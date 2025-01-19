@@ -12,7 +12,8 @@ import SwiftSoup
 struct AccountInfo: Codable {
     var username: String
     var xsrfToken: String?
-    
+    var avatar: String?
+    var userLink: String?
     func isValid() -> Bool {
         return xsrfToken.isEmpty == true
     }
@@ -22,6 +23,7 @@ struct Persist {
     private static let userDefault = UserDefaults.standard
 
     static func save(value: Any, forkey key: String) {
+        print("[bao]save \(value) \(key)")
         userDefault.set(value, forKey: key)
     }
 
@@ -76,14 +78,18 @@ struct AccountState {
     static func token() -> String {
         return getAccount()?.xsrfToken ?? ""
     }
-
+    
     static var userName: String {
         return getAccount()?.username ?? .default
     }
+    
+    static var userLink: String {
+        return getAccount()?.userLink ?? .default
+    }
 
-//    static var avatarUrl: String {
-//        return getAccount()?.avatar ?? .default
-//    }
+    static var avatarUrl: String {
+        return getAccount()?.avatar ?? .default
+    }
     
     static func isSelf(userName: String) -> Bool {
         return userName == Self.userName && userName != .default
@@ -108,36 +114,62 @@ class LoginStateChecker: ObservableObject {
     @Published var error: String?
     @Published var loginDestination: LoginDestination?
     
-    func loginStateChecker() -> Bool {
+    static func unLoginState() {
+        runInMain {
+            LoginStateChecker.shared.needLogin = true
+            LoginStateChecker.shared.isLogin = false
+            APIService.shared.clearCookie()
+            AccountState.deleteAccount()
+        }
+    }
+    
+    static func LoginState() {
+        runInMain {
+            LoginStateChecker.shared.needLogin = false
+            LoginStateChecker.shared.isLogin = true
+        }
+    }
+    
+    static func userLoginState() -> Bool {
+        var success = false
+        if isLogin() == false {
+            unLoginState()
+        } else {
+            LoginState()
+            success = true
+        }
+        return success
+    }
+    
+    static func isLogin() -> Bool {
         return AccountState.isLogin()
     }
     
-    func checkLoginState(doc: Document) throws -> Bool {
+    func htmlCheckUserState(doc: Document) throws -> Bool {
         // 检查是否存在登录表单
         let loginForm = try doc.select("form.form-horizontal")
-        let alerts    = try doc.select("ul.alert-danger li")
+        //let alerts    = try doc.select("ul.alert-danger li")
         
         if !loginForm.isEmpty() {
             // 检查错误提示
-            if !alerts.isEmpty() {
-                error = try alerts.first()?.text() ?? "需要登录"
-            } else {
-                error = "请先登录社区再完成操作"
+//            if !alerts.isEmpty() {
+//                self.error = try alerts.first()?.text() ?? "需要登录"
+//            } else {
+//                error = "请先登录社区再完成操作"
+//            }
+            LoginStateChecker.unLoginState()
+            runInMain {
+                self.needLogin = true
             }
-            needLogin = true
             return true
         }
         
-        needLogin = false
-        error = nil
-        return true
+        Task { @MainActor in
+            self.needLogin = false
+            self.error = nil
+        }
+        return false
     }
 }
 
-// MARK: - 通知名称扩展
-extension Notification.Name {
-    static let reloadPostDetail = Notification.Name("reloadPostDetail")
-    static let reloadComments = Notification.Name("reloadComments")
-    static let reloadProfile = Notification.Name("reloadProfile")
-}
 

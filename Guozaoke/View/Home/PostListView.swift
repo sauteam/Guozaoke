@@ -12,7 +12,10 @@ struct PostListView: View {
     @State private var selectedTab: PostListType = .latest
     @State private var posts: [PostItem] = []
     @State private var isLoading = false
-    @Environment(\.themeColor) private var themeColor: Color
+    @State private var showAddPostView = false
+    @State private var showSearchView  = false
+
+//    @Environment(\.themeColor) private var themeColor: Color
     
     var body: some View {
         NavigationView {
@@ -51,18 +54,39 @@ struct PostListView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
             }
-        }
-        .navigationTitle("首页")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    
-                }) {
-                    Image(systemName: "plus")
+            .navigationTitle("过早客")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showAddPostView = true
+                    }) {
+                        SFSymbol.add
+                    }
+
+                    Button(action: {
+                        showSearchView = true
+                    }) {
+                        SFSymbol.search
+                    }
+                    .background {
+                        NavigationLink(destination: SearchListView(),
+                                       isActive: $showSearchView) {
+                            EmptyView()
+                        }
+                    }
                 }
-                .foregroundColor(.brown)
             }
+            .sheet(isPresented: $showAddPostView) {
+                SendPostView(isPresented: $showAddPostView) {
+                    //log("showAddPostView \(showAddPostView)")
+                }
+            }
+            
+//            .sheet(isPresented: $showSearchView) {
+//                SearchListView(isPresented: $showSearchView)
+//                log("showSearchView \(showSearchView)")
+//            }
         }
     }
 }
@@ -73,8 +97,8 @@ struct PostListView: View {
 struct PostListContentView: View {
     let type: PostListType
     @StateObject private var viewModel = PostListParser()
-
     var body: some View {
+        ZStack {
             List {
                 ForEach(viewModel.posts) { post in
                     NavigationLink {
@@ -83,12 +107,11 @@ struct PostListContentView: View {
                         PostRowView(post: post)
                             .onAppear {
                                 if post == viewModel.posts.last {
-                                    viewModel.loadPosts(type: type)
+                                    viewModel.loadMorePosts(type: type)
                                     print("2 type \(type)")
                                 }
                             }
                     }
-                    
                 }
                 
                 if viewModel.isLoading {
@@ -113,11 +136,21 @@ struct PostListContentView: View {
                 viewModel.refresh(type: type)
             }
             .id(type)
-            .task {
+            .onAppear() {
                 if viewModel.posts.isEmpty {
                     viewModel.refresh(type: type)
                 }
                 print("1 type \(type)")
+                let account = AccountState.getAccount()
+                log("userInfo \(account)")
+                NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
+                    if type == .follows {
+                        viewModel.refresh(type: type)
+                    }
+                }
+            }
+            .onDisappear() {
+                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
             }
             .alert("错误", isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -126,9 +159,35 @@ struct PostListContentView: View {
                 Button("确定", role: .cancel) {}
             } message: {
                 Text(viewModel.error ?? "")
-            }            
+            }
+        }
     }
 }
+
+
+//VStack {
+//    Spacer()
+//    HStack {
+//        Spacer()
+//        Button(action: {
+//            print("发帖子按钮被点击！")
+//        }) {
+//            SFSymbol.add
+//                .resizable() // 允许调整图标大小
+//                .scaledToFit()
+//                .frame(width: 20, height: 20)
+//                .padding()
+//                .frame(width: 40, height: 40)
+//                .font(.title)
+//                .padding()
+//                .background(Circle().fill(Color.blue))
+//        }
+//        .padding(.bottom, 30)
+//        .padding(.trailing, 30)
+//        .shadow(radius: 5)
+//    }
+//}
+
 
 
 //// 预览

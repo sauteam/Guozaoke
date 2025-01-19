@@ -91,9 +91,10 @@ extension URL {
 
 extension String {
     func openURL() {
-        self.copyToClipboard()
+        //self.copyToClipboard()
         URL(self)?.openSafari()
     }
+    
 }
 
 
@@ -108,3 +109,4 @@ extension EnvironmentValues {
         set { self[ThemeColorKey.self] = newValue }
     }
 }
+

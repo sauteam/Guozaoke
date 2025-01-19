@@ -13,11 +13,13 @@ enum SFSymbol: String {
     /// 􀍡
     case node = "ellipsis.circle"
     /// 􀌤
-    case noti = "message"
+    case noti = "bell.badge.fill"
     /// 􀉩
     case mine = "person"
     /// 􀅼
-    case addPost = "plus"
+    case add = "plus"
+    /// 􀊫
+    case search = "magnifyingglass"
     /// 􀉁
     case copy  = "document.on.document"
     /// 􀉌
@@ -46,6 +48,8 @@ enum SFSymbol: String {
     case safariFill = "safari.fill"
     /// 􀈂
     case share = "square.and.arrow.up"
+    /// 􀍟
+    case setting = "gear"
 }
 
 extension SFSymbol: View {

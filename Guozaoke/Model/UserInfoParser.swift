@@ -73,6 +73,8 @@ class UserInfoParser: ObservableObject {
             let followElement = try doc.select(".label.label-success a").first()
             let followLink = try followElement?.attr("href") ?? ""
             
+            let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+
             let followText = try doc.select(".label.label-success").text()
             log("followText \(followText) followLink\(followLink)")
             var success = false
@@ -108,7 +110,6 @@ class UserInfoParser: ObservableObject {
                 }
             }
 
-
             let url = "\(baseUrl)?page=\(currentPage)"
             let html = try await NetworkManager.shared.get(url)
             let doc = try SwiftSoup.parse(html)
@@ -116,15 +117,15 @@ class UserInfoParser: ObservableObject {
             let newTopics  = try parseTopics(doc: doc, isTopic: true)
             let newReplies = try parseReply(doc: doc)
             try self.parsePagination(doc: doc)
+            
+            let _ =  try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
 
-            // Parse user info only on the first page
             if reset || userInfo == nil {
                 let parsedUserInfo = try parseUserInfo(doc: doc)
                 await MainActor.run {
                     self.userInfo = parsedUserInfo
                 }
             }
-
 
             if newTopics.isEmpty && newReplies.isEmpty {
                 await MainActor.run {

@@ -125,12 +125,20 @@ class PostDetailParser: ObservableObject {
     var zanText: String {
         return isZan ? "已感谢":"感谢"
     }
+    
+    func loadMore() {
+        if !self.hasMore {
+            return
+        }
+        currentPage += 1
+        loadPostDetail(id: postId ?? "0")
+    }
 
     func loadPostDetail(id: String) {
-        guard !isLoading else { return }
+        guard !isLoading || id == "0"  else { return }
         isLoading = true
         log("详情开始刷新 \(id)")
-        
+        postId = id
         let urlString = id.postDetailUrl() + "?p=\(currentPage)"
         
         guard let url = URL(string: urlString) else {
@@ -162,18 +170,13 @@ class PostDetailParser: ObservableObject {
                     
                     let doc = try SwiftSoup.parse(html)
                     // 检查登录状态
-                    let loginChecker = LoginStateChecker.shared
-                    guard try loginChecker.checkLoginState(doc: doc) else {
-                        self.needLogin = true
-                        self.error = loginChecker.error
-                        return
-                    }
+                    let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                    
                     try self.parsePagination(doc: doc)
 
                     self.postDetail = try self.parsePostDetail(doc: doc)
                     self.hasMore = self.currentPage <= self.totalPages
-                    log("currentPage \(self.currentPage) \(self.hasMore)")
-                    self.currentPage += 1
+                    log("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
                 } catch {
                     self.error = error.localizedDescription
                 }
@@ -363,7 +366,7 @@ class PostDetailParser: ObservableObject {
             return Int(try element.text())
         }.max() ?? currentPage
         self.totalPages = pageNumbers
-        log("currentPage \(currentPage) previousPageUrl \(previousPageUrl) nextPageUrl\(nextPageUrl) pageNumbers\(pageNumbers)")
+        log("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl) nextPageUrl\(nextPageUrl) pageNumbers\(pageNumbers)")
 //        if totalPages == 1 {
 //            let mobilePaginationText = try doc.select("div.pagination-wap div").text()
 //            if let range = mobilePaginationText.range(of: "/") {
@@ -385,6 +388,11 @@ class PostDetailParser: ObservableObject {
                 do {
                     let model = try JSONDecoder().decode(BaseResponse.self, from: jsonData)
                     log("jsonData \(jsonData) \(model)")
+                    if model.message == "user_not_login" {
+                        runInMain {
+                            LoginStateChecker.unLoginState()
+                        }
+                    }
                     return model
                 } catch {
                     log("JSON 解析错误: \(error.localizedDescription)")

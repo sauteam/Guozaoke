@@ -9,11 +9,11 @@ import SwiftUI
 
 struct UserInfoView: View {
     let userId: String
-    
     @State private var isLoading = true
     @StateObject private var parser = UserInfoParser()
     @State private var selectedTab = 0
     @State private var followText = "+关注"
+
     var body: some View {
         VStack() {
             if parser.isLoading && parser.userInfo == nil {
@@ -32,26 +32,33 @@ struct UserInfoView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Button(action: {
-                        print("关注按钮点击")
-                        Task {
-                            do {
-                                let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
-                                if success == true {
-                                    //followText = userInfo.followTextChange
-                                    await parser.fetchUserInfoAndData(self.userId)
+                    let isMe = AccountState.isSelf(userName: userId)
+                    if isMe {
+                        Text("Email: \(userInfo.email)")
+                            .font(.caption)
+                            .bold()
+                    } else {
+                        Button(action: {
+                            print("关注按钮点击")
+                            Task {
+                                do {
+                                    let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
+                                    if success == true {
+                                        //followText = userInfo.followTextChange
+                                        await parser.fetchUserInfoAndData(self.userId)
+                                    }
                                 }
                             }
+                            
+                        }) {
+                            Text(userInfo.followTextChange)
+                                .font(.headline)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
                         }
-                        
-                    }) {
-                        Text(userInfo.followTextChange)
-                            .font(.headline)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(16)
                     }
                     
                     Text("\(userInfo.number) \(userInfo.joinDate)")
@@ -147,11 +154,23 @@ struct UserInfoView: View {
                 }
             }
         }
-        .navigationTitle(parser.userInfo?.nickname ?? "个人主页")
+        .navigationTitle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !parser.hadData {
                 Task { await parser.fetchUserInfoAndData(userId, reset: true) }
             }
+            
+            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
+                if let userInfo = notification.userInfo,
+                   let user = userInfo as? Dictionary<String, Any> {
+                    let username  = user["userName"] as? String ?? ""
+                    Task { await parser.fetchUserInfoAndData(username, reset: true) }
+                }
+            }
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
         }
     }
 }
@@ -183,12 +202,12 @@ struct MyReplyRowView: View {
             Text(myReply.content)
                 .font(.callout)
                 .lineLimit(2)
-                .onTapGesture {
-                    if myReply.userLink.isEmpty == false {
-                        //isUserInfoViewActive = true
-                    }
-                    log("mentionedUser \(myReply.userLink ?? "")")
-                }
+//                .onTapGesture {
+//                    if myReply.userLink.isEmpty == false {
+//                        //isUserInfoViewActive = true
+//                    }
+//                    log("mentionedUser \(myReply.userLink ?? "")")
+//                }
                 .background {
                     NavigationLink(
                         destination: UserInfoView(userId: myReply.userLink ?? ""),

@@ -30,14 +30,19 @@ struct NavItem: Identifiable {
     let id = UUID()
     let title: String
     let link: String
-    let isActive: Bool
+    //let isActive: Bool
 }
 
-struct NodeItem: Identifiable {
+struct NodeItem: Identifiable, Hashable, Equatable {
     let id = UUID()
     let category: String
+    let nodes: [Node]
+}
+
+struct Node: Identifiable, Hashable, Equatable {
+    let id = UUID()
     /// 文字
-    let title: String
+    var title: String
     /// 比如 /nodes/job 找工作
     let link: String
 }
@@ -49,6 +54,7 @@ class PostListParser: ObservableObject {
     @Published var navItems: [NavItem] = []
     @Published var posts: [PostItem] = []
     @Published var nodes: [NodeItem] = []
+    @Published var onlyNodes: [Node] = []
     @Published var currentPage = 1
     @Published var totalPages  = 1
     @Published var isLoading   = false
@@ -56,17 +62,45 @@ class PostListParser: ObservableObject {
     @Published var hasMore = true
     @Published var needLogin = false
     private var currentType: PostListType?
+    private var urlHeader: String?
+    var justNodes: [Node] {
+        let allNodes: [Node] = nodes.flatMap { $0.nodes }
+        return allNodes
+    }
     
-
+    var hadNodeItemData: Bool {
+        return self.nodes.count > 0
+    }
+    
     func refresh(type: PostListType) {
         currentPage = 1
         hasMore   = true
         isLoading = false
-        loadPosts(type: type)
+        loadMorePosts(type: type)
     }
     
+    func loadNodeInfoLastst(_ url: String) {
+        currentPage = 1
+        hasMore   = true
+        isLoading = false
+        loadNodeInfo(url)
+    }
     
-    func loadPosts(type: PostListType) {
+    func loadNodeInfo(_ url: String) {
+        guard !isLoading, hasMore else { return }
+        isLoading = true
+        let zhong = url
+        let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
+        let urlString = APIService.baseUrlString + zhong + page
+        guard let url = URL(string: urlString) else {
+           error = "Invalid URL"
+           isLoading = false
+           return
+        }
+        loadWithUrl(url)
+    }
+    
+    func loadMorePosts(type: PostListType) {
         currentType = type
         guard !isLoading, hasMore, type == currentType else { return }
         isLoading = true
@@ -79,7 +113,10 @@ class PostListParser: ObservableObject {
            isLoading = false
            return
         }
-        
+        loadWithUrl(url)
+   }
+    
+    private func loadWithUrl(_ url: URL) {
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
            DispatchQueue.main.async {
                guard let self = self else { return }
@@ -104,12 +141,10 @@ class PostListParser: ObservableObject {
                        self.posts = []
                    }
                    let doc = try SwiftSoup.parse(html)
-                   // 检查登录状态
-                   let loginChecker = LoginStateChecker.shared
-                   guard try loginChecker.checkLoginState(doc: doc) else {
+                   
+                   let success = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                   if !success {
                        self.needLogin = true
-                       self.error = loginChecker.error
-                       return
                    }
 
                    let newPosts  = try self.parseTopics(doc: doc)
@@ -121,45 +156,52 @@ class PostListParser: ObservableObject {
                    }
                    try self.parsePagination(doc: doc)
                    // 累加数据
-                   self.posts.append(contentsOf: newPosts)
                    self.currentPage += 1
+                   self.posts.append(contentsOf: newPosts)
                    self.hasMore = self.currentPage <= self.totalPages
-                   
+                   log("p \(self.currentPage) t \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
                } catch {
                    self.error = error.localizedDescription
                }
            }
         }.resume()
-   }
+
+    }
         
     // 解析导航栏
     func parseNavbar(doc: Document) throws -> [NavItem] {
         let navItems = try doc.select("#navbar5 ul.nav.navbar-nav.navbar-left li")
         return try navItems.map { element in
             let link     = try element.select("a").first()
-            let isActive = try element.hasClass("active")
+            //let isActive = try element.hasClass("active")
             //log("parseNavbar \(link) \(navItems)")
             return NavItem(
                 title: try link?.text() ?? "",
-                link: try link?.attr("href") ?? "",
-                isActive: isActive
+                link: try link?.attr("href") ?? ""
+                //isActive: isActive
             )
         }
     }
     
     func parseNodes(doc: Document) throws -> [NodeItem] {
         var nodeItems: [NodeItem] = []
+        var allNodes: [Node] = []
         if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")
             for item in listItems {
+                var nodes: [Node] = []
                 let category = try item.select("label").text()
                 let links = try item.select("a")
                 for link in links {
                     let nodeName = try link.text()
                     let nodeHref = try link.attr("href")
-                    nodeItems.append(NodeItem(category: category, title: nodeName, link: nodeHref))
+                    let node = Node( title: nodeName, link: nodeHref)
+                    nodes.append(node)
+                    allNodes.append(node)
                 }
+                nodeItems.append(NodeItem(category: category, nodes: nodes))
             }
+            onlyNodes = allNodes
         } else {
             log("未找到节点导航部分")
         }

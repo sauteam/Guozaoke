@@ -40,10 +40,10 @@ class NetworkManager: ObservableObject {
      
             // 默认头部
             var defaultHeaders: HTTPHeaders = [
-                "Accept": "application/json, text/javascript, text/html, application/xhtml+xml,application/xml",
+                "Accept": "application/json, text/javascript, text/html, application/xhtml+xml, application/xml",
                 "X-Requested-With": "XMLHttpRequest",
                 "Content-Type": "text/html"
-            ]            
+            ]
 
             // 如果有传入 headers，则合并
             if let headers = headers {
@@ -60,14 +60,11 @@ class NetworkManager: ObservableObject {
             .responseString { response in
                 switch response.result {
                 case .success(let string):
-//                    if let contentType = response.response?.mimeType {
-//                        if contentType.contains("text/html") || contentType.contains("text/plain") {
-//                            let documents = try SwiftSoup.parse(string)
-//                            //处理登录
-//                        }
-//                    }
+                    log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
+                    let _ = LoginStateChecker.userLoginState()
                     continuation.resume(returning: string)
                 case .failure(let error):
+                    log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
                 }
             }

@@ -32,6 +32,11 @@ enum LoginError: LocalizedError {
     }
 }
 
+// MARK: - 通知名称扩展
+extension Notification.Name {
+    static let loginSuccessNoti = Notification.Name("loginSuccessNoti")
+}
+
 // MARK: - 登录服务
 class LoginService: ObservableObject {
     @State var isLoggedIn = false
@@ -40,9 +45,11 @@ class LoginService: ObservableObject {
     
     // XSRF Token
     private var xsrfToken: String = ""
+
     private let loginUrl = APIService.baseUrlString + "/login"
         
-    func fetchLoginPage() async throws {
+    func fetchLoginPage() async throws -> Bool {
+        var success = false
         guard let url = URL(string: loginUrl) else {
             throw LoginError.invalidURL
         }
@@ -53,21 +60,31 @@ class LoginService: ObservableObject {
         }
         
         let doc = try SwiftSoup.parse(html)
-        // 解析XSRF Token
         if let tokenInput = try doc.select("input[name=_xsrf]").first() {
             xsrfToken = try tokenInput.attr("value")
+            success =  true
         }
+        return success
     }
     
 //    // 执行登录请求
-    func login(email: String, password: String) async throws {
+    func login(email: String, password: String) async throws -> Bool {
+        var loginSuccess = false
         guard xsrfToken.isEmpty == false else {
-            try await fetchLoginPage()
-            return
+            let success = try await fetchLoginPage()
+            if success {
+                log("login success")
+                loginSuccess = try await login(email: email, password: password)
+            } else {
+                log("login fail")
+            }
+            return loginSuccess
         }
         
-        isLoggedIn = true
-        isLoading  = false
+        await MainActor.run {
+            isLoggedIn = true
+            isLoading  = false
+        }
         
         guard let url = URL(string: loginUrl) else {
             throw LoginError.invalidURL
@@ -107,18 +124,36 @@ class LoginService: ObservableObject {
             if let errorMessage = try doc.select("ul.alert-danger li").first()?.text() {
                 throw LoginError.loginFailed(message: errorMessage)
             }
+            log("[login] \(doc)")
+            let avatarElement = try doc.select(".ui-header a img").first()
+            let avatar = try avatarElement?.attr("src") ?? ""
+            let username = try doc.select(".ui-header .username").first()?.text() ?? ""
+//            // Number
+//            let numberElement = try doc.select(".user-number .number").first()
+//            let number = try numberElement?.text() ?? ""
+//            // Since
+//            let sinceElement = try doc.select(".user-number .since").first()
+//            let since = try sinceElement?.text() ?? ""
+            let idElement = try doc.select(".ui-header a").first()
+            let idLink = try idElement?.attr("href") ?? ""
+
             if try doc.select("div.topic-item").count > 0 {
-                let paramater = ["loginId": email, "token": xsrfToken]
-                isLoggedIn    = true
-                DispatchQueue.main.async { 
-                    Persist.save(value: paramater, forkey: AccountState.ACCOUNT_KEY)
+                let account = AccountInfo(username: username, xsrfToken: xsrfToken, avatar: avatar, userLink: idLink)
+                DispatchQueue.main.async {
+                    AccountState.saveAccount(account)
                 }
+                log("[userInfo]\(account)")
+                NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
+                isLoggedIn    = true
+                loginSuccess  = true
+                LoginStateChecker.LoginState()
             } else {
                 throw LoginError.loginFailed(message: "登录失败")
             }
         } else {
             throw LoginError.httpError(statusCode: httpResponse.statusCode)
         }
+        return loginSuccess
     }
     
 //    func login(email: String, password: String) {

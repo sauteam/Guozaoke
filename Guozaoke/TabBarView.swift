@@ -10,7 +10,7 @@ import SwiftUI
 struct TabBarView: View {
     @State private var tab: Tab = .home
     @State private var hideTabBar = false
-    @StateObject private var loginChecker = LoginStateChecker.shared
+    @StateObject  var loginChecker = LoginStateChecker.shared
 
     var body: some View {
         TabView(selection: $tab) {
@@ -29,7 +29,7 @@ struct TabBarView: View {
                     Label("通知", systemImage: .noti)
                 }.tag(Tab.noti)
             
-            MeView()
+            MeView(userId: AccountState.userName)
                 .tabItem {
                     Label("我的", systemImage: .mine)
                 }.tag(Tab.me)

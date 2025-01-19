@@ -10,14 +10,50 @@ import SwiftUI
 struct NodeInfoView: View {
     let node: String
     let nodeUrl: String
-    
+    @StateObject private var viewModel = PostListParser()
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-        
-            .navigationTitle("节点详情")
+        VStack {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .listRowSeparator(.hidden)
+            }
+            
+            List {
+                ForEach(viewModel.posts) { post in
+                    NavigationLink {
+                        PostDetailView(postId: post.link)
+                    } label: {
+                        PostRowView(post: post)
+                        .onAppear {
+                            if post == viewModel.posts.last {
+                                viewModel.loadNodeInfo(nodeUrl)
+                            }
+                        }
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .listStyle(.plain)
+            .refreshable {
+                viewModel.loadNodeInfoLastst(nodeUrl)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(node)
+        .onAppear {
+            if viewModel.posts.isEmpty {
+                viewModel.loadNodeInfoLastst(nodeUrl)
+            }
+            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _
+                in
+                viewModel.loadNodeInfoLastst(nodeUrl)
+            }
+        }
     }
 }
 
 //#Preview {
-//    NodeInfoView()
+//    NodeInfoView(node: "IT", nodeUrl: "/node/IT")
 //}

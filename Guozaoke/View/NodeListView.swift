@@ -8,26 +8,51 @@
 import SwiftUI
 
 struct NodeListView: View {
-    @Environment(\.themeColor) private var themeColor: Color
+    @StateObject private var viewModel = PostListParser()
 
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-            .navigationTitle("首页")
+        NavigationView {
+            VStack {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .listRowSeparator(.hidden)
+                }
+                
+                List (viewModel.nodes) { category in
+                    Section(header: Text(category.category).font(.headline)) {
+                        ForEach(category.nodes, id: \.self) { node in
+                            NavigationLink(destination: NodeInfoView(node: node.title, nodeUrl: node.link)) {
+                                Text(node.title)
+                                    .padding(.vertical, 4)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("节点导航")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("节点详情")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        
+                        APIService.shared.clearCookie()
                     }) {
-                        Image(systemName: "plus")
+                        Label("", systemImage: .search)
                     }
-                    .foregroundColor(themeColor)
+                    
                 }
             }
+        }
+        .onAppear {
+            if !viewModel.hadNodeItemData   {
+                viewModel.refresh(type: .hot)
+            }
+        }
     }
 }
 
-#Preview {
-    NodeListView()
-}
+
+
+//#Preview {
+//    NodeListView()
+//}

@@ -67,39 +67,27 @@ struct LoginView: View {
         }
         .onChange(of: loginService.isLoggedIn) { newValue in
             if newValue {
-                LoginStateChecker.shared.isLogin = true
-                onLoginSuccess()
-                isPresented = false
+                successAsyn()
             }
         }
+    }
+    
+    private func successAsyn() {
+        LoginStateChecker.shared.isLogin = true
+        onLoginSuccess()
+        isPresented = false
     }
     
     private func performLogin() {
         Task {
             do {
-                try await loginService.login(email: email, password: password)
+                let success = try await loginService.login(email: email, password: password)
+                if success {
+                    successAsyn()
+                }
             } catch {
                 loginService.error = error.localizedDescription
             }
-        }
-    }
-    
-    
-    private func handleLoginSuccess() {
-        if let destination = LoginStateChecker.shared.loginDestination {
-            // 处理登录成功后的跳转
-            switch destination {
-            case .postDetail(let postId):
-                // 重新加载帖子详情
-                NotificationCenter.default.post(name: .reloadPostDetail, object: postId)
-            case .comment:
-                // 重新加载评论
-                NotificationCenter.default.post(name: .reloadComments, object: nil)
-            case .profile:
-                // 重新加载个人信息
-                NotificationCenter.default.post(name: .reloadProfile, object: nil)
-            }
-            LoginStateChecker.shared.loginDestination = nil
         }
     }
 }

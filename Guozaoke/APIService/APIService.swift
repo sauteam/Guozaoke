@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftSoup
+import Alamofire
 
 /// href
 let ghref = "href"
@@ -31,7 +32,8 @@ enum PostListType: String, CaseIterable {
     case latest  = "最新"
     case elite   = "精华"
     case follows = "关注"
-    
+    //case node   = "节点"
+
     
     var url: String {
         switch self {
@@ -43,6 +45,8 @@ enum PostListType: String, CaseIterable {
             return "/?tab=elite"
         case .follows:
             return "/?tab=follows"
+//        case .node:
+//            return "/nodes"
         }
     }
 }
@@ -62,9 +66,36 @@ struct APIService {
     static let baseURL       = URL(string: baseUrlString)!
     static let registerUrl   = baseUrlString + "/register"
     static let forgotUrl     = baseUrlString + "/forgotUrl"
-    
-    
     private init() {}
+    
+    
+    static func sendPost(
+            url: String,
+            title: String,
+            content: String
+        ) async throws -> String {
+            // 构造参数
+            let xsrfToken = AccountState.token()
+            if xsrfToken.isEmpty {
+                let _  = LoginStateChecker.unLoginState()
+            }
+            let parameters: Parameters = [
+                "title": title,
+                "content": content,
+                "_xsrf": xsrfToken
+            ]
+            
+            // 构造头部
+            let headers: HTTPHeaders = [
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Encoding": "gzip, deflate"
+            ]
+            
+            // 调用通用请求方法
+            let response: String = try await NetworkManager.shared.post(url, parameters: parameters, headers: headers)
+            return response
+        }
 }
 
 
@@ -107,6 +138,18 @@ extension String {
             return APIService.baseUrlString + uid
         }
         return APIService.baseUrlString + "/" + uid
+    }
+    
+    /// /node/IT => /t/create/IT
+    func createPostUrl() -> String {
+        var url = self
+        if url.hasPrefix("/node") {
+            url = url.replacingOccurrences(of: "/node", with: "create")
+        }
+        if !url.hasPrefix("/t") {
+            url = "/t/" + url
+        }
+        return APIService.baseUrlString + url
     }
 }
 

@@ -122,6 +122,7 @@ struct PostRowView: View {
             
             Button {
                 let url = post.link.postDetailUrl()
+                url.copyToClipboard()
                 url.openURL()
             } label: {
                 Label("网页查看帖子", systemImage: .safari)

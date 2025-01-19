@@ -166,6 +166,7 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.favUrl)
                         if model?.success == 1 {
+                            hapticFeedback()
                             detailParser.loadPostDetail(id: postId)
                             DispatchQueue.main.async {
                                 detailParser.isCollection.toggle()
@@ -189,6 +190,7 @@ struct PostFooterView: View {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
                             detailParser.loadPostDetail(id: postId)
+                            hapticFeedback()
                             DispatchQueue.main.async {
                                 detailParser.isZan.toggle()
                                 log("isZan \(detailParser.isZan)")
@@ -251,7 +253,7 @@ struct ReplyListView: View {
                 ReplyItemView(reply: reply)
                     .onAppear {
                         if reply == replies.last {
-                            detailParser.loadPostDetail(id: detailParser.postId ?? "")
+                            detailParser.loadMore()
                         }
                     }
             }
