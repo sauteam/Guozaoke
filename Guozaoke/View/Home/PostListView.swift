@@ -137,12 +137,14 @@ struct PostListContentView: View {
             }
             .id(type)
             .onAppear() {
+
                 if viewModel.posts.isEmpty {
                     viewModel.refresh(type: type)
                 }
+                
                 print("1 type \(type)")
-                let account = AccountState.getAccount()
-                log("userInfo \(account)")
+                //let account = AccountState.getAccount()
+                //log("userInfo \(account)")
                 NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
                     if type == .follows {
                         viewModel.refresh(type: type)

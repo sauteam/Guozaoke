@@ -18,11 +18,17 @@ struct PostRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
+                let profile     = post.rowEnum == .profileRow
+                let nodeInfo    = post.rowEnum == .nodeInfo
+
                 KFImageView(post.avatar)
                     .avatar()
+                    .disabled(post.rowEnum == .profileRow)
                     .onTapGesture {
                         log("点击 \(post.avatar)")
-                        isUserAvatarViewActive = true
+                        if !profile {
+                            isUserAvatarViewActive = true
+                        }
                     }
                     .overlay {
                         NavigationLink(
@@ -43,7 +49,9 @@ struct PostRowView: View {
                             .lineLimit(1)
                             .onTapGesture {
                                 log("点击 \(post.author) \(post.nodeUrl)")
-                                isUserNameInfoViewActive = true
+                                if !profile {
+                                    isUserNameInfoViewActive = true
+                                }
                             }
                             .overlay {
                                 NavigationLink(
@@ -76,10 +84,8 @@ struct PostRowView: View {
                                         }.hidden()
                                 }
                         }
-                        
-                        
-                        
-                        if post.isDetailInfo == false {
+                                                
+                        if post.rowEnum == .detailRow {
                             if post.replyCount > 0 {
                                 Text("评论\(post.replyCount)")
                                     .font(.caption)
@@ -96,7 +102,9 @@ struct PostRowView: View {
                             .clipShape(Rectangle())
                             .onTapGesture {
                                 log("点击 \(post.node) \(post.nodeUrl)")
-                                isNodeInfoViewActive = true
+                                if !nodeInfo {
+                                    isNodeInfoViewActive = true
+                                }
                             }
                             .background {
                                 NavigationLink(
@@ -144,7 +152,3 @@ struct PostRowView: View {
     }
 }
 
-
-//#Preview {
-//    PostRowView()
-//}

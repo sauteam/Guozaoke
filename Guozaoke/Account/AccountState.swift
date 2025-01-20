@@ -54,7 +54,7 @@ struct AccountState {
     static func deleteAccount() {
         Persist.save(value: String.empty, forkey: AccountState.ACCOUNT_KEY)
         ACCOUNT = nil
-        APIService.shared.clearCookie()
+        APIService.clearCookie()
     }
 
     static func getAccount() -> AccountInfo? {
@@ -114,16 +114,16 @@ class LoginStateChecker: ObservableObject {
     @Published var error: String?
     @Published var loginDestination: LoginDestination?
     
-    static func unLoginState() {
+    static func clearUserInfo() {
         runInMain {
             LoginStateChecker.shared.needLogin = true
             LoginStateChecker.shared.isLogin = false
-            APIService.shared.clearCookie()
             AccountState.deleteAccount()
+            APIService.clearCookie()
         }
     }
     
-    static func LoginState() {
+    static func LoginStateHandle() {
         runInMain {
             LoginStateChecker.shared.needLogin = false
             LoginStateChecker.shared.isLogin = true
@@ -133,9 +133,9 @@ class LoginStateChecker: ObservableObject {
     static func userLoginState() -> Bool {
         var success = false
         if isLogin() == false {
-            unLoginState()
+            clearUserInfo()
         } else {
-            LoginState()
+            LoginStateHandle()
             success = true
         }
         return success
@@ -157,16 +157,20 @@ class LoginStateChecker: ObservableObject {
 //            } else {
 //                error = "请先登录社区再完成操作"
 //            }
-            LoginStateChecker.unLoginState()
+            LoginStateChecker.clearUserInfo()
             runInMain {
-                self.needLogin = true
+                if !self.needLogin {
+                    self.needLogin = true
+                }
             }
             return true
         }
         
         Task { @MainActor in
-            self.needLogin = false
-            self.error = nil
+            if self.needLogin == true {
+                self.needLogin = false
+                self.error = nil
+            }
         }
         return false
     }

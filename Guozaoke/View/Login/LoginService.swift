@@ -54,9 +54,13 @@ class LoginService: ObservableObject {
             throw LoginError.invalidURL
         }
         
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let (data, response) = try await URLSession.shared.data(from: url)
         guard let html = String(data: data, encoding: .utf8) else {
             throw LoginError.invalidData
+        }
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            saveCookies(from: httpResponse)
         }
         
         let doc = try SwiftSoup.parse(html)
@@ -65,6 +69,30 @@ class LoginService: ObservableObject {
             success =  true
         }
         return success
+    }
+    
+    // 将响应中的 Cookies 保存到 HTTPCookieStorage
+    private func saveCookies(from response: HTTPURLResponse) {
+        if let cookies = response.allHeaderFields["Set-Cookie"] as? String {
+            // 分割多个 Cookies
+            let cookieArray = cookies.split(separator: ";")
+            
+            for cookie in cookieArray {
+                let cookieProperties: [HTTPCookiePropertyKey: Any] = [
+                    .domain: "www.guozaoke.com",
+                    .path: "/",
+                    .name: "session_id", // 或者使用从 cookie 字符串中解析出的名称
+                    .value: cookie, // 存储每个 Cookie 的值
+                    .secure: "TRUE",
+                    .expires: NSDate(timeIntervalSinceNow: 31536000)
+                ]
+                
+                if let cookie = HTTPCookie(properties: cookieProperties) {
+                    HTTPCookieStorage.shared.setCookie(cookie)
+                    print("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
+                }
+            }
+        }
     }
     
 //    // 执行登录请求
@@ -146,7 +174,7 @@ class LoginService: ObservableObject {
                 NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
                 isLoggedIn    = true
                 loginSuccess  = true
-                LoginStateChecker.LoginState()
+                LoginStateChecker.LoginStateHandle()
             } else {
                 throw LoginError.loginFailed(message: "登录失败")
             }

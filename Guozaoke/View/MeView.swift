@@ -70,7 +70,6 @@ struct MeView: View {
                     }
                     .padding()
                     
-                    // Tab Selection
                     Picker("选择列表", selection: $selectedTab) {
                         Text("主题").tag(0)
                         Text("回复").tag(1)

@@ -38,9 +38,22 @@
 		3226277C2D3393AF00F4AAA8 /* GuozaokeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GuozaokeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		327B92482D3E6E7500358C42 /* Exceptions for "Guozaoke" folder in "Guozaoke" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 322627612D3393AC00F4AAA8 /* Guozaoke */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		322627642D3393AC00F4AAA8 /* Guozaoke */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				327B92482D3E6E7500358C42 /* Exceptions for "Guozaoke" folder in "Guozaoke" target */,
+			);
 			path = Guozaoke;
 			sourceTree = "<group>";
 		};
@@ -426,6 +439,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Guozaoke/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "过早客";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -455,6 +469,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Guozaoke/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "过早客";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -9,6 +9,10 @@ import SwiftUI
 import SwiftSoup
 import Alamofire
 
+enum PostItemEnum {
+    case homeRow, detailRow, profileRow, nodeInfo
+}
+
 // MARK: - 数据模型
 struct PostItem: Identifiable,Equatable {
     let id = UUID()
@@ -23,7 +27,7 @@ struct PostItem: Identifiable,Equatable {
     var time: String
     let replyCount: Int
     let lastReplyUser: String?
-    let isDetailInfo: Bool?
+    var rowEnum: PostItemEnum = .homeRow
 }
 
 struct NavItem: Identifiable {
@@ -63,6 +67,7 @@ class PostListParser: ObservableObject {
     @Published var needLogin = false
     private var currentType: PostListType?
     private var urlHeader: String?
+    private var rowEnum: PostItemEnum = .homeRow
     var justNodes: [Node] {
         let allNodes: [Node] = nodes.flatMap { $0.nodes }
         return allNodes
@@ -80,6 +85,7 @@ class PostListParser: ObservableObject {
     }
     
     func loadNodeInfoLastst(_ url: String) {
+        rowEnum = .nodeInfo
         currentPage = 1
         hasMore   = true
         isLoading = false
@@ -221,7 +227,8 @@ class PostListParser: ObservableObject {
                 nodeUrl: try element.select("span.node a").attr("href"),
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
-                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), isDetailInfo: false
+                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(),
+                rowEnum: rowEnum
             )
         }
     }

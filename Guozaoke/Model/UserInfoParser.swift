@@ -205,7 +205,7 @@ class UserInfoParser: ObservableObject {
                 nodeUrl: try element.select("span.node a").attr("href"),
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
-                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), isDetailInfo: false
+                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), rowEnum: .profileRow
             )
         }
     }

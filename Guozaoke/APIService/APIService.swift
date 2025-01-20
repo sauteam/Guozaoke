@@ -9,6 +9,7 @@
 import Foundation
 import SwiftSoup
 import Alamofire
+import WebKit
 
 /// href
 let ghref = "href"
@@ -70,36 +71,115 @@ struct APIService {
     
     
     static func sendPost(
-            url: String,
-            title: String,
-            content: String
-        ) async throws -> String {
-            // 构造参数
-            let xsrfToken = AccountState.token()
-            if xsrfToken.isEmpty {
-                let _  = LoginStateChecker.unLoginState()
-            }
-            let parameters: Parameters = [
-                "title": title,
-                "content": content,
-                "_xsrf": xsrfToken
-            ]
-            
-            // 构造头部
-            let headers: HTTPHeaders = [
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Encoding": "gzip, deflate"
-            ]
-            
-            // 调用通用请求方法
-            let response: String = try await NetworkManager.shared.post(url, parameters: parameters, headers: headers)
-            return response
+        url: String,
+        title: String,
+        content: String
+    ) async throws -> String {
+        // 构造参数
+        let xsrfToken = AccountState.token()
+        if xsrfToken.isEmpty {
+            let _  = LoginStateChecker.clearUserInfo()
         }
+        let parameters: Parameters = [
+            "title": title,
+            "content": content,
+            "_xsrf": xsrfToken
+        ]
+        
+        // 构造头部
+        let headers: HTTPHeaders = [
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate"
+        ]
+        
+        // 调用通用请求方法
+        let response: String = try await NetworkManager.shared.post(url, parameters: parameters, headers: headers)
+        return response
+    }
 }
 
 
 extension APIService {
+//    static func getCookies() async throws -> (String, [HTTPCookie]?) {
+//        if let existingCookies = cookies(), !existingCookies.isEmpty {
+//            saveCookies(existingCookies)
+//            return ("读取", existingCookies)
+//        }
+//        let response: String = try await NetworkManager.shared.get(APIService.baseUrlString)
+//        if let newCookies = cookies(), !newCookies.isEmpty {
+//            saveCookies(newCookies)
+//        }
+//        return (response, cookies())
+//    }
+    
+    // 获取存储的 Cookies 并格式化为请求头
+    static func getStoredCookies() -> String {
+        var cookieHeader = ""
+        
+        if let cookies = HTTPCookieStorage.shared.cookies {
+            for cookie in cookies {
+                if cookie.domain.contains("guozaoke.com") {
+                    cookieHeader += "\(cookie.name)=\(cookie.value); "
+                }
+            }
+        }
+        return cookieHeader
+    }
+    
+    static func saveCookies(_ cookies: [HTTPCookie]) {
+        let cookieStorage = HTTPCookieStorage.shared
+        for cookie in cookies {
+            cookieStorage.setCookie(cookie)
+            log("[save]Saved Cookie: \(cookie.name) = \(cookie.value)")
+        }
+    }
+    
+    static func cookies() -> [HTTPCookie]? {
+        let cookies = HTTPCookieStorage.shared.cookies
+        //log("[cookies]\(cookies)")
+        return cookies
+    }
+    
+    static func clearCookiesForDomain() {
+        if let cookies = cookies() {
+            for cookie in cookies {
+                if cookie.domain.contains("guozaoke.com") {
+                    HTTPCookieStorage.shared.deleteCookie(cookie)
+                    log("[cookies]Deleted cookie: \(cookie.name)")
+                }
+            }
+        }
+    }
+    
+    static func clearCookieStorage() {
+        let cookieStore = URLSession.shared.configuration.httpCookieStorage
+        cookieStore?.cookies?.forEach { cookie in
+            cookieStore?.deleteCookie(cookie)
+        }
+        log("[cookies][httpCookieStorage] Deleted all session cookies.")
+    }
+    
+    static func clearWebViewCookies() {
+        let dataStore = WKWebsiteDataStore.default()
+        dataStore.fetchDataRecords(ofTypes: [WKWebsiteDataTypeCookies]) { records in
+            records.forEach { record in
+                dataStore.removeData(ofTypes: [WKWebsiteDataTypeCookies], for: [record]) {
+                    print("Deleted WebView cookies for \(record.displayName)")
+                }
+            }
+        }
+    }
+
+    static func clearCookie() {
+        clearCookieStorage()
+        clearWebViewCookies()
+        clearCookiesForDomain()
+        let cookieStore = HTTPCookieStorage.shared
+        for cookie in cookieStore.cookies ?? [] {
+            cookieStore.deleteCookie(cookie)
+        }
+    }
     
     private func printCookies(tag: String = .empty) {
         let storage = HTTPCookieStorage.shared
@@ -107,13 +187,6 @@ extension APIService {
             for cookie in cookies {
                 log("\(tag) --> cookie: \(cookie.name), \(cookie.value)")
             }
-        }
-    }
-
-    func clearCookie() {
-        let cookieStore = HTTPCookieStorage.shared
-        for cookie in cookieStore.cookies ?? [] {
-            cookieStore.deleteCookie(cookie)
         }
     }
 }

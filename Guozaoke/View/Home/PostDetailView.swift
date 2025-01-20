@@ -32,7 +32,7 @@ struct PostDetailView: View {
             }
         }
         .refreshable {
-            detailParser.loadPostDetail(id: postId)
+            detailParser.loadNews(postId: postId)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("主题详情")
@@ -41,13 +41,13 @@ struct PostDetailView: View {
                 Button(action: {
                     shareContent()
                 }) {
-                    Image(systemName: "square.and.arrow.up")
+                    SFSymbol.share
                 }
             }
         }
         .onAppear() {
             if  detailParser.postDetail == nil {
-                detailParser.loadPostDetail(id: postId)
+                detailParser.loadNews(postId: postId)
             }
         }
     }
@@ -74,7 +74,7 @@ struct PostDetailContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             let replay = detail.replies.last
-            let post = PostItem(title: detail.title, link: postId, author: detail.author.name, avatar: detail.author.avatar, node: detail.author.node, nodeUrl: detail.nodeUrl, time: detail.author.joinDate ?? "", replyCount: detail.replies.count, lastReplyUser: replay?.author.name, isDetailInfo: true)
+            let post = PostItem(title: detail.title, link: postId, author: detail.author.name, avatar: detail.author.avatar, node: detail.author.node, nodeUrl: detail.nodeUrl, time: detail.author.joinDate ?? "", replyCount: detail.replies.count, lastReplyUser: replay?.author.name, rowEnum: .detailRow)
 
             PostRowView(post: post)
                 .padding(.horizontal)
@@ -167,12 +167,11 @@ struct PostFooterView: View {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.favUrl)
                         if model?.success == 1 {
                             hapticFeedback()
-                            detailParser.loadPostDetail(id: postId)
+                            detailParser.loadNews(postId: postId)
                             DispatchQueue.main.async {
                                 detailParser.isCollection.toggle()
                                 log("isCollection \(detailParser.isCollection)")
                             }
-                            //detailParser.loadPostDetail(id: postId)
                         }
                     }
                 }
@@ -189,7 +188,7 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
-                            detailParser.loadPostDetail(id: postId)
+                            detailParser.loadNews(postId: postId)
                             hapticFeedback()
                             DispatchQueue.main.async {
                                 detailParser.isZan.toggle()

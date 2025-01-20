@@ -35,7 +35,7 @@ struct NodeListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        APIService.shared.clearCookie()
+                        LoginStateChecker.clearUserInfo()
                     }) {
                         Label("", systemImage: .search)
                     }

@@ -11,6 +11,7 @@ struct NodeInfoView: View {
     let node: String
     let nodeUrl: String
     @StateObject private var viewModel = PostListParser()
+    @State private var selectedTab = 0
 
     var body: some View {
         VStack {
@@ -42,6 +43,31 @@ struct NodeInfoView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(node)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                }) {
+                    Menu {
+                        Button {
+                            
+                        } label: {
+                            
+                            Label("关注", systemImage: .collection)
+                        }
+                        
+                        Button {
+                            
+                        } label: {
+                            
+                            Label("创建新主题", systemImage: .add)
+                        }
+
+                    } label: {
+                        SFSymbol.more
+                    }
+                }
+            }
+        }
         .onAppear {
             if viewModel.posts.isEmpty {
                 viewModel.loadNodeInfoLastst(nodeUrl)

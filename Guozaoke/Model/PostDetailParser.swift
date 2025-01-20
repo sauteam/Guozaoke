@@ -130,11 +130,15 @@ class PostDetailParser: ObservableObject {
         if !self.hasMore {
             return
         }
-        currentPage += 1
         loadPostDetail(id: postId ?? "0")
     }
+    
+    func loadNews(postId: String) {
+        currentPage = 1
+        loadPostDetail(id: postId)
+    }
 
-    func loadPostDetail(id: String) {
+    private func loadPostDetail(id: String) {
         guard !isLoading || id == "0"  else { return }
         isLoading = true
         log("详情开始刷新 \(id)")
@@ -175,6 +179,7 @@ class PostDetailParser: ObservableObject {
                     try self.parsePagination(doc: doc)
 
                     self.postDetail = try self.parsePostDetail(doc: doc)
+                    self.currentPage += 1
                     self.hasMore = self.currentPage <= self.totalPages
                     log("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
                 } catch {
@@ -390,7 +395,7 @@ class PostDetailParser: ObservableObject {
                     log("jsonData \(jsonData) \(model)")
                     if model.message == "user_not_login" {
                         runInMain {
-                            LoginStateChecker.unLoginState()
+                            LoginStateChecker.clearUserInfo()
                         }
                     }
                     return model

@@ -50,6 +50,8 @@ enum SFSymbol: String {
     case share = "square.and.arrow.up"
     /// 􀍟
     case setting = "gear"
+    /// ellipsis
+    case more = "ellipsis"
 }
 
 extension SFSymbol: View {

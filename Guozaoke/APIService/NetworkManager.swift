@@ -42,7 +42,8 @@ class NetworkManager: ObservableObject {
             var defaultHeaders: HTTPHeaders = [
                 "Accept": "application/json, text/javascript, text/html, application/xhtml+xml, application/xml",
                 "X-Requested-With": "XMLHttpRequest",
-                "Content-Type": "text/html"
+                "Content-Type": "text/html",
+                "Cookie": APIService.getStoredCookies()
             ]
 
             // 如果有传入 headers，则合并
@@ -58,6 +59,9 @@ class NetworkManager: ObservableObject {
             )
             .validate()
             .responseString { response in
+//                if let cookies = response.response?.allHeaderFields["Set-Cookie"] as? String {
+//                     print("[request]Cookies: \(cookies)")
+//                 }
                 switch response.result {
                 case .success(let string):
                     log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
@@ -69,8 +73,7 @@ class NetworkManager: ObservableObject {
                 }
             }
         }
-    }
-    
+    }    
     // POST请求
     func post(
         _ url: String,

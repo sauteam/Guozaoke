@@ -34,7 +34,7 @@ struct UserInfoView: View {
                     
                     let isMe = AccountState.isSelf(userName: userId)
                     if isMe {
-                        Text("Email: \(userInfo.email)")
+                        Text("账号: \(userInfo.email)")
                             .font(.caption)
                             .bold()
                     } else {
