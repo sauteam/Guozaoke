@@ -184,8 +184,9 @@ struct MyReplyRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("\(myReply.title)")
-                    .font(.caption2)
-                    .lineLimit(1)
+                    .font(.footnote)
+                    .lineLimit(2)
+                    .foregroundColor(.gray)
                     .onTapGesture {
                         isPostDetailViewActive = true
                         log("titleLink \(myReply.titleLink)")

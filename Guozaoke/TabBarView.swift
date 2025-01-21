@@ -11,7 +11,8 @@ struct TabBarView: View {
     @State private var tab: Tab = .home
     @State private var hideTabBar = false
     @StateObject  var loginChecker = LoginStateChecker.shared
-    
+    @ObservedObject var notificationManager = NotificationManager.shared
+
     var body: some View {
         TabView(selection: $tab) {
             PostListView()
@@ -24,12 +25,13 @@ struct TabBarView: View {
                     Label(Tab.node.rawValue, systemImage: .node)
                 }.tag(Tab.node)
             
-            MessageListView()
+            NotificationsView()
                 .tabItem {
                     Label(Tab.node.rawValue, systemImage: .noti)
                 }.tag(Tab.noti)
+                .badge(notificationManager.unreadCount)
             
-            MeView(userId: AccountState.userName)
+            MeView()
                 .tabItem {
                     Label(Tab.mine.rawValue, systemImage: .mine)
                 }.tag(Tab.mine)
@@ -43,6 +45,9 @@ struct TabBarView: View {
         }
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}
+        }
+        .onChange(of: notificationManager.unreadCount) { newValue in
+            updateAppBadge(newValue) 
         }
     }
 }

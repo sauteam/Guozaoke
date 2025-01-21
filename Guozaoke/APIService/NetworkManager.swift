@@ -64,12 +64,18 @@ class NetworkManager: ObservableObject {
 //                 }
                 switch response.result {
                 case .success(let string):
-                    log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
+                    //log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
                     let _ = LoginStateChecker.userLoginState()
                     continuation.resume(returning: string)
                 case .failure(let error):
                     log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
+                    if error.responseCode == 403 {
+                        if url.contains("/create") {
+                            log("发表帖子 403 \(url)")
+                            LoginStateChecker.clearUserInfo()
+                        }
+                    }
                 }
             }
         }

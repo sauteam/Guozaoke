@@ -25,16 +25,17 @@ let spanContent = "span.content"
 
 struct NoMoreDataTitle {
     static let homeList   = "已经到底啦"
+    static let notiList   = "没有通知消息"
     static let commentList = "评论到底了，要不要发一条"
 }
 
 enum PostListType: String, CaseIterable {
-    case hot     = "默认"
-    case latest  = "最新"
-    case elite   = "精华"
-    case follows = "关注"
+    case hot      = "默认"
+    case latest   = "最新"
+    case elite    = "精华"
+    case interest = "兴趣"
+    case follows  = "关注"
     //case node   = "节点"
-
     
     var url: String {
         switch self {
@@ -44,6 +45,8 @@ enum PostListType: String, CaseIterable {
             return "/?tab=latest"
         case .elite:
             return "/?tab=elite"
+        case .interest:
+            return "/?tab=interest"
         case .follows:
             return "/?tab=follows"
 //        case .node:
@@ -67,8 +70,14 @@ struct APIService {
     static let baseURL       = URL(string: baseUrlString)!
     static let registerUrl   = baseUrlString + "/register"
     static let forgotUrl     = baseUrlString + "/forgotUrl"
+    static let notifications = "/notifications"
+    static let favorites     = "/favorites"
     private init() {}
     
+    static func getNotifications(url: String) async throws -> String {
+        let response: String = try await NetworkManager.shared.get(url)
+        return response
+    }
     
     static func sendPost(
         url: String,
@@ -90,7 +99,9 @@ struct APIService {
         let headers: HTTPHeaders = [
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate"
+            "Accept-Encoding": "gzip, deflate",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+            "Referer": url
         ]
         
         // 调用通用请求方法

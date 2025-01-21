@@ -11,13 +11,17 @@ import SwiftUI
 
 @main
 struct GuozaokeApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     public static var rootViewController: UIViewController?
     public static var statusBarState: UIStatusBarStyle = .darkContent
     public static var window: UIWindow?
     public static var tabbarView = TabBarView()
+    @AppStorage("appearanceMode") private var darkMode: String = "system"
+
     init() {
-        //UINavigationBar.appearance().tintColor = .brown
+        ///UINavigationBar.appearance().tintColor = .brown
         applyTabBarBackground()
+        requestNotificationPermission()
     }
 
     var body: some Scene {
@@ -25,6 +29,9 @@ struct GuozaokeApp: App {
             GuozaokeApp.tabbarView
                 ///.accentColor(.brown)
                 ///.environment(\.themeColor, .brown)
+                .onAppear {
+                    applyAppearance()
+                }
         }
     }
     
@@ -32,6 +39,26 @@ struct GuozaokeApp: App {
         guard style != statusBarState else { return }
         statusBarState = style
         rootViewController?.setNeedsStatusBarAppearanceUpdate()
+    }
+    
+    private func applyAppearance() {
+        let style: UIUserInterfaceStyle
+        switch darkMode {
+        case "light":
+            style = .light
+        case "dark":
+            style = .dark
+        default:
+            style = .unspecified
+        }
+        
+        UIApplication.shared.connectedScenes.forEach { scene in
+            if let windowScene = scene as? UIWindowScene {
+                windowScene.windows.forEach { window in
+                    window.overrideUserInterfaceStyle = style
+                }
+            }
+        }
     }
 }
 

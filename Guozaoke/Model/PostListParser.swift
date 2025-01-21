@@ -65,6 +65,7 @@ class PostListParser: ObservableObject {
     @Published var error: String?
     @Published var hasMore = true
     @Published var needLogin = false
+    @Published var notificationLinksCount = 0
     private var currentType: PostListType?
     private var urlHeader: String?
     private var rowEnum: PostItemEnum = .homeRow
@@ -152,7 +153,38 @@ class PostListParser: ObservableObject {
                    if !success {
                        self.needLogin = true
                    }
-
+                   
+                   let notificationLinks = try doc.select("a[href*='notifications']")
+                   if !notificationLinks.isEmpty() {
+                       let titleText = try notificationLinks.first()?.attr("title") ?? ""
+                       print("完整的提醒文本: \(titleText)")
+                       let pattern = "\\d+"
+                       if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                           let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
+                           if let match = results.first {
+                               let numberString = (titleText as NSString).substring(with: match.range)
+                               self.notificationLinksCount = Int(numberString) ?? 0
+                               NotificationManager.shared.unreadCount = self.notificationLinksCount
+                               print("解析出的未读通知数量: \(numberString)")
+                           } else {
+                               print("未找到数字")
+                           }
+                       }
+                       // 检查是否包含未读消息
+                       if try !doc.select(".mail-status.unread").isEmpty() {
+                           print("存在未读通知")
+                       } else {
+                           self.notificationLinksCount = 0
+                           NotificationManager.shared.unreadCount = 0
+                           updateAppBadge(0)
+                           print("没有未读通知")
+                       }
+                   } else {
+                       NotificationManager.shared.unreadCount = 0
+                       updateAppBadge(0)
+                       print("未找到通知链接")
+                   }
+                   
                    let newPosts  = try self.parseTopics(doc: doc)
                    if self.navItems.count <= 0 {
                        self.navItems = try self.parseNavbar(doc: doc)

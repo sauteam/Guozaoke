@@ -64,6 +64,7 @@ struct PostRowView: View {
                             }
                         
                         Text(post.time)
+                            .lineLimit(1)
                             .foregroundColor(.gray)
                         if let lastReplyUser = post.lastReplyUser {
                             Text("•")
@@ -73,7 +74,9 @@ struct PostRowView: View {
                                 .lineLimit(1)
                                 .onTapGesture {
                                     log("点击 \(lastReplyUser)")
-                                    isLastReplyUserInfoViewActive = true
+                                    if post.author != post.lastReplyUser ?? "" {
+                                        isLastReplyUserInfoViewActive = true
+                                    }
                                 }
                                 .background {
                                     NavigationLink(

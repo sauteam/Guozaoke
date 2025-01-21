@@ -30,7 +30,7 @@ struct SendPostView: View {
                     .frame(height: 30)
                 
                 TextEditor(text: $content)
-                    .frame(minHeight: 100)
+                    .frame(minHeight: 180)
                     .padding(.top)
                                 
 //                HStack {
@@ -92,6 +92,9 @@ struct SendPostView: View {
             }
             .listRowBackground(Color.clear)
             .navigationTitle("创建新主题")
+            .navigationBarItems(trailing: Button("取消") {
+                isPresented = false
+            })
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage)
             }

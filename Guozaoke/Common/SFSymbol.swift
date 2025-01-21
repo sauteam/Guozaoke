@@ -37,7 +37,7 @@ enum SFSymbol: String {
     /// 􀊴
     case collection = "heart"
     /// 􀊵
-    case uncollection = "heart.fill"
+    case collectionFill = "heart.fill"
     /// 􀊴
     case zan = "hand.thumbsup"
     /// 􀊵
@@ -52,6 +52,12 @@ enum SFSymbol: String {
     case setting = "gear"
     /// ellipsis
     case more = "ellipsis"
+    /// clock
+    case clock = "clock"
+    /// bookmark
+    case bookmark = "bookmark"
+    case bookmarkFill = "bookmark.fill"
+    case moonphase = "moonphase.first.quarter.inverse"
 }
 
 extension SFSymbol: View {
