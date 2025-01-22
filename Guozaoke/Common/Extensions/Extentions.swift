@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import CryptoKit
 
+let themeColor = UIColor(hex: 303030)
 
 
 extension String {

@@ -47,13 +47,12 @@ class UserInfoParser: ObservableObject {
 
     private var currentPage = 1
     private var totalPages  = 1
-    var hasMoreData = true
-
+    var hasMoreData   = true
     private var baseUrl: String = ""
     
-//    func fetchUserInfoMore(_ userId: String) async {
-//        await fetchUserInfoAndData(userId, reset: false)
-//    }
+    func loadMyTopic(type: MyTopicEnum, reset: Bool) async {
+        await fetchUserInfoAndData("/u/"+"\(AccountState.userName)/" + type.rawValue, reset: false)
+    }
     
     var hadData: Bool {
         guard let _ = userInfo else {
@@ -93,7 +92,7 @@ class UserInfoParser: ObservableObject {
     }
 
     func fetchUserInfoAndData(_ userId: String, reset: Bool = false) async {
-        baseUrl = userId.userProfileUrl()
+        baseUrl = userId
         guard !isLoading && (hasMoreData || reset) else { return }
         await MainActor.run {
             self.isLoading = true

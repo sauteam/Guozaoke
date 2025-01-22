@@ -45,7 +45,7 @@ struct UserInfoView: View {
                                     let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
                                     if success == true {
                                         //followText = userInfo.followTextChange
-                                        await parser.fetchUserInfoAndData(self.userId)
+                                        await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
                                     }
                                 }
                             }
@@ -113,7 +113,7 @@ struct UserInfoView: View {
                     .buttonStyle(.plain)
                     .listStyle(.plain)
                     .refreshable {
-                        Task { await parser.fetchUserInfoAndData(userId, reset: true) }
+                        Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
                     }
                 } else {
                     List {
@@ -124,7 +124,7 @@ struct UserInfoView: View {
                                 MyReplyRowView(myReply: post, userId: userId)
                                     .onAppear {
                                         if post == parser.replies.last {
-                                            Task { await parser.fetchUserInfoAndData(userId, reset: false) }
+                                            Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: false) }
                                         }
                                     }
                             }
@@ -158,7 +158,7 @@ struct UserInfoView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !parser.hadData {
-                Task { await parser.fetchUserInfoAndData(userId, reset: true) }
+                Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
             }
             
             NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
@@ -172,6 +172,11 @@ struct UserInfoView: View {
         .onDisappear {
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
         }
+    }
+    
+    
+    private func profileUrl(_ userId: String) -> String {
+        return userId.userProfileUrl()
     }
 }
 

@@ -24,19 +24,19 @@ let spanContent = "span.content"
 
 
 struct NoMoreDataTitle {
+    static let nodata     = "没有数据"
     static let homeList   = "已经到底啦"
     static let notiList   = "没有通知消息"
     static let commentList = "评论到底了，要不要发一条"
 }
 
+/// 首页tab 
 enum PostListType: String, CaseIterable {
     case hot      = "默认"
     case latest   = "最新"
     case elite    = "精华"
     case interest = "兴趣"
     case follows  = "关注"
-    //case node   = "节点"
-    
     var url: String {
         switch self {
         case .hot:
@@ -49,10 +49,14 @@ enum PostListType: String, CaseIterable {
             return "/?tab=interest"
         case .follows:
             return "/?tab=follows"
-//        case .node:
-//            return "/nodes"
         }
     }
+}
+
+enum MyTopicEnum: String {
+    case collections = "favorites"
+    case follows = "topics"
+    case browse = "replies"
 }
 
 struct BaseResponse: Codable {

@@ -52,6 +52,11 @@ extension KeyboardReadable {
 }
 
 
+func randomElements<T>(from array: [T], count: Int) -> [T] {
+    return Array(array.shuffled().prefix(count))
+}
+
+
 func runInMain(delay: Int = 0, execute work: @escaping @convention(block) () -> Void) {
     DispatchQueue.main.asyncAfter(deadline: .now() + .microseconds(delay), execute: work)
 }

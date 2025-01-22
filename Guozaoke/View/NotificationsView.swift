@@ -86,19 +86,19 @@ struct NotificationRowView: View {
                     }
                 
                 Text(notification.topicTitle)
-                    .font(.callout)
-                Text(notification.content)
                     .font(.footnote)
+                    .lineLimit(2)
+                Text(notification.content)
+                    .font(.callout)
                     .foregroundColor(.gray)
-                    .lineLimit(3)
             }
             Spacer()
         }
         .contextMenu {
             Button {
-                notification.topicTitle.copyToClipboard()
+                notification.topicLink.copyToClipboard()
             } label: {
-                Label("拷贝标题", systemImage: .copy)
+                Label("拷贝链接", systemImage: .copy)
             }
             
             Button {

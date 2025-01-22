@@ -13,6 +13,10 @@ enum PostItemEnum {
     case homeRow, detailRow, profileRow, nodeInfo
 }
 
+enum PostTypeEnum {
+    case none, elite
+}
+
 // MARK: - 数据模型
 struct PostItem: Identifiable,Equatable {
     let id = UUID()
@@ -27,7 +31,8 @@ struct PostItem: Identifiable,Equatable {
     var time: String
     let replyCount: Int
     let lastReplyUser: String?
-    var rowEnum: PostItemEnum = .homeRow
+    var rowEnum: PostItemEnum  = .homeRow
+    var postType: PostTypeEnum = .none
 }
 
 struct NavItem: Identifiable {
@@ -78,12 +83,31 @@ class PostListParser: ObservableObject {
         return self.nodes.count > 0
     }
     
+    // MARK: - 加载我的数据
+    
+    func loadMyTopicRefresh(type: MyTopicEnum) {
+        currentPage = 1
+        hasMore   = true
+        isLoading = false
+        loadMyTopic(type: type)
+    }
+
+    func loadMyTopic(type: MyTopicEnum) {
+        hasMore   = true
+        isLoading = false
+        loadNodeInfo(type.rawValue)
+    }
+    
+    // MARK: - 刷新主题列表
+    
     func refresh(type: PostListType) {
         currentPage = 1
         hasMore   = true
         isLoading = false
         loadMorePosts(type: type)
     }
+    
+    // MARK: - 刷新节点详情
     
     func loadNodeInfoLastst(_ url: String) {
         rowEnum = .nodeInfo
@@ -92,6 +116,8 @@ class PostListParser: ObservableObject {
         isLoading = false
         loadNodeInfo(url)
     }
+    
+    // MARK: - 加载节点详情 加载更多
     
     func loadNodeInfo(_ url: String) {
         guard !isLoading, hasMore else { return }
@@ -107,6 +133,8 @@ class PostListParser: ObservableObject {
         loadWithUrl(url)
     }
     
+    // MARK: - 加载主题列表 加载更多
+
     func loadMorePosts(type: PostListType) {
         currentType = type
         guard !isLoading, hasMore, type == currentType else { return }
@@ -154,37 +182,6 @@ class PostListParser: ObservableObject {
                        self.needLogin = true
                    }
                    
-                   let notificationLinks = try doc.select("a[href*='notifications']")
-                   if !notificationLinks.isEmpty() {
-                       let titleText = try notificationLinks.first()?.attr("title") ?? ""
-                       print("完整的提醒文本: \(titleText)")
-                       let pattern = "\\d+"
-                       if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-                           let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
-                           if let match = results.first {
-                               let numberString = (titleText as NSString).substring(with: match.range)
-                               self.notificationLinksCount = Int(numberString) ?? 0
-                               NotificationManager.shared.unreadCount = self.notificationLinksCount
-                               print("解析出的未读通知数量: \(numberString)")
-                           } else {
-                               print("未找到数字")
-                           }
-                       }
-                       // 检查是否包含未读消息
-                       if try !doc.select(".mail-status.unread").isEmpty() {
-                           print("存在未读通知")
-                       } else {
-                           self.notificationLinksCount = 0
-                           NotificationManager.shared.unreadCount = 0
-                           updateAppBadge(0)
-                           print("没有未读通知")
-                       }
-                   } else {
-                       NotificationManager.shared.unreadCount = 0
-                       updateAppBadge(0)
-                       print("未找到通知链接")
-                   }
-                   
                    let newPosts  = try self.parseTopics(doc: doc)
                    if self.navItems.count <= 0 {
                        self.navItems = try self.parseNavbar(doc: doc)
@@ -192,6 +189,7 @@ class PostListParser: ObservableObject {
                    if self.nodes.count <= 0 {
                        self.nodes    =  try self.parseNodes(doc: doc)
                    }
+                   try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
                    // 累加数据
                    self.currentPage += 1
@@ -204,6 +202,39 @@ class PostListParser: ObservableObject {
            }
         }.resume()
 
+    }
+    
+    func parseNotification(doc: Document) throws {
+        let notificationLinks = try doc.select("a[href*='notifications']")
+        if !notificationLinks.isEmpty() {
+            let titleText = try notificationLinks.first()?.attr("title") ?? ""
+            print("完整的提醒文本: \(titleText)")
+            let pattern = "\\d+"
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
+                if let match = results.first {
+                    let numberString = (titleText as NSString).substring(with: match.range)
+                    self.notificationLinksCount = Int(numberString) ?? 0
+                    NotificationManager.shared.unreadCount = self.notificationLinksCount
+                    print("解析出的未读通知数量: \(numberString)")
+                } else {
+                    print("未找到数字")
+                }
+            }
+            // 检查是否包含未读消息
+            if try !doc.select(".mail-status.unread").isEmpty() {
+                print("存在未读通知")
+            } else {
+                self.notificationLinksCount = 0
+                NotificationManager.shared.unreadCount = 0
+                updateAppBadge(0)
+                print("没有未读通知")
+            }
+        } else {
+            NotificationManager.shared.unreadCount = 0
+            updateAppBadge(0)
+            print("未找到通知链接")
+        }
     }
         
     // 解析导航栏
@@ -260,7 +291,8 @@ class PostListParser: ObservableObject {
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
                 lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(),
-                rowEnum: rowEnum
+                rowEnum: rowEnum,
+                postType: try element.select("i.icon-bookmark-empty").last() == nil ? .none: .elite
             )
         }
     }

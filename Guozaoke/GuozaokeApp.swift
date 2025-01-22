@@ -19,7 +19,7 @@ struct GuozaokeApp: App {
     @AppStorage("appearanceMode") private var darkMode: String = "system"
 
     init() {
-        ///UINavigationBar.appearance().tintColor = .brown
+        ///UINavigationBar.appearance().tintColor = themeColor
         applyTabBarBackground()
         requestNotificationPermission()
     }
@@ -27,7 +27,7 @@ struct GuozaokeApp: App {
     var body: some Scene {
         WindowGroup {
             GuozaokeApp.tabbarView
-                ///.accentColor(.brown)
+                //.accentColor(.brown)
                 ///.environment(\.themeColor, .brown)
                 .onAppear {
                     applyAppearance()
@@ -40,8 +40,21 @@ struct GuozaokeApp: App {
         statusBarState = style
         rootViewController?.setNeedsStatusBarAppearanceUpdate()
     }
+}
+
+
+private extension GuozaokeApp {
     
-    private func applyAppearance() {
+    // MARK TabBar Appearance
+    func applyTabBarBackground() {
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithTransparentBackground()
+        tabBarAppearance.backgroundColor  = .secondarySystemBackground.withAlphaComponent(0.3)
+        tabBarAppearance.backgroundEffect = UIBlurEffect(style: .systemChromeMaterial)
+        UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+    }
+
+     func applyAppearance() {
         let style: UIUserInterfaceStyle
         switch darkMode {
         case "light":
@@ -60,16 +73,5 @@ struct GuozaokeApp: App {
             }
         }
     }
-}
 
-
-extension GuozaokeApp {
-    // MARK TabBar Appearance
-    func applyTabBarBackground() {
-        let tabBarAppearance = UITabBarAppearance()
-        tabBarAppearance.configureWithTransparentBackground()
-        tabBarAppearance.backgroundColor  = .secondarySystemBackground.withAlphaComponent(0.3)
-        tabBarAppearance.backgroundEffect = UIBlurEffect(style: .systemChromeMaterial)
-        UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
-    }
 }

@@ -12,7 +12,7 @@ struct SendPostView: View {
     let sendSuccess: () -> Void
 
     @StateObject private var viewModel = PostListParser()
-    @State private var selectedTopic: Node? = nil
+    @State private var selectedTopic: Node = Node(title: "IT技术", link: "/node/IT")
     @State private var title = ""
     @State private var content = ""
     @State private var selectedImage: UIImage? = nil
@@ -53,7 +53,7 @@ struct SendPostView: View {
                 Picker("主题", selection: $selectedTopic) {
                     ForEach(viewModel.onlyNodes, id: \.self) { topic in
                         Text(topic.title)
-                            .tag(topic)
+                            .tag(topic.link)
                     }
                 }
                 
@@ -86,7 +86,7 @@ struct SendPostView: View {
                 }
             }
             .onReceive(viewModel.$onlyNodes) { nodes in
-                if selectedTopic == nil, let firstTopic = nodes.first {
+                if let firstTopic = nodes.randomElement() {
                     selectedTopic = firstTopic
                }
             }
@@ -104,7 +104,7 @@ struct SendPostView: View {
     private func sendPost() async {
         isPosting = true
         do {
-            let response = try await APIService.sendPost(url: selectedTopic?.link.createPostUrl() ?? "", title: title, content: content)
+            let response = try await APIService.sendPost(url: selectedTopic.link.createPostUrl(), title: title, content: content)
             print("Response: \(response)")
             postSuccess = true
             isPresented = false

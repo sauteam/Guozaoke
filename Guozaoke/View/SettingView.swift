@@ -18,12 +18,12 @@ struct SettingView: View {
                             tapTextEvent(text)
                         }
                 }
-                .padding(.vertical, 10) // 设置行高
+                .padding(.vertical, 10)
             }
-            .padding(.vertical, 5)
-            .buttonStyle(.plain)
-            .listStyle(.plain)
-            .listStyle(PlainListStyle())
+            //.padding(.vertical, 5)
+            //.buttonStyle(.plain)
+            //.listStyle(.plain)
+            .listStyle(InsetGroupedListStyle())
         }
         .navigationTitle("设置")
     }

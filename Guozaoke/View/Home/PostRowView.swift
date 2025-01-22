@@ -20,7 +20,7 @@ struct PostRowView: View {
             HStack(alignment: .top) {
                 let profile     = post.rowEnum == .profileRow
                 let nodeInfo    = post.rowEnum == .nodeInfo
-
+                
                 KFImageView(post.avatar)
                     .avatar()
                     .disabled(post.rowEnum == .profileRow)
@@ -40,10 +40,13 @@ struct PostRowView: View {
                     }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(post.title)
-                        .font(.body)
-                        .padding(.horizontal, 2)
-                        .lineLimit(2)
+                    HStack {
+                        //let content = post.title + (post.postType == .elite ? Text(Image(systemName: SFSymbol.bookmark.rawValue)) : Text(""))
+                        Text(post.title)
+                            .font(.body)
+                            .padding(.horizontal, 2)
+                            .lineLimit(2)
+                    }
                     HStack {
                         Text(post.author)
                             .lineLimit(1)
@@ -126,9 +129,9 @@ struct PostRowView: View {
         .padding(.vertical, 4)
         .contextMenu {
             Button {
-                post.title.copyToClipboard()
+                post.link.copyToClipboard()
             } label: {
-                Label("拷贝标题", systemImage: .copy)
+                Label("拷贝链接", systemImage: .copy)
             }
             
             Button {
