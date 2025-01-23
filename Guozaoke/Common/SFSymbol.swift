@@ -12,7 +12,7 @@ enum SFSymbol: String {
     case home = "list.bullet.circle"
     /// 􀍡
     case node = "ellipsis.circle"
-    /// 􀌤
+    /// 􀌤 评论
     case noti = "bell.badge.fill"
     /// 􀉩
     case mine = "person"
@@ -58,6 +58,7 @@ enum SFSymbol: String {
     case bookmark = "bookmark"
     case bookmarkFill = "bookmark.fill"
     case moonphase = "moonphase.first.quarter.inverse"
+    case coment = "ellipsis.message"
 }
 
 extension SFSymbol: View {

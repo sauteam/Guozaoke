@@ -23,6 +23,11 @@ class NotificationsParser: ObservableObject {
     @Published var errorMessage  = ""
     private var hasFetched = false  // 避免重复请求
 
+    func fetchNotificationsRefresh() async {
+        hasFetched = false
+        await fetchNotifications()
+    }
+    
     func fetchNotifications() async {
         guard !hasFetched else { return }
             hasFetched = true

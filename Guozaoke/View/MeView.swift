@@ -86,8 +86,8 @@ struct MyProfileView: View {
                         NavigationLink(destination: MyCollectionView(topicType: .follows))  {              ProfileRow(icon: SFSymbol.collectionFill.rawValue, title: "关注") {}
                         }
                                 
-                        NavigationLink(destination: MyCollectionView(topicType: .browse))  {              ProfileRow(icon: SFSymbol.collectionFill.rawValue, title: "浏览") {}
-                        }
+//                        NavigationLink(destination: MyCollectionView(topicType: .browse))  {              ProfileRow(icon: SFSymbol.collectionFill.rawValue, title: "浏览") {}
+//                        }
                         
                         NavigationLink(destination: DarkModeToggleView()) {
                             ProfileRow(icon: "circle.lefthalf.filled", title: "模式切换") {}
@@ -101,26 +101,7 @@ struct MyProfileView: View {
             }
             .listStyle(InsetGroupedListStyle())
         }
-    }
-    
-    
-//    @ViewBuilder
-//    private func viewForItem(_ item: Any) -> some View {
-//        switch item {
-//        case is MyCollectionView:
-//            MyCollectionView(topicType: .collections)
-//        case is MyCollectionView:
-//            MyCollectionView(topicType: .follows)
-//        case is MyCollectionView:
-//            MyCollectionView(topicType: .browse)
-//        case is DarkModeToggleView:
-//            DarkModeToggleView()
-//        case is SettingView:
-//            SettingView()
-//        default:
-//            Text("未知页面")
-//        }
-//    }
+    }    
 }
 
 struct ProfileRow: View {

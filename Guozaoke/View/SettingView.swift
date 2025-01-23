@@ -29,8 +29,12 @@ struct SettingView: View {
     }
     
     private func tapTextEvent(_ urlString: String) {
-         if urlString == "logout" {
+         if urlString == "退出登录" {
              print("退出登录")
+             Task {
+                 let response = try await APIService.logout()
+                 print("response \(response)")
+             }
          } else if let url = URL(string: APIService.baseUrlString) {
              UIApplication.shared.open(url)
          }

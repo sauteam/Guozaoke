@@ -12,6 +12,7 @@ import SwiftSoup
 struct PostDetail: Identifiable {
     let id = UUID()
     let title: String
+    var detailId: String?
     let node: String
     let nodeUrl: String
     let author: Author
@@ -82,6 +83,7 @@ struct Reply: Identifiable, Equatable {
     let time: String
     let location: String
     let like: String
+    let likeLink: String
 }
 
 enum ParseError: Error {
@@ -266,6 +268,7 @@ class PostDetailParser: ObservableObject {
         
         return PostDetail(
             title: title,
+            detailId: postId,
             node: category,
             nodeUrl: nodeUrl,
             author: author,
@@ -338,6 +341,7 @@ class PostDetailParser: ObservableObject {
                 return text
             }()
             
+            let likeLink = try item.select("a.J_replyVote").first()?.attr("href")
             return Reply(
                 floor: floor,
                 author: replyAuthor,
@@ -346,7 +350,8 @@ class PostDetailParser: ObservableObject {
                 links: links,
                 time: time,
                 location: location,
-                like: likeCount
+                like: likeCount,
+                likeLink: likeLink ?? ""
             )
         }
     }

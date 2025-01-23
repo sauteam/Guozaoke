@@ -156,6 +156,46 @@ struct UserInfoView: View {
         }
         .navigationTitle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                
+                Menu {
+                    Button {
+                        profileUrl(userId).copyToClipboard()
+                    } label: {
+                        Label("拷贝个人主页", systemImage: .copy)
+                    }
+                    
+                    if AccountState.isSelf(userName: userId) {
+                        Button {
+                            userId.userProfileUrl().openURL()
+                        } label: {
+                            Label("网页查看主页", systemImage: .safari)
+                        }
+                    } else {
+                        
+                        Button {
+                            userId.userProfileUrl().openURL()
+                        } label: {
+                            Label("网页查看主页", systemImage: .safari)
+                        }
+                        
+                        Button {
+                            Task {
+                                let response = await parser.blockUserAction(parser.userInfo?.blockLink)
+                                print("block \(response)")
+                            }
+                        } label: {
+                            
+                            Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.isBlocked ?? false ? .unblock : .block)
+                        }
+                    }
+
+                } label: {
+                    SFSymbol.more
+                }
+            }
+        }
         .onAppear {
             if !parser.hadData {
                 Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
@@ -239,11 +279,11 @@ struct MyReplyRowView: View {
                 Label("网页查看主页", systemImage: .safari)
             }
                         
-            Button {
-                
-            } label: {
-                Label("举报帖子", systemImage: .report)
-            }
+//            Button {
+//                
+//            } label: {
+//                Label("举报帖子", systemImage: .report)
+//            }
         }
     }
 }

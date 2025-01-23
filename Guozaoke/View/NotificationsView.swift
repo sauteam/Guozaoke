@@ -44,6 +44,12 @@ struct NotificationsView: View {
                 Task {
                     await viewModel.fetchNotifications()
                 }
+                
+                NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
+                    Task {
+                        await viewModel.fetchNotificationsRefresh()
+                    }
+                }
             }
         }
     }
@@ -87,10 +93,10 @@ struct NotificationRowView: View {
                 
                 Text(notification.topicTitle)
                     .font(.footnote)
-                    .lineLimit(2)
                 Text(notification.content)
                     .font(.callout)
                     .foregroundColor(.gray)
+                    
             }
             Spacer()
         }
@@ -116,11 +122,11 @@ struct NotificationRowView: View {
                 Label("网页查看主页", systemImage: .safari)
             }
                         
-            Button {
-                
-            } label: {
-                Label("举报帖子", systemImage: .report)
-            }
+//            Button {
+//                
+//            } label: {
+//                Label("举报帖子", systemImage: .report)
+//            }
         }
     }
 }

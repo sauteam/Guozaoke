@@ -11,7 +11,8 @@ import SwiftUI
 struct PostDetailView: View {
     @StateObject private var detailParser = PostDetailParser()
     let postId: String
-    
+    @State private var showComentView  = false
+
     var body: some View {
         ScrollView {
             if let detail = detailParser.postDetail {
@@ -38,11 +39,30 @@ struct PostDetailView: View {
         .navigationTitle("主题详情")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    shareContent()
-                }) {
-                    SFSymbol.share
+                
+                Menu {
+                    Button {
+                        shareContent()
+                    } label: {
+                        
+                        Label("分享", systemImage: .share)
+                    }
+                    
+                    Button {
+                        showComentView = true
+                    } label: {
+                        
+                        Label("评论", systemImage: .coment)
+                    }
+
+                } label: {
+                    SFSymbol.more
                 }
+            }
+        }
+        .sheet(isPresented: $showComentView) {
+            SendCommentView(detailId: detailParser.postDetail?.detailId ?? "", replyUser: "", isPresented: $showComentView) {
+                
             }
         }
         .onAppear() {
@@ -210,7 +230,7 @@ struct PostFooterView: View {
             Button {
                 
             } label: {
-                Label("\(detail.collections)", systemImage: .collection)
+                Label("\(detail.collections)", systemImage: .collectionFill)
             }
             .padding(.horizontal, 10)
             .font(.caption)
@@ -229,7 +249,7 @@ struct PostFooterView: View {
             Button {
                 
             } label: {
-                Label("\(detail.hits)", systemImage: .see)
+                Text(detail.hits)
             }
             .font(.caption)
             .disabled(true)
@@ -247,9 +267,8 @@ struct ReplyListView: View {
         LazyVStack(alignment: .leading, spacing: 16) {
             Text("全部回复 (\(replies.count))")
                 .font(.headline)
-            
             ForEach(replies) { reply in
-                ReplyItemView(reply: reply)
+                ReplyItemView(detailParser: detailParser, reply: reply)
                     .onAppear {
                         if reply == replies.last {
                             detailParser.loadMore()
@@ -262,6 +281,7 @@ struct ReplyListView: View {
 
 // MARK: - 回复项视图
 struct ReplyItemView: View {
+    let detailParser: PostDetailParser
     let reply: Reply
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
@@ -284,6 +304,12 @@ struct ReplyItemView: View {
                                 EmptyView()
                             }.hidden()
                     }
+                
+                if AccountState.isSelf(userName: reply.author.name) {
+                    Text("楼主")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
                 Text(reply.author.name)
                     .font(.subheadline)
                     .onTapGesture {
@@ -306,10 +332,24 @@ struct ReplyItemView: View {
                     Label("回复", systemImage: .reply)
                 }
                 .font(.caption)
-                
+                .sheet(isPresented: $showActions) {
+                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: reply.author.name, isPresented: $showActions) {
+                        
+                    }
+                }
                 Text(reply.like)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .onTapGesture {
+                        Task {
+                            do {
+                                let model = await detailParser.fetchCollectionAction(link: reply.likeLink)
+                                if model?.success == 1 {
+                                    hapticFeedback()
+                                }
+                            }
+                        }
+                    }
                 
                 Text(reply.floor)
                     .font(.caption)
@@ -338,17 +378,17 @@ struct ReplyItemView: View {
                 Label("拷贝内容", systemImage: .copy)
             }
                         
-            Button {
-                
-            } label: {
-                Label("回复", systemImage: .reply)
-            }
+//            Button {
+//                
+//            } label: {
+//                Label("回复", systemImage: .reply)
+//            }
             
-            Button {
-                
-            } label: {
-                Label("举报", systemImage: .report)
-            }
+//            Button {
+//                
+//            } label: {
+//                Label("举报", systemImage: .report)
+//            }
            
         }
 //        .actionSheet(isPresented: $showActions) {

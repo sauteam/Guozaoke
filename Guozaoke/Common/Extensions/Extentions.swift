@@ -13,8 +13,13 @@ let themeColor = UIColor(hex: 303030)
 
 
 extension String {
+    
     static let `default`: String = ""
     public static let empty = `default`
+    
+    var isBlank: Bool {
+        return self.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var int: Int {
         return Int(self) ?? 0

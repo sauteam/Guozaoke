@@ -8,6 +8,36 @@
 import Foundation
 import SwiftSoup
 
+struct EditPost: Codable {
+    static let editPostInfoKey = "editPostInfo"
+    let title: String?
+    let content: String?
+    let topicId: String?
+    
+    static func saveEditPost(_ post: EditPost) {
+        do {
+            let jsonData = try JSONEncoder().encode(post)
+            Persist.save(value: jsonData, forkey: editPostInfoKey)
+            log("account: \(post) saved")
+        } catch {
+            log("Save post failed")
+        }
+    }
+    
+    static func getEditPost() -> EditPost? {
+        do {
+            let data = Persist.read(key: editPostInfoKey)
+            guard let data = data else { return nil }
+            let info = try JSONDecoder()
+                .decode(EditPost.self, from: data)
+            return info
+        } catch {
+            log("readAccount failed")
+        }
+        return nil
+    }
+}
+
 // MARK: - 账户信息
 struct AccountInfo: Codable {
     var username: String
@@ -98,21 +128,12 @@ struct AccountState {
 }
 
 
-// MARK: - 登录目标枚举
-enum LoginDestination {
-    case postDetail(postId: String)
-    case comment(postId: String)
-    case profile
-    // ... 其他需要登录的目标
-}
-
 // MARK: - 登录状态检查
 class LoginStateChecker: ObservableObject {
     static let shared = LoginStateChecker()
     @Published var isLogin = false
     @Published var needLogin = false
     @Published var error: String?
-    @Published var loginDestination: LoginDestination?
     
     static func clearUserInfo() {
         runInMain {

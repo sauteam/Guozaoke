@@ -18,6 +18,9 @@ struct UserInfo {
     var followLink: String
     let nickname: String
     let email: String
+    var blockText: String?
+    var blockLink: String?
+    
     let topics: [PostItem]
     let replies: [MyReply]
     
@@ -26,6 +29,10 @@ struct UserInfo {
             return "+关注"
         }
         return followText == "取消关注" ? "取消关注" : "+关注"
+    }
+    
+    var isBlocked: Bool {
+        return blockText == "屏蔽此帐号" ? false : true
     }
 }
 
@@ -49,6 +56,7 @@ class UserInfoParser: ObservableObject {
     private var totalPages  = 1
     var hasMoreData   = true
     private var baseUrl: String = ""
+    private var isUserInfoUrl = false
     
     func loadMyTopic(type: MyTopicEnum, reset: Bool) async {
         await fetchUserInfoAndData("/u/"+"\(AccountState.userName)/" + type.rawValue, reset: false)
@@ -60,11 +68,35 @@ class UserInfoParser: ObservableObject {
         }
         return true
     }
+    
+    func blockUserAction(_ userId: String?) async -> String {
+        guard let userId else {
+            return ""
+        }
+        
+        do {
+            let html = try await NetworkManager.shared.get(userId)
+            runInMain {
+                if self.userInfo?.isBlocked  == true {
+                    self.userInfo?.blockText = "屏蔽此账号"
+                    self.userInfo?.blockLink = self.userInfo?.blockLink?.replacingOccurrences(of: "block", with: "unblock")
+                } else {
+                    self.userInfo?.blockText = "取消屏蔽"
+                    self.userInfo?.blockLink = self.userInfo?.blockLink?.replacingOccurrences(of: "unblock", with: "block")
+                }
+            }
+            return html
+        } catch {
+            log("请求失败: \(error.localizedDescription)")
+        }
+        return ""
+    }
             
     func followUserAction(_ userId: String?) async -> (Bool, String)? {
         guard let userId else {
-            return nil
+            return (false, "")
         }
+        
         do {
             let html = try await NetworkManager.shared.get(userId)
             let doc = try SwiftSoup.parse(html)
@@ -108,6 +140,12 @@ class UserInfoParser: ObservableObject {
                     self.replies.removeAll()
                 }
             }
+            
+            self.isUserInfoUrl = false
+            if userId.contains("/u/") {
+                self.isUserInfoUrl = true
+            }
+
 
             let url = "\(baseUrl)?page=\(currentPage)"
             let html = try await NetworkManager.shared.get(url)
@@ -175,7 +213,19 @@ class UserInfoParser: ObservableObject {
         let emailElement = try doc.select("dl:has(dt:contains(Email)) dd").first()
         let email = try emailElement?.text() ?? ""
         
-        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, topics: topics, replies: replies)
+        var blockText: String = "屏蔽此账号", blockLink: String = ""
+        if let linkElement = try doc.select("div.self-introduction.container-box.mt10 a").first() {
+            let linkText = try linkElement.text()
+            let linkHref = try linkElement.attr("href")
+            blockText = linkText
+            blockLink = linkHref
+            print("文本内容: \(linkText)")
+            print("链接地址: \(linkHref)")
+        } else {
+            
+        }
+        
+        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, topics: topics, replies: replies)
     }
 
     private func parseReply(doc: Document) throws -> [MyReply] {

@@ -71,10 +71,8 @@ class NetworkManager: ObservableObject {
                     log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
                     if error.responseCode == 403 {
-                        if url.contains("/create") {
-                            log("发表帖子 403 \(url)")
-                            LoginStateChecker.clearUserInfo()
-                        }
+                        log("[403]重新登录处理 \(url)")
+                        LoginStateChecker.clearUserInfo()
                     }
                 }
             }

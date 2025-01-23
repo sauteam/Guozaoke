@@ -63,6 +63,14 @@ struct SendPostView: View {
                         .listRowSeparator(.hidden)
                 }
                 Button(action: {
+                    if title.trim().isEmpty {
+                        return
+                    }
+                    
+                    if content.trim().isEmpty {
+                        return
+                    }
+                    
                     Task {
                         await sendPost()
                     }
@@ -83,6 +91,17 @@ struct SendPostView: View {
             .onAppear() {
                 if !viewModel.hadNodeItemData {
                     viewModel.refresh(type: .hot)
+                }
+                
+                if let postInfo = EditPost.getEditPost() {
+                    title   = postInfo.title ?? ""
+                    content = postInfo.content ?? ""
+                }
+            }
+            .onDisappear() {
+                if !content.isEmpty, !title.isEmpty {
+                    let editPost = EditPost(title: title, content: content, topicId: selectedTopic.link)
+                    EditPost.saveEditPost(editPost)
                 }
             }
             .onReceive(viewModel.$onlyNodes) { nodes in
@@ -108,6 +127,8 @@ struct SendPostView: View {
             print("Response: \(response)")
             postSuccess = true
             isPresented = false
+            content = ""
+            title   = ""
             sendSuccess()
         } catch {
             isPosting = false

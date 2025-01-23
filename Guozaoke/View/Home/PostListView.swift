@@ -79,7 +79,7 @@ struct PostListView: View {
             }
             .sheet(isPresented: $showAddPostView) {
                 SendPostView(isPresented: $showAddPostView) {
-                    //log("showAddPostView \(showAddPostView)")
+                    
                 }
             }
             
@@ -154,10 +154,8 @@ struct PostListContentView: View {
                 }
                 
                 print("1 type \(type)")
-                //let account = AccountState.getAccount()
-                //log("userInfo \(account)")
                 NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
-                    if type == .follows {
+                    if type == .follows || type == .interest {
                         viewModel.refresh(type: type)
                     }
                 }

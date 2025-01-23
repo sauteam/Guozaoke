@@ -149,11 +149,11 @@ struct PostRowView: View {
                 Label("网页查看主页", systemImage: .safari)
             }
                         
-            Button {
-                
-            } label: {
-                Label("举报帖子", systemImage: .report)
-            }
+//            Button {
+//                
+//            } label: {
+//                Label("举报帖子", systemImage: .report)
+//            }
         }
     }
 }

@@ -83,6 +83,20 @@ struct APIService {
         return response
     }
     
+    static func logout() async throws -> String {
+        let response: String = try await NetworkManager.shared.get(APIService.baseUrlString + "/logout")
+        if response.isEmpty == false {
+            LoginStateChecker.clearUserInfo()
+        }
+        return response
+    }
+    
+    /// 发表评论
+    static func sendComment(url: String, content: String) async throws -> String {
+        try await sendPost(url: url, title: "", content: content)
+    }
+    
+    /// 发布主题
     static func sendPost(
         url: String,
         title: String,
@@ -93,11 +107,19 @@ struct APIService {
         if xsrfToken.isEmpty {
             let _  = LoginStateChecker.clearUserInfo()
         }
-        let parameters: Parameters = [
-            "title": title,
-            "content": content,
-            "_xsrf": xsrfToken
-        ]
+        let parameters: Parameters
+        if title.isEmpty {
+            parameters = [
+                "content": content,
+                "_xsrf": xsrfToken
+            ]
+        } else {
+            parameters = [
+                "title": title,
+                "content": content,
+                "_xsrf": xsrfToken
+            ]
+        }
         
         // 构造头部
         let headers: HTTPHeaders = [
