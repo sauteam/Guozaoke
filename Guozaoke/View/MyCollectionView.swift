@@ -55,27 +55,20 @@ struct MyCollectionView: View {
                     .padding(.vertical, 12)
                 }
             }
-//            .buttonStyle(.plain)
-//            .listStyle(.plain)
+            .buttonStyle(.plain)
+            .listStyle(.plain)
+            .navigationTitle(topicType.title)
 //            .refreshable {
 //                viewModel.loadMyTopicRefresh(type: topicType)
 //            }
             .onAppear() {
+                if !AccountState.isLogin() {
+                    return
+                }
                 if viewModel.topics.isEmpty {
                     Task { await viewModel.loadMyTopic(type: topicType, reset: true) }
                 }
             }
-//            .onDisappear() {
-//                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
-//            }
-//            .alert("错误", isPresented: Binding(
-//                get: { viewModel.error != nil },
-//                set: { if !$0 { viewModel.error = nil } }
-//            )) {
-//                Button("确定", role: .cancel) {}
-//            } message: {
-//                Text(viewModel.error ?? "")
-//            }
         }
     }
 

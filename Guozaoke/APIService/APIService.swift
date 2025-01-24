@@ -55,8 +55,19 @@ enum PostListType: String, CaseIterable {
 
 enum MyTopicEnum: String {
     case collections = "favorites"
-    case follows = "topics"
+    case topics = "topics"
     case browse = "replies"
+    
+    var title: String {
+        switch self {
+        case .collections:
+            return "我的收藏"
+        case .topics:
+            return "我的主题"
+        case .browse:
+            return "我的回复"
+        }
+    }
 }
 
 struct BaseResponse: Codable {
@@ -74,9 +85,61 @@ struct APIService {
     static let baseURL       = URL(string: baseUrlString)!
     static let registerUrl   = baseUrlString + "/register"
     static let forgotUrl     = baseUrlString + "/forgotUrl"
+    static let loginUrl      = baseUrlString + "/login"
     static let notifications = "/notifications"
     static let favorites     = "/favorites"
+    static let feedback      = "/node/feedback"
+
     private init() {}
+    
+    
+    static func fetchLoginPage() async throws -> (Bool, String) {
+        var success   = false
+        var tokenText = ""
+        guard let url = URL(string: loginUrl) else {
+            throw LoginError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let html = String(data: data, encoding: .utf8) else {
+            throw LoginError.invalidData
+        }
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            saveCookies(from: httpResponse)
+        }
+        
+        let doc = try SwiftSoup.parse(html)
+        if let tokenInput = try doc.select("input[name=_xsrf]").first() {
+            tokenText = try tokenInput.attr("value")
+            success   =  true
+        }
+        return (success, tokenText)
+    }
+
+    // 将响应中的 Cookies 保存到 HTTPCookieStorage
+    static func saveCookies(from response: HTTPURLResponse) {
+        if let cookies = response.allHeaderFields["Set-Cookie"] as? String {
+            // 分割多个 Cookies
+            let cookieArray = cookies.split(separator: ";")
+            
+            for cookie in cookieArray {
+                let cookieProperties: [HTTPCookiePropertyKey: Any] = [
+                    .domain: "www.guozaoke.com",
+                    .path: "/",
+                    .name: "session_id", // 或者使用从 cookie 字符串中解析出的名称
+                    .value: cookie, // 存储每个 Cookie 的值
+                    .secure: "TRUE",
+                    .expires: NSDate(timeIntervalSinceNow: 31536000)
+                ]
+                
+                if let cookie = HTTPCookie(properties: cookieProperties) {
+                    HTTPCookieStorage.shared.setCookie(cookie)
+                    print("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
+                }
+            }
+        }
+    }
     
     static func getNotifications(url: String) async throws -> String {
         let response: String = try await NetworkManager.shared.get(url)
@@ -91,37 +154,51 @@ struct APIService {
         return response
     }
     
-    /// 发表评论
-    static func sendComment(url: String, content: String) async throws -> String {
-        try await sendPost(url: url, title: "", content: content)
+    static func extractNumberSimple(from text: String) -> String? {
+        let components = text.split(separator: "/")
+        if let last = components.last {
+            return String(last)
+        }
+        return nil
     }
     
+    /// 发表评论
+    static func sendComment(url: String, content: String) async throws -> String {
+        let tid = extractNumberSimple(from: url)
+        let parameters: Parameters = [
+            "tid": tid ?? "",
+            "content": content
+        ]
+        return try await toServer(url: url, parameters: parameters)
+    }
+        
     /// 发布主题
     static func sendPost(
         url: String,
         title: String,
         content: String
     ) async throws -> String {
-        // 构造参数
+        let parameters: Parameters = [
+            "title": title,
+            "content": content,
+        ]
+        return try await toServer(url: url, parameters: parameters)
+    }
+    
+    static func toServer(url: String, parameters: Parameters) async throws -> String {
         let xsrfToken = AccountState.token()
         if xsrfToken.isEmpty {
             let _  = LoginStateChecker.clearUserInfo()
         }
-        let parameters: Parameters
-        if title.isEmpty {
-            parameters = [
-                "content": content,
-                "_xsrf": xsrfToken
-            ]
-        } else {
-            parameters = [
-                "title": title,
-                "content": content,
-                "_xsrf": xsrfToken
-            ]
+        
+        var baseParams: [String: Any] = [
+            "_xsrf": xsrfToken
+        ]
+        
+        for (key, value) in parameters {
+            baseParams[key] = value
         }
         
-        // 构造头部
         let headers: HTTPHeaders = [
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -131,7 +208,7 @@ struct APIService {
         ]
         
         // 调用通用请求方法
-        let response: String = try await NetworkManager.shared.post(url, parameters: parameters, headers: headers)
+        let response: String = try await NetworkManager.shared.post(url, parameters: baseParams, headers: headers)
         return response
     }
 }

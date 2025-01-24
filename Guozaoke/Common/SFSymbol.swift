@@ -18,6 +18,7 @@ enum SFSymbol: String {
     case mine = "person"
     /// 􀅼
     case add = "plus"
+    case edit = "pencil"
     /// 􀊫
     case search = "magnifyingglass"
     /// 􀉁
@@ -57,8 +58,9 @@ enum SFSymbol: String {
     /// bookmark
     case bookmark = "bookmark"
     case bookmarkFill = "bookmark.fill"
-    case moonphase = "moonphase.first.quarter.inverse"
+    case moonphase = "circle.lefthalf.filled"
     case coment = "ellipsis.message"
+    case topics = "paperplane"
 }
 
 extension SFSymbol: View {

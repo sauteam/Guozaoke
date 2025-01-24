@@ -59,9 +59,6 @@ class NetworkManager: ObservableObject {
             )
             .validate()
             .responseString { response in
-//                if let cookies = response.response?.allHeaderFields["Set-Cookie"] as? String {
-//                     print("[request]Cookies: \(cookies)")
-//                 }
                 switch response.result {
                 case .success(let string):
                     //log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
@@ -72,7 +69,7 @@ class NetworkManager: ObservableObject {
                     continuation.resume(throwing: error)
                     if error.responseCode == 403 {
                         log("[403]重新登录处理 \(url)")
-                        LoginStateChecker.clearUserInfo()
+                        NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
                 }
             }

@@ -18,6 +18,7 @@ struct SendCommentView: View {
     @State private var isPosting = false
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
+    @FocusState private var isFocused: Bool
 
     
     var body: some View {
@@ -27,6 +28,7 @@ struct SendCommentView: View {
                 TextEditor(text: $content)
                     .frame(minHeight: 180)
                     .padding(.top)
+                    .focused($isFocused)
                                 
                 if viewModel.isLoading {
                     ProgressView()
@@ -58,6 +60,10 @@ struct SendCommentView: View {
                 if let replyUser = replyUser, !replyUser.isEmpty {
                     content = "@" + replyUser + " "
                 }
+                self.isFocused = true
+            }
+            .onDisappear() {
+                self.isFocused = false
             }
             .listRowBackground(Color.clear)
             .navigationTitle("创建新的回复")
@@ -75,6 +81,7 @@ struct SendCommentView: View {
         }
         return topicUrl
     }
+    
     
     private func sendComment() async {
         isPosting = true

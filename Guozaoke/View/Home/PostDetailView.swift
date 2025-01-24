@@ -69,6 +69,12 @@ struct PostDetailView: View {
             if  detailParser.postDetail == nil {
                 detailParser.loadNews(postId: postId)
             }
+            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
+                detailParser.loadNews(postId: postId)
+            }
+        }
+        .onDisappear() {
+            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
         }
     }
     
@@ -184,20 +190,19 @@ struct PostFooterView: View {
             Button {
                 Task {
                     do {
-                        let model = await detailParser.fetchCollectionAction(link: detailParser.favUrl)
+                        let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
                         if model?.success == 1 {
                             hapticFeedback()
-                            detailParser.loadNews(postId: postId)
+                            //detailParser.loadNews(postId: postId)
                             DispatchQueue.main.async {
-                                detailParser.isCollection.toggle()
-                                log("isCollection \(detailParser.isCollection)")
+                                //detailParser.isCollection.toggle()
                             }
                         }
                     }
                 }
             } label: {
-                ///Text(detailParser.colText)
-                Text(detailParser.isCollection ? "取消收藏": "加入收藏")
+                Text(detailParser.postDetail?.collectionString ?? "加入收藏")
+                //Text(detailParser.isCollection ? "取消收藏": "加入收藏")
             }
             .padding(.horizontal, 16)
             .font(.caption)
@@ -208,29 +213,28 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
-                            detailParser.loadNews(postId: postId)
+                            //detailParser.loadNews(postId: postId)
                             hapticFeedback()
                             DispatchQueue.main.async {
-                                detailParser.isZan.toggle()
-                                log("isZan \(detailParser.isZan)")
+                                //detailParser.isZan.toggle()
+                                //log("isZan \(detailParser.isZan)")
                             }
                         }
                     }
                 }
 
             } label: {
-                //Text(detailParser.zanText)
-                Text(detailParser.isZan ? "已感谢":"感谢")
+                Text(detailParser.postDetail?.zanString ?? "感谢")
             }
             .font(.caption)
-            .disabled(detailParser.isZan ? true: false)
+            .disabled(detailParser.isZan)
             .padding(.horizontal, 5)
             .lineLimit(1)
 
             Button {
                 
             } label: {
-                Label("\(detail.collections)", systemImage: .collectionFill)
+                Text("\(detail.collections)")
             }
             .padding(.horizontal, 10)
             .font(.caption)
@@ -240,7 +244,7 @@ struct PostFooterView: View {
             Button {
                 
             } label: {
-                Label("\(detail.zans)", systemImage: .zan)
+                Text(detail.zans)
             }
             .font(.caption)
             .disabled(true)

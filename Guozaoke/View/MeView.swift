@@ -21,7 +21,14 @@ struct MeView: View {
             .navigationTitle("我的")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                if !AccountState.isLogin() {
+                    LoginStateChecker.clearUserInfo()
+                    return
+                }
                 if !parser.hadData {
+                    if AccountState.userName.isEmpty {
+                        return
+                    }
                     Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl(), reset: true) }
                 }
                 
@@ -42,17 +49,8 @@ struct MeView: View {
 }
 
 struct MyProfileView: View {
-    let items: [(icon: String, title: String, destination: Any)]
-    
-    init() {
-        items = [
-            (SFSymbol.bookmarkFill.rawValue, "收藏", MyCollectionView(topicType: .collections)),
-            (SFSymbol.collectionFill.rawValue, "关注", MyCollectionView(topicType: .follows)),
-            (SFSymbol.clock.rawValue, "最近浏览", MyCollectionView(topicType: .browse)),
-            (SFSymbol.moonphase.rawValue, "模式切换", DarkModeToggleView()),
-            (SFSymbol.setting.rawValue, "设置", SettingView())
-        ]
-    }
+    //let items: [(icon: String, title: String, destination: Any)]
+    @State private var needLogin = false
 
     var body: some View {
         VStack {
@@ -83,14 +81,15 @@ struct MyProfileView: View {
                             }
                         }
                         
-                        NavigationLink(destination: MyCollectionView(topicType: .follows))  {              ProfileRow(icon: SFSymbol.collectionFill.rawValue, title: "关注") {}
+                        NavigationLink(destination: MyCollectionView(topicType: .topics))  {              ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
                         }
                                 
-//                        NavigationLink(destination: MyCollectionView(topicType: .browse))  {              ProfileRow(icon: SFSymbol.collectionFill.rawValue, title: "浏览") {}
-//                        }
+                        NavigationLink(destination: IntroductationView())  {
+                            ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖") {}
+                        }
                         
                         NavigationLink(destination: DarkModeToggleView()) {
-                            ProfileRow(icon: "circle.lefthalf.filled", title: "模式切换") {}
+                            ProfileRow(icon: SFSymbol.topics.rawValue, title: "模式切换") {}
                         }
                         
                         NavigationLink(destination: SettingView()) {
@@ -113,7 +112,7 @@ struct ProfileRow: View {
         Button(action: action) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.black)
+                    //.foregroundColor(.black)
                 Text(title)
                     .foregroundColor(.primary)
                 Spacer()

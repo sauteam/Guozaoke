@@ -31,6 +31,7 @@ struct GuozaokeApp: App {
                 ///.environment(\.themeColor, .brown)
                 .onAppear {
                     applyAppearance()
+                    addNoti()
                 }
         }
     }
@@ -73,5 +74,17 @@ private extension GuozaokeApp {
             }
         }
     }
-
+    
+    func addNoti() {
+        NotificationCenter.default.addObserver(forName: .refreshTokenNoti, object: nil, queue: .main) { _ in
+            handleTokenExpiration()
+        }
+    }
+    
+    func handleTokenExpiration() {
+        Task {
+            let (success, token) = try await  APIService.fetchLoginPage()
+            log("handleTokenExpiration \(success), \(token)")
+        }
+    }
 }

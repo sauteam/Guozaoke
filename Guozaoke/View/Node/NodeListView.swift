@@ -32,16 +32,16 @@ struct NodeListView: View {
             }
             .navigationTitle("节点导航")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        LoginStateChecker.clearUserInfo()
-                    }) {
-                        Label("", systemImage: .search)
-                    }
-                    
-                }
-            }
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button(action: {
+//                        LoginStateChecker.clearUserInfo()
+//                    }) {
+//                        SFSymbol.search
+//                    }
+//                    
+//                }
+//            }
         }
         .onAppear {
             if !viewModel.hadNodeItemData   {

@@ -61,20 +61,20 @@ struct PostListView: View {
                     Button(action: {
                         showAddPostView = true
                     }) {
-                        SFSymbol.add
+                        SFSymbol.edit
                     }
 
-                    Button(action: {
-                        showSearchView = true
-                    }) {
-                        SFSymbol.search
-                    }
-                    .background {
-                        NavigationLink(destination: SearchListView(),
-                                       isActive: $showSearchView) {
-                            EmptyView()
-                        }
-                    }
+//                    Button(action: {
+//                        showSearchView = true
+//                    }) {
+//                        SFSymbol.search
+//                    }
+//                    .background {
+//                        NavigationLink(destination: SearchListView(),
+//                                       isActive: $showSearchView) {
+//                            EmptyView()
+//                        }
+//                    }
                 }
             }
             .sheet(isPresented: $showAddPostView) {

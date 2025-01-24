@@ -141,13 +141,11 @@ class UserInfoParser: ObservableObject {
                 }
             }
             
-            self.isUserInfoUrl = false
-            if userId.contains("/u/") {
-                self.isUserInfoUrl = true
+            
+            var url = "\(baseUrl)"
+            if currentPage > 1 {
+                url = "\(baseUrl)?page=\(currentPage)"
             }
-
-
-            let url = "\(baseUrl)?page=\(currentPage)"
             let html = try await NetworkManager.shared.get(url)
             let doc = try SwiftSoup.parse(html)
 
@@ -181,8 +179,10 @@ class UserInfoParser: ObservableObject {
                 self.isLoading = false
             }
         } catch {
-            self.errorMessage = error.localizedDescription
-            self.isLoading = false
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
         }
 
     }

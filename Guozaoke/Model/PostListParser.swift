@@ -53,7 +53,7 @@ struct Node: Identifiable, Hashable, Equatable {
     /// 文字
     var title: String
     /// 比如 /nodes/job 找工作
-    let link: String
+    var link: String
 }
 
 
@@ -208,7 +208,7 @@ class PostListParser: ObservableObject {
         let notificationLinks = try doc.select("a[href*='notifications']")
         if !notificationLinks.isEmpty() {
             let titleText = try notificationLinks.first()?.attr("title") ?? ""
-            print("完整的提醒文本: \(titleText)")
+            //print("完整的提醒文本: \(titleText)")
             let pattern = "\\d+"
             if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
                 let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
@@ -216,9 +216,9 @@ class PostListParser: ObservableObject {
                     let numberString = (titleText as NSString).substring(with: match.range)
                     self.notificationLinksCount = Int(numberString) ?? 0
                     NotificationManager.shared.unreadCount = self.notificationLinksCount
-                    print("解析出的未读通知数量: \(numberString)")
+                    //print("解析出的未读通知数量: \(numberString)")
                 } else {
-                    print("未找到数字")
+                    //print("未找到数字")
                 }
             }
             // 检查是否包含未读消息

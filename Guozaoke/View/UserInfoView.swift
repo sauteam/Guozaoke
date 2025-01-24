@@ -44,7 +44,6 @@ struct UserInfoView: View {
                                 do {
                                     let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
                                     if success == true {
-                                        //followText = userInfo.followTextChange
                                         await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
                                     }
                                 }
@@ -149,7 +148,7 @@ struct UserInfoView: View {
                     .buttonStyle(.plain)
                     .listStyle(.plain)
                     .refreshable {
-                        Task { await parser.fetchUserInfoAndData(userId, reset: true) }
+                        Task { await parser.fetchUserInfoAndData(userId.userProfileUrl(), reset: true) }
                     }
                 }
             }
@@ -187,7 +186,7 @@ struct UserInfoView: View {
                             }
                         } label: {
                             
-                            Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.isBlocked ?? false ? .unblock : .block)
+                            Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.isBlocked ?? false ? .block : .unblock)
                         }
                     }
 
@@ -207,6 +206,9 @@ struct UserInfoView: View {
                     let username  = user["userName"] as? String ?? ""
                     Task { await parser.fetchUserInfoAndData(username, reset: true) }
                 }
+            }
+            if !LoginStateChecker.isLogin() {
+                
             }
         }
         .onDisappear {

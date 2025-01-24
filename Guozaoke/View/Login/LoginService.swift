@@ -35,6 +35,7 @@ enum LoginError: LocalizedError {
 // MARK: - 通知名称扩展
 extension Notification.Name {
     static let loginSuccessNoti = Notification.Name("loginSuccessNoti")
+    static let refreshTokenNoti = Notification.Name("refreshTokenNoti")
 }
 
 // MARK: - 登录服务
@@ -45,63 +46,14 @@ class LoginService: ObservableObject {
     
     // XSRF Token
     private var xsrfToken: String = ""
-
-    private let loginUrl = APIService.baseUrlString + "/login"
-        
-    func fetchLoginPage() async throws -> Bool {
-        var success = false
-        guard let url = URL(string: loginUrl) else {
-            throw LoginError.invalidURL
-        }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let html = String(data: data, encoding: .utf8) else {
-            throw LoginError.invalidData
-        }
-        
-        if let httpResponse = response as? HTTPURLResponse {
-            saveCookies(from: httpResponse)
-        }
-        
-        let doc = try SwiftSoup.parse(html)
-        if let tokenInput = try doc.select("input[name=_xsrf]").first() {
-            xsrfToken = try tokenInput.attr("value")
-            success =  true
-        }
-        return success
-    }
     
-    // 将响应中的 Cookies 保存到 HTTPCookieStorage
-    private func saveCookies(from response: HTTPURLResponse) {
-        if let cookies = response.allHeaderFields["Set-Cookie"] as? String {
-            // 分割多个 Cookies
-            let cookieArray = cookies.split(separator: ";")
-            
-            for cookie in cookieArray {
-                let cookieProperties: [HTTPCookiePropertyKey: Any] = [
-                    .domain: "www.guozaoke.com",
-                    .path: "/",
-                    .name: "session_id", // 或者使用从 cookie 字符串中解析出的名称
-                    .value: cookie, // 存储每个 Cookie 的值
-                    .secure: "TRUE",
-                    .expires: NSDate(timeIntervalSinceNow: 31536000)
-                ]
-                
-                if let cookie = HTTPCookie(properties: cookieProperties) {
-                    HTTPCookieStorage.shared.setCookie(cookie)
-                    print("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
-                }
-            }
-        }
-    }
-    
-//    // 执行登录请求
     func login(email: String, password: String) async throws -> Bool {
         var loginSuccess = false
         guard xsrfToken.isEmpty == false else {
-            let success = try await fetchLoginPage()
+            let (success, token) = try await APIService.fetchLoginPage()
             if success {
                 log("login success")
+                xsrfToken = token
                 loginSuccess = try await login(email: email, password: password)
             } else {
                 log("login fail")
@@ -114,7 +66,7 @@ class LoginService: ObservableObject {
             isLoading  = false
         }
         
-        guard let url = URL(string: loginUrl) else {
+        guard let url = URL(string:APIService.loginUrl ) else {
             throw LoginError.invalidURL
         }
         

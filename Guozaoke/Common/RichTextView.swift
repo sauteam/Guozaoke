@@ -1,9 +1,82 @@
+import Atributika
+import SwiftUI
 
 
+//struct RichTextView: UIViewRepresentable {
+//    let text: String
+//    let linkColor: UIColor
+//    let mentionColor: UIColor
+//    let tagColor: UIColor
+//    let fontSize: CGFloat
 //
-//import SwiftUI
-//import UIKit
-//import Atributika
+//    func makeUIView(context: Context) -> AttributedLabel {
+//        let label = AttributedLabel()
+//        label.numberOfLines = 0
+//        label.textAlignment = .left
+//        label.lineBreakMode = .byWordWrapping
+//        updateLabel(label)
+//        return label
+//    }
+//
+//    func updateUIView(_ uiView: AttributedLabel, context: Context) {
+//        updateLabel(uiView)
+//    }
+//
+//    private func updateLabel(_ label: AttributedLabel) {
+//        let linkStyle = Style("a").foregroundColor(linkColor).underlineStyle(.single)
+//        let mentionStyle = Style().foregroundColor(mentionColor)
+//        let tagStyle = Style().foregroundColor(tagColor)
+//
+//        let attributedText = text
+//            .styleLinks(linkStyle)
+//            .styleHashtags(tagStyle)
+//            .styleMentions(mentionStyle)
+//            .styleAll(font: .systemFont(ofSize: fontSize))
+//
+//        label.attributedText = attributedText
+//        label.onTap = { detection in
+//            switch detection.type {
+//            case .mention(let username):
+//                print("Tapped mention: \(username)")
+//            case .hashtag(let tag):
+//                print("Tapped hashtag: \(tag)")
+//            case .link(let url):
+//                print("Tapped link: \(url)")
+//                if let url = URL(string: url.absoluteString) {
+//                    UIApplication.shared.open(url)
+//                }
+//            default:
+//                break
+//            }
+//        }
+//    }
+//}
+//
+//// 扩展帮助函数，支持 @ 和 # 标签
+//extension String {
+//    func styleMentions(_ style: Style) -> NSAttributedString {
+//        return self.styleRanges(of: "@[A-Za-z0-9_]+", style: style)
+//    }
+//
+//    func styleHashtags(_ style: Style) -> NSAttributedString {
+//        return self.styleRanges(of: "#[A-Za-z0-9_]+", style: style)
+//    }
+//
+//    private func styleRanges(of pattern: String, style: Style) -> NSAttributedString {
+//        let detector = try? NSRegularExpression(pattern: pattern, options: [])
+//        let nsString = self as NSString
+//        let attributedString = NSMutableAttributedString(string: self)
+//
+//        detector?.matches(in: self, options: [], range: NSRange(location: 0, length: nsString.length)).forEach { result in
+//            attributedString.addAttributes(style.attributes, range: result.range)
+//        }
+//        return attributedString
+//    }
+//}
+
+
+
+
 //
 //// MARK: - Atributika SwiftUI 包装器
 //struct AtributikaView: UIViewRepresentable {

@@ -21,6 +21,7 @@ struct SendPostView: View {
     @State private var isPosting = false
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         NavigationView {
@@ -28,7 +29,8 @@ struct SendPostView: View {
                 TextField("输入标题", text: $title)
                     .padding(.vertical)
                     .frame(height: 30)
-                
+                    .focused($isFocused)
+
                 TextEditor(text: $content)
                     .frame(minHeight: 180)
                     .padding(.top)
@@ -97,8 +99,10 @@ struct SendPostView: View {
                     title   = postInfo.title ?? ""
                     content = postInfo.content ?? ""
                 }
+                self.isFocused = true
             }
             .onDisappear() {
+                self.isFocused = false
                 if !content.isEmpty, !title.isEmpty {
                     let editPost = EditPost(title: title, content: content, topicId: selectedTopic.link)
                     EditPost.saveEditPost(editPost)

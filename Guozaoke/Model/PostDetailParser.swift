@@ -105,25 +105,7 @@ class PostDetailParser: ObservableObject {
     
     @Published var isCollection = false
     @Published var isZan  = false
-    
-    var favUrl: String {
-        var url = postDetail?.collectionsLink
-        let unfav = "/unfavorite"
-        let fav = "/favorite"
-        if isCollection {
-            url = url?.replacingOccurrences(of: fav, with: unfav)
-        } else {
-            url = url?.replacingOccurrences(of: unfav, with: fav)
-        }
-        return url ?? postDetail?.collectionsLink ?? ""
-    }
-    
-    var colText: String {
-        let ttt = isCollection ? "取消收藏": "加入收藏"
-        log("colText \(ttt)")
-        return ttt
-    }
-    
+            
     var zanText: String {
         return isZan ? "已感谢":"感谢"
     }
@@ -401,6 +383,33 @@ class PostDetailParser: ObservableObject {
                     if model.message == "user_not_login" {
                         runInMain {
                             LoginStateChecker.clearUserInfo()
+                        }
+                    }
+                    if model.success == 1 {
+                        runInMain {
+                            if link.contains("favorite") {
+                                self.isCollection.toggle()
+                                log("isCollection \(self.isCollection)")
+                                var url = self.postDetail?.collectionsLink
+                                let unfav = "/unfavorite"
+                                let fav = "/favorite"
+                                if self.isCollection {
+                                    self.postDetail?.collectionString = "取消收藏"
+                                    url = url?.replacingOccurrences(of: fav, with: unfav)
+                                } else {
+                                    self.postDetail?.collectionString = "加入收藏"
+                                    url = url?.replacingOccurrences(of: unfav, with: fav)
+                                }
+                                self.postDetail?.collectionsLink = url ?? ""
+                            } else if link.contains("vote?topic_id") {
+                                self.isZan.toggle()
+                                log("isZan \(self.isZan)")
+                                if self.isZan {
+                                    self.postDetail?.zanString = "感谢已表示"
+                                } else {
+                                    self.postDetail?.zanString = "感谢"
+                                }
+                            }
                         }
                     }
                     return model

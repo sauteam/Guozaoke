@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+//struct TabBarVisibilityPreferenceKey: PreferenceKey {
+//    static var defaultValue: Bool = false
+//    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+//        value = nextValue()
+//    }
+//}
+
 struct TabBarView: View {
     @State private var tab: Tab = .home
     @State private var hideTabBar = false
@@ -27,7 +34,7 @@ struct TabBarView: View {
             
             NotificationsView()
                 .tabItem {
-                    Label(Tab.node.rawValue, systemImage: .noti)
+                    Label(Tab.noti.rawValue, systemImage: .noti)
                 }.tag(Tab.noti)
                 .badge(notificationManager.unreadCount)
             
@@ -35,16 +42,11 @@ struct TabBarView: View {
                 .tabItem {
                     Label(Tab.mine.rawValue, systemImage: .mine)
                 }.tag(Tab.mine)
-            
-//            if hideTabBar {
-//                Color(.systemBackground)
-//                    .frame(height: 49)
-//                    .frame(maxHeight: .infinity, alignment: .bottom)
-//                    .ignoresSafeArea()
-//            }
         }
         .sheet(isPresented: $loginChecker.needLogin) {
-            LoginView(isPresented: $loginChecker.needLogin) {}
+            LoginView(isPresented: $loginChecker.needLogin) {
+                
+            }
         }
         .onChange(of: notificationManager.unreadCount) { newValue in
             updateAppBadge(newValue) 

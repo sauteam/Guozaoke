@@ -80,6 +80,14 @@ struct AccountState {
             log("Save account failed")
         }
     }
+    
+    
+    static func update(_ account: AccountInfo?) {
+        if let account = account {
+            saveAccount(account)
+        }
+    }
+
 
     static func deleteAccount() {
         Persist.save(value: String.empty, forkey: AccountState.ACCOUNT_KEY)
