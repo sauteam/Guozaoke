@@ -91,7 +91,7 @@ struct PostRowView: View {
                                 }
                         }
                                                 
-                        if post.rowEnum == .detailRow {
+                        if post.rowEnum != .detailRow {
                             if post.replyCount > 0 {
                                 Text("评论\(post.replyCount)")
                                     .font(.caption)

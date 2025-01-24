@@ -17,6 +17,7 @@ extension String {
     static let `default`: String = ""
     public static let empty = `default`
     
+    
     var isBlank: Bool {
         return self.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -69,17 +70,24 @@ extension String {
         return self.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
     }
 
-
-    var attributedString: AttributedString {
-        do {
-            let attributedString = try AttributedString(markdown: self, options:
-                                                            AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
-            return attributedString
-        } catch {
-            print("Couldn't parse: \(error)")
+    func htmlUserId() -> String? {
+        if let result = self.components(separatedBy: "user://").last {
+            return result
         }
-        return AttributedString("Error parsing markdown")
+        return self
     }
+
+
+//    var attributedString: AttributedString {
+//        do {
+//            let attributedString = try AttributedString(markdown: self, options:
+//                                                            AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
+//            return attributedString
+//        } catch {
+//            print("Couldn't parse: \(error)")
+//        }
+//        return AttributedString("Error parsing markdown")
+//    }
 
     func urlEncoded()-> String {
         let result = self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)

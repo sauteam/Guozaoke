@@ -94,9 +94,8 @@ struct PostDetailContent: View {
     let detail: PostDetail
     let postId: String
     let detailParser: PostDetailParser
-//    let quoteFont = Style.font(UIFont.systemFont(ofSize: 16))
-//        .foregroundColor(.black)
-    
+    @State private var showUserInfo = false
+    @State private var linkUserId = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             let replay = detail.replies.last
@@ -106,9 +105,21 @@ struct PostDetailContent: View {
                 .padding(.horizontal)
             
             // 帖子内容
-            HTMLContentView(content: detail.content)
-                .padding(.horizontal)
+            HTMLContentView(
+                content: detail.content,
+                fontSize: 14
+                
+//                onLinkTap: { url in
+//                    print("Link tapped: \(url)")
+//                },
+//                onUserTap: { userUrl in
+//                    linkUserId = userUrl.htmlUserId() ?? ""
+//                    showUserInfo = true
+//                }
+            )
             
+            ////RichTextView(content: detail.content)
+                .padding(.horizontal)
             // 帖子图片
             if !detail.images.isEmpty {
                 PostImagesView(images: detail.images)
@@ -309,11 +320,6 @@ struct ReplyItemView: View {
                             }.hidden()
                     }
                 
-                if AccountState.isSelf(userName: reply.author.name) {
-                    Text("楼主")
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
-                }
                 Text(reply.author.name)
                     .font(.subheadline)
                     .onTapGesture {
@@ -358,6 +364,11 @@ struct ReplyItemView: View {
                 Text(reply.floor)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                if AccountState.isSelf(userName: reply.author.name) {
+                    Text("楼主")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
             }
             
             // 回复内容

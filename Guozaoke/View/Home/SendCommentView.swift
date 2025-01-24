@@ -75,9 +75,8 @@ struct SendCommentView: View {
     
     private func getDetailId() -> String {
         var topicUrl   = detailId
-        let components = detailId.split(separator: "#")
-        if components.count > 1 {
-            topicUrl = String(components[0])
+        if let result = topicUrl.components(separatedBy: "#").first {
+            topicUrl  = result
         }
         return topicUrl
     }
