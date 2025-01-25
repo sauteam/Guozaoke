@@ -13,28 +13,29 @@ struct SettingView: View {
     @State private var isLoggedOut = false
 
     var body: some View {
-        VStack {
             List {
                 ForEach(items, id: \.self) { text in
-                    Text(text)
-                        .onTapGesture {
-                            tapTextEvent(text)
-                        }
+                    HStack {
+                        Text(text)
+                            .onTapGesture {
+                                tapTextEvent(text)
+                            }
+                        Spacer()
+                        SFSymbol.rightIcon
+                            .foregroundColor(.gray)
+                    }
                 }
-                .padding(.vertical, 10)
-            }
+            .padding(.vertical, 10)
             .listStyle(InsetGroupedListStyle())
             .sheet(isPresented: $showLogoutSheet) {
-                if #available(iOS 16.0, *) {
-                    LogoutConfirmationSheet(showLogoutSheet: $showLogoutSheet, isLoggedOut: $isLoggedOut)
-                        .presentationDetents([.height(230)])
-                }
+                LogoutConfirmationSheet(showLogoutSheet: $showLogoutSheet, isLoggedOut: $isLoggedOut)
+                    .presentationDetents([.height(230)])
             }
-            .sheet(isPresented: $isLoggedOut) {
-                LoginView(isPresented: $isLoggedOut) {
-                    
-                }
+        .sheet(isPresented: $isLoggedOut) {
+            LoginView(isPresented: $isLoggedOut) {
+                
             }
+        }
         }
         .navigationTitle("设置")
     }
@@ -42,11 +43,11 @@ struct SettingView: View {
     private func tapTextEvent(_ urlString: String) {
          if urlString == "退出登录" {
              print("退出登录")
+             showLogoutSheet = true
              if !AccountState.isLogin() {
                  isLoggedOut = true
                  return
              }
-             showLogoutSheet = true
          } else {
              var url =  APIService.baseUrlString
              if urlString == "帮助反馈" {

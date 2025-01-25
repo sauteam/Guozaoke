@@ -53,6 +53,7 @@ enum SFSymbol: String {
     case moonphase = "circle.lefthalf.filled"
     case coment = "ellipsis.message"
     case topics = "paperplane"
+    case rightIcon = "chevron.right"
 }
 
 extension SFSymbol: View {
