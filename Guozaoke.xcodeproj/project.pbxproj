@@ -13,6 +13,7 @@
 		322627D92D35608300F4AAA8 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D82D35608300F4AAA8 /* Alamofire */; };
 		324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0532D43EEC2000D2C48 /* Atributika */; };
 		324EF0562D43EEC2000D2C48 /* AtributikaViews in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0552D43EEC2000D2C48 /* AtributikaViews */; };
+		328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */ = {isa = PBXBuildFile; productRef = 328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,6 +78,7 @@
 				322627D42D35566700F4AAA8 /* Kingfisher in Frameworks */,
 				324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */,
 				322627D92D35608300F4AAA8 /* Alamofire in Frameworks */,
+				328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */,
 				322627912D33A00000F4AAA8 /* SwiftSoup in Frameworks */,
 				322627D12D3555BC00F4AAA8 /* LookinServer in Frameworks */,
 				324EF0562D43EEC2000D2C48 /* AtributikaViews in Frameworks */,
@@ -146,6 +148,7 @@
 				322627D82D35608300F4AAA8 /* Alamofire */,
 				324EF0532D43EEC2000D2C48 /* Atributika */,
 				324EF0552D43EEC2000D2C48 /* AtributikaViews */,
+				328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */,
 			);
 			productName = Guozaoke;
 			productReference = 322627622D3393AC00F4AAA8 /* Guozaoke.app */;
@@ -235,6 +238,7 @@
 				322627D22D35566700F4AAA8 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				322627D72D35608300F4AAA8 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */,
+				328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 322627632D3393AC00F4AAA8 /* Products */;
@@ -434,8 +438,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 104;
+				CURRENT_PROJECT_VERSION = 105;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -456,6 +461,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -467,8 +473,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 104;
+				CURRENT_PROJECT_VERSION = 105;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -489,6 +496,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -645,6 +653,14 @@
 				minimumVersion = 5.0.5;
 			};
 		};
+		328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/calimarkus/JDStatusBarNotification";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -677,6 +693,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */;
 			productName = AtributikaViews;
+		};
+		328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */;
+			productName = JDStatusBarNotification;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

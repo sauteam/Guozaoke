@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftSoup
+import JDStatusBarNotification
 
 // MARK: - 错误定义
 enum LoginError: LocalizedError {
@@ -37,6 +38,13 @@ extension Notification.Name {
     static let loginSuccessNoti = Notification.Name("loginSuccessNoti")
     static let refreshTokenNoti = Notification.Name("refreshTokenNoti")
 }
+
+private func showToast() {
+    runInMain {
+        NotificationPresenter.shared.present("登录成功", includedStyle: .dark, duration: toastDuration)
+    }
+}
+
 
 // MARK: - 登录服务
 class LoginService: ObservableObject {
@@ -121,6 +129,7 @@ class LoginService: ObservableObject {
                 let account = AccountInfo(username: username, xsrfToken: xsrfToken, avatar: avatar, userLink: idLink)
                 DispatchQueue.main.async {
                     AccountState.saveAccount(account)
+                    showToast()
                 }
                 log("[userInfo]\(account)")
                 NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])

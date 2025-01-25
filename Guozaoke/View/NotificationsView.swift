@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import JDStatusBarNotification
 
 struct NotificationsView: View {
     @StateObject private var viewModel = NotificationsParser()
@@ -41,6 +42,11 @@ struct NotificationsView: View {
             .navigationTitle("通知")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                if !AccountState.isLogin() {
+                    NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+                    LoginStateChecker.clearUserInfo()
+                    return
+                }
                 Task {
                     await viewModel.fetchNotifications()
                 }

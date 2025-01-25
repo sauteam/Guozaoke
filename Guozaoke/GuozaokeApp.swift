@@ -38,7 +38,7 @@ struct GuozaokeApp: App {
             } else {
                 LaunchScreenView()
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                             withAnimation {
                                 isActive = true
                             }
@@ -64,7 +64,7 @@ private extension GuozaokeApp {
             VStack {
                 Text("欢迎进入过早客")
                     .font(.title)
-                    .fontWeight(.bold)
+                    .fontWeight(.thin)
                     .padding()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

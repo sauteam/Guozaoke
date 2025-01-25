@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftSoup
+import JDStatusBarNotification
 
 struct EditPost: Codable {
     static let editPostInfoKey = "editPostInfo"
@@ -56,6 +57,10 @@ struct Persist {
         print("[bao]save \(value) \(key)")
         userDefault.set(value, forKey: key)
     }
+    
+    static func remove(key: String)  {
+        return userDefault.removeObject(forKey: key)
+    }
 
     static func read(key: String, default: String = .empty) -> String {
         return userDefault.string(forKey: key) ?? `default`
@@ -67,13 +72,13 @@ struct Persist {
 }
 
 struct AccountState {
-    static let ACCOUNT_KEY = "com.guozaoke.ios"
+    static let loginUserKey = "com.guozaoke.ios.user.info"
     static var ACCOUNT: AccountInfo?
 
     static func saveAccount(_ account: AccountInfo) {
         do {
             let jsonData = try JSONEncoder().encode(account)
-            Persist.save(value: jsonData, forkey: AccountState.ACCOUNT_KEY)
+            Persist.save(value: jsonData, forkey: loginUserKey)
             log("account: \(account) saved")
             ACCOUNT = account
         } catch {
@@ -90,15 +95,19 @@ struct AccountState {
 
 
     static func deleteAccount() {
-        Persist.save(value: String.empty, forkey: AccountState.ACCOUNT_KEY)
-        ACCOUNT = nil
-        APIService.clearCookie()
+        if getAccount() != nil {
+            Persist.remove(key: loginUserKey)
+            ACCOUNT = nil
+            APIService.clearCookie()
+        } else {
+            log("没登录用户信息")
+        }
     }
 
     static func getAccount() -> AccountInfo? {
         do {
             if ACCOUNT != nil { return ACCOUNT }
-            let data = Persist.read(key: ACCOUNT_KEY)
+            let data = Persist.read(key: loginUserKey)
             guard let data = data else { return nil }
             ACCOUNT = try JSONDecoder()
                 .decode(AccountInfo.self, from: data)
@@ -177,17 +186,19 @@ class LoginStateChecker: ObservableObject {
     func htmlCheckUserState(doc: Document) throws -> Bool {
         // 检查是否存在登录表单
         let loginForm = try doc.select("form.form-horizontal")
-        //let alerts    = try doc.select("ul.alert-danger li")
+        let alerts    = try doc.select("ul.alert-danger li")
         
         if !loginForm.isEmpty() {
             // 检查错误提示
-//            if !alerts.isEmpty() {
-//                self.error = try alerts.first()?.text() ?? "需要登录"
-//            } else {
-//                error = "请先登录社区再完成操作"
-//            }
+            if !alerts.isEmpty() {
+                self.error = try alerts.first()?.text() ?? needLoginTextCanDo
+            } else {
+                error = needLoginTextCanDo
+            }
             LoginStateChecker.clearUserInfo()
             runInMain {
+                NotificationPresenter.shared.present(self.error ?? needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+                    
                 if !self.needLogin {
                     self.needLogin = true
                 }

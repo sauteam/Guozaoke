@@ -84,6 +84,7 @@ struct LoginView: View {
                 let success = try await loginService.login(email: email, password: password)
                 if success {
                     successAsyn()
+                    
                 }
             } catch {
                 loginService.error = error.localizedDescription

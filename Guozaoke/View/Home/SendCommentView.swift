@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import JDStatusBarNotification
 
 struct SendCommentView: View {
     let detailId: String
@@ -37,6 +38,7 @@ struct SendCommentView: View {
                 }
                 Button(action: {
                     if content.trim().isEmpty {
+                        NotificationPresenter.shared.present("输入内容", includedStyle: .dark, duration: toastDuration)
                         return
                     }
                     Task {
@@ -55,6 +57,7 @@ struct SendCommentView: View {
                 }
                 .disabled(isPosting || content.isEmpty)
                 .pickerStyle(DefaultPickerStyle())
+                
             }
             .onAppear {
                 if let replyUser = replyUser, !replyUser.isEmpty {
@@ -93,9 +96,10 @@ struct SendCommentView: View {
             postSuccess = true
             isPresented = false
             sendSuccess()
+            NotificationPresenter.shared.present("发送成功", includedStyle: .dark, duration: toastDuration)
         } catch {
             isPosting = false
-            errorMessage = "发布失败: \(error.localizedDescription)"
+            errorMessage = "发送失败: \(error.localizedDescription)"
         }
     }
 

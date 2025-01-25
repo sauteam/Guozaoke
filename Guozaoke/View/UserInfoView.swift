@@ -207,9 +207,6 @@ struct UserInfoView: View {
                     Task { await parser.fetchUserInfoAndData(username, reset: true) }
                 }
             }
-            if !LoginStateChecker.isLogin() {
-                
-            }
         }
         .onDisappear {
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)

@@ -61,7 +61,8 @@ struct PostDetailView: View {
             }
         }
         .sheet(isPresented: $showComentView) {
-            SendCommentView(detailId: detailParser.postDetail?.detailId ?? "", replyUser: "", isPresented: $showComentView) {
+            let detailId = detailParser.postDetail?.detailId ?? ""
+            SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
                 
             }
         }
@@ -80,8 +81,9 @@ struct PostDetailView: View {
     
     func shareContent() {
         postId.postDetailUrl().copyToClipboard()
-        let textToShare = detailParser.postDetail?.title
-        let activityController = UIActivityViewController(activityItems: [textToShare!], applicationActivities: nil)
+        let textToShare = detailParser.postDetail?.title ?? ""
+        let link = postId.postDetailUrl()
+        let activityController = UIActivityViewController(activityItems: [textToShare, link], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootViewController = windowScene.windows.first?.rootViewController {
             rootViewController.present(activityController, animated: true, completion: nil)
