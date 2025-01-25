@@ -15,10 +15,11 @@ struct MeView: View {
     @State private var showSettingView  = false
 
     var body: some View {
-        NavigationView {
+//        NavigationView {
             VStack() {
                 MyProfileView()
             }
+            .navigationBarBackButtonHidden(true)
             .navigationTitle("我的")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -46,7 +47,7 @@ struct MeView: View {
             .onDisappear {
                 NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
             }
-        }
+//        }
     }
 }
 

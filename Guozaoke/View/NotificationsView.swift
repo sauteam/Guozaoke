@@ -12,7 +12,7 @@ struct NotificationsView: View {
     @StateObject private var viewModel = NotificationsParser()
     
     var body: some View {
-        NavigationView {
+//        NavigationView {        
             List(viewModel.notifications) { notification in
                 NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
                     NotificationRowView(notification: notification)
@@ -41,6 +41,7 @@ struct NotificationsView: View {
 //            }
             .navigationTitle("通知")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .onAppear {
                 if !AccountState.isLogin() {
                     NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
@@ -57,7 +58,7 @@ struct NotificationsView: View {
                     }
                 }
             }
-        }
+//        }
     }
 }
 
@@ -74,12 +75,16 @@ struct NotificationRowView: View {
                 isUserAvatarViewActive = true
             }
             .overlay {
-                NavigationLink(
-                    destination: UserInfoView(userId: notification.username),
-                        isActive: $isUserAvatarViewActive
-                    ) {
-                        EmptyView()
-                    }.hidden()
+                NavigationStack {
+                     VStack {
+                         Button("跳转到用户信息") {
+                             isUserAvatarViewActive = true
+                         }
+                     }
+                     .navigationDestination(isPresented: $isUserAvatarViewActive) {
+                         UserInfoView(userId: notification.username)
+                     }
+                }.hidden()
             }
             
             VStack(alignment: .leading) {
@@ -89,12 +94,24 @@ struct NotificationRowView: View {
                         isUserNameInfoViewActive = true
                     }
                     .overlay {
-                        NavigationLink(
-                            destination: UserInfoView(userId: notification.username),
-                                isActive: $isUserNameInfoViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
+                        
+                        NavigationStack {
+                             VStack {
+                                 Button("跳转到用户信息") {
+                                     isUserNameInfoViewActive = true
+                                 }
+                             }
+                             .navigationDestination(isPresented: $isUserNameInfoViewActive) {
+                                 UserInfoView(userId: notification.username)
+                             }
+                        }.hidden()
+
+//                        NavigationLink(
+//                            destination: UserInfoView(userId: notification.username),
+//                                isActive: $isUserNameInfoViewActive
+//                            ) {
+//                                EmptyView()
+//                            }.hidden()
                     }
                 
                 Text(notification.topicTitle)

@@ -18,7 +18,7 @@ struct PostListView: View {
 //    @Environment(\.themeColor) private var themeColor: Color
     
     var body: some View {
-        NavigationView {
+//        NavigationView {
             VStack(spacing: 0) {
                 // 顶部分类按钮
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -53,9 +53,10 @@ struct PostListView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-            }
+//            }
             .navigationTitle("过早客")
             .navigationBarTitleDisplayMode(.inline)
+            //.navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {

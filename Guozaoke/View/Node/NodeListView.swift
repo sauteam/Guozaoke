@@ -11,7 +11,7 @@ struct NodeListView: View {
     @StateObject private var viewModel = PostListParser()
 
     var body: some View {
-        NavigationView {
+//        NavigationView {
             VStack {
                 if viewModel.isLoading {
                     ProgressView()
@@ -32,6 +32,7 @@ struct NodeListView: View {
             }
             .navigationTitle("节点导航")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
 //            .toolbar {
 //                ToolbarItem(placement: .navigationBarTrailing) {
 //                    Button(action: {
@@ -42,7 +43,7 @@ struct NodeListView: View {
 //                    
 //                }
 //            }
-        }
+//        }
         .onAppear {
             if !viewModel.hadNodeItemData   {
                 viewModel.refresh(type: .hot)

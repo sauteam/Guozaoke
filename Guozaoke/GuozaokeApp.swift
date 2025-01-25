@@ -38,7 +38,7 @@ struct GuozaokeApp: App {
             } else {
                 LaunchScreenView()
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             withAnimation {
                                 isActive = true
                             }
@@ -62,7 +62,13 @@ private extension GuozaokeApp {
     struct LaunchScreenView: View {
         var body: some View {
             VStack {
-                Text("欢迎进入过早客")
+                Image("zaoIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 80, maxHeight: 80)
+                    .padding()
+                
+                Text(getFestivalGreeting())
                     .font(.title)
                     .fontWeight(.thin)
                     .padding()
@@ -70,6 +76,20 @@ private extension GuozaokeApp {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.white)
             .ignoresSafeArea()
+        }
+        
+        private func getFestivalGreeting() -> String {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            
+            let today = dateFormatter.string(from: Date())
+
+            let festivalMessages: [String: String] = [
+                "2025-01-28": "除夕快乐！",   // 2025年除夕
+                "2025-01-29": "新年快乐！",   // 2025年春节
+                "2025-02-03": "元宵节快乐！"  // 2025年元宵节
+            ]
+            return festivalMessages[today] ?? "欢迎进入过早客"
         }
     }
     

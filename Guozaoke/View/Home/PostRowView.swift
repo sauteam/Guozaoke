@@ -31,12 +31,24 @@ struct PostRowView: View {
                         }
                     }
                     .overlay {
-                        NavigationLink(
-                            destination: UserInfoView(userId: post.author),
-                                isActive: $isUserAvatarViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
+                        
+                        NavigationStack {
+                             VStack {
+                                 Button("跳转到用户信息") {
+                                     isUserAvatarViewActive = true
+                                 }
+                             }
+                             .navigationDestination(isPresented: $isUserAvatarViewActive) {
+                                 UserInfoView(userId: post.author)
+                             }
+                        }.hidden()
+                        
+//                        NavigationLink(
+//                            destination: UserInfoView(userId: post.author),
+//                                isActive: $isUserAvatarViewActive
+//                            ) {
+//                                EmptyView()
+//                            }.hidden()
                     }
                 
                 VStack(alignment: .leading, spacing: 4) {

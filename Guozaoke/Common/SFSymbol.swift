@@ -8,14 +8,6 @@
 import SwiftUI
 
 enum SFSymbol: String {
-    /// 􀻧
-    case home = "list.bullet.circle"
-    /// 􀍡
-    case node = "ellipsis.circle"
-    /// 􀌤 评论
-    case noti = "bell.badge.fill"
-    /// 􀉩
-    case mine = "person"
     /// 􀅼
     case add = "plus"
     case edit = "pencil"
