@@ -61,7 +61,7 @@ struct PostListView: View {
                     Button(action: {
                         showAddPostView = true
                     }) {
-                        SFSymbol.edit
+                        SFSymbol.add
                     }
 
 //                    Button(action: {

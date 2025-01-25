@@ -77,8 +77,9 @@ struct PostRowView: View {
                                 .lineLimit(1)
                                 .onTapGesture {
                                     log("点击 \(lastReplyUser)")
-                                    if post.author != post.lastReplyUser ?? "" {
-                                        isLastReplyUserInfoViewActive = true
+                                    isLastReplyUserInfoViewActive = true
+                                    if profile == true, post.author == post.lastReplyUser ?? "" {
+                                        isLastReplyUserInfoViewActive = false
                                     }
                                 }
                                 .background {

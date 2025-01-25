@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import JDStatusBarNotification
 
 struct SendPostView: View {
     @Binding var isPresented: Bool
@@ -65,11 +66,8 @@ struct SendPostView: View {
                         .listRowSeparator(.hidden)
                 }
                 Button(action: {
-                    if title.trim().isEmpty {
-                        return
-                    }
-                    
-                    if content.trim().isEmpty {
+                    if title.trim().isEmpty || content.trim().isEmpty {
+                        NotificationPresenter.shared.present("输入内容", includedStyle: .dark, duration: toastDuration)
                         return
                     }
                     
@@ -133,6 +131,7 @@ struct SendPostView: View {
             isPresented = false
             content = ""
             title   = ""
+            NotificationPresenter.shared.present("发送成功", includedStyle: .dark, duration: toastDuration)
             sendSuccess()
         } catch {
             isPosting = false

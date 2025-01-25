@@ -1,5 +1,5 @@
 {
-  "originHash" : "b5bc46abe16d686afddf1354373b84723fb55ad7ce461cbeaa8218edc1a9c2dc",
+  "originHash" : "3c33eebf455ce44570353876efb57073233ffed3a3e55f17c0ec3ab7e85c1f65",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "2de3536009a6f9ba88344a612ed219e2eb99ca2f",
         "version" : "5.0.5"
+      }
+    },
+    {
+      "identity" : "jdstatusbarnotification",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/calimarkus/JDStatusBarNotification",
+      "state" : {
+        "revision" : "8214549f7e2a472174a743c4f9bf64f005f6aacc",
+        "version" : "2.2.4"
       }
     },
     {

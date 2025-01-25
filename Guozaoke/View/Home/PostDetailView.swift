@@ -61,7 +61,8 @@ struct PostDetailView: View {
             }
         }
         .sheet(isPresented: $showComentView) {
-            SendCommentView(detailId: detailParser.postDetail?.detailId ?? "", replyUser: "", isPresented: $showComentView) {
+            let detailId = detailParser.postDetail?.detailId ?? ""
+            SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
                 
             }
         }

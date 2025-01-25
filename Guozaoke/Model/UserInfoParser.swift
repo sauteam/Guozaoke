@@ -7,6 +7,7 @@
 
 import SwiftSoup
 import SwiftUI
+import JDStatusBarNotification
 
 struct UserInfo {
     let avatar: String
@@ -69,7 +70,18 @@ class UserInfoParser: ObservableObject {
         return true
     }
     
+    private func showToast() {
+        runInMain {
+            NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+        }
+    }
+    
     func blockUserAction(_ userId: String?) async -> String {
+        if !LoginStateChecker.isLogin() {
+            self.showToast()
+            return ""
+        }
+        
         guard let userId else {
             return ""
         }
@@ -93,6 +105,13 @@ class UserInfoParser: ObservableObject {
     }
             
     func followUserAction(_ userId: String?) async -> (Bool, String)? {
+        if !LoginStateChecker.isLogin() {
+            runInMain {
+                self.showToast()
+            }
+            return (false, "")
+        }
+        
         guard let userId else {
             return (false, "")
         }
@@ -140,7 +159,6 @@ class UserInfoParser: ObservableObject {
                     self.replies.removeAll()
                 }
             }
-            
             
             var url = "\(baseUrl)"
             if currentPage > 1 {

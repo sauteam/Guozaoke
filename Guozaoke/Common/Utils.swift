@@ -10,6 +10,9 @@ import Combine
 import UIKit
 import SwiftUI
 
+/// 2.5 秒
+let toastDuration = 2.5
+
 private let loggable: Bool = true
 
 public func log(_ items: Any..., separator: String = " ", terminator: String = "\n") {

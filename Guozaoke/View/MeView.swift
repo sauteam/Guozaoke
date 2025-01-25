@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import JDStatusBarNotification
 
 struct MeView: View {
     //@State private var userId: String
@@ -22,6 +23,7 @@ struct MeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if !AccountState.isLogin() {
+                    NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
                     LoginStateChecker.clearUserInfo()
                     return
                 }
@@ -81,7 +83,8 @@ struct MyProfileView: View {
                             }
                         }
                         
-                        NavigationLink(destination: MyCollectionView(topicType: .topics))  {              ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
+                        NavigationLink(destination: MyCollectionView(topicType: .topics))  {
+                            ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
                         }
                                 
                         NavigationLink(destination: IntroductationView())  {
@@ -89,7 +92,7 @@ struct MyProfileView: View {
                         }
                         
                         NavigationLink(destination: DarkModeToggleView()) {
-                            ProfileRow(icon: SFSymbol.topics.rawValue, title: "模式切换") {}
+                            ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {}
                         }
                         
                         NavigationLink(destination: SettingView()) {

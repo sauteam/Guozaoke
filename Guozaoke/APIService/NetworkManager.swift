@@ -8,6 +8,7 @@
 import SwiftUI
 import Alamofire
 import SwiftSoup
+import JDStatusBarNotification
 
 // MARK: - 网络请求管理器
 class NetworkManager: ObservableObject {
@@ -62,15 +63,16 @@ class NetworkManager: ObservableObject {
                 switch response.result {
                 case .success(let string):
                     //log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
-                    let _ = LoginStateChecker.userLoginState()
                     continuation.resume(returning: string)
                 case .failure(let error):
                     log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
+                    let desc = "出现错误❌: " + "[\(response.response?.statusCode ?? 0)[403 可能需要重新登]]"
                     if error.responseCode == 403 {
                         log("[403]重新登录处理 \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
+                    NotificationPresenter.shared.present(desc, includedStyle: .dark, duration: toastDuration)
                 }
             }
         }

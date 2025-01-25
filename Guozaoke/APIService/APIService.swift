@@ -22,6 +22,8 @@ let imgAvatar = "img.avatar"
 let spanTime = "span.time"
 let spanContent = "span.content"
 
+let needLoginTextCanDo  = "请先登录社区再完成操作"
+
 
 struct NoMoreDataTitle {
     static let nodata     = "没有数据"
