@@ -11,12 +11,13 @@ import SwiftUI
 
 @main
 struct GuozaokeApp: App {
+    @AppStorage("appearanceMode") private var darkMode: String = "system"
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     public static var rootViewController: UIViewController?
     public static var statusBarState: UIStatusBarStyle = .darkContent
     public static var window: UIWindow?
     public static var tabbarView = TabBarView()
-    @AppStorage("appearanceMode") private var darkMode: String = "system"
+    @State private var isActive = false
 
     init() {
         ///UINavigationBar.appearance().tintColor = themeColor
@@ -26,13 +27,24 @@ struct GuozaokeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            GuozaokeApp.tabbarView
-                //.accentColor(.brown)
-                ///.environment(\.themeColor, .brown)
-                .onAppear {
-                    applyAppearance()
-                    addNoti()
-                }
+            if isActive {
+                GuozaokeApp.tabbarView
+                    //.accentColor(.brown)
+                    ///.environment(\.themeColor, .brown)
+                    .onAppear {
+                        applyAppearance()
+                        addNoti()
+                    }
+            } else {
+                LaunchScreenView()
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                isActive = true
+                            }
+                        }
+                    }
+            }
         }
     }
     
@@ -41,10 +53,25 @@ struct GuozaokeApp: App {
         statusBarState = style
         rootViewController?.setNeedsStatusBarAppearanceUpdate()
     }
+    
 }
 
 
 private extension GuozaokeApp {
+    
+    struct LaunchScreenView: View {
+        var body: some View {
+            VStack {
+                Text("欢迎进入过早客")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .padding()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.white)
+            .ignoresSafeArea()
+        }
+    }
     
     // MARK TabBar Appearance
     func applyTabBarBackground() {
