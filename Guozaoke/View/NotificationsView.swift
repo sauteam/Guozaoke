@@ -51,13 +51,17 @@ struct NotificationsView: View {
                 Task {
                     await viewModel.fetchNotifications()
                 }
-                
-                NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
-                    Task {
-                        await viewModel.fetchNotificationsRefresh()
-                    }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+                Task {
+                    await viewModel.fetchNotificationsRefresh()
                 }
             }
+            .onDisappear {
+                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+            }
+
+
 //        }
     }
 }

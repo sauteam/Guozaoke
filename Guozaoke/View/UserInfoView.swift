@@ -208,6 +208,13 @@ struct UserInfoView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
+                if let userInfo = notification.userInfo,
+                   let user = userInfo as? Dictionary<String, Any> {
+                        let username  = user["userName"] as? String ?? ""
+                        Task { await parser.fetchUserInfoAndData(username, reset: true) }
+                }
+        }
         .onDisappear {
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
         }

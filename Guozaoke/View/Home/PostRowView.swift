@@ -42,13 +42,6 @@ struct PostRowView: View {
                                  UserInfoView(userId: post.author)
                              }
                         }.hidden()
-                        
-//                        NavigationLink(
-//                            destination: UserInfoView(userId: post.author),
-//                                isActive: $isUserAvatarViewActive
-//                            ) {
-//                                EmptyView()
-//                            }.hidden()
                     }
                 
                 VStack(alignment: .leading, spacing: 4) {

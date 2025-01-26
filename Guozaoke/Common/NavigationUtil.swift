@@ -50,31 +50,6 @@ struct TagDetailView: View {
     }
 }
 
-struct ImagePreviewView: View {
-    let url: String
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        VStack {
-            AsyncImage(url: URL(string: url)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } placeholder: {
-                ProgressView()
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("关闭") {
-                    dismiss()
-                }
-            }
-        }
-    }
-}
-
-
 //#Preview {
 //    NavigationUtil()
 //}

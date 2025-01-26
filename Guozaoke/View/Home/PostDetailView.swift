@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
@@ -15,21 +16,23 @@ struct PostDetailView: View {
 
     var body: some View {
         ScrollView {
-            if let detail = detailParser.postDetail {
-                PostDetailContent(detail: detail, postId: postId, detailParser: detailParser)
-            } else if detailParser.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if !detailParser.hasMore {
-                HStack {
-                    Spacer()
-                    Text(NoMoreDataTitle.commentList)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                    Spacer()
+            LazyVStack {
+                if let detail = detailParser.postDetail {
+                    PostDetailContent(detail: detail, postId: postId, detailParser: detailParser)
+                } else if detailParser.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !detailParser.hasMore {
+                    HStack {
+                        Spacer()
+                        Text(NoMoreDataTitle.commentList)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                    .padding(.vertical, 12)
                 }
-                .listRowSeparator(.hidden)
-                .padding(.vertical, 12)
             }
         }
         .refreshable {
@@ -67,12 +70,12 @@ struct PostDetailView: View {
             }
         }
         .onAppear() {
-            if  detailParser.postDetail == nil {
-                detailParser.loadNews(postId: postId)
-            }
-            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
-                detailParser.loadNews(postId: postId)
-            }
+            guard detailParser.postDetail == nil else { return }
+            detailParser.loadNews(postId: postId)
+        }
+        
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+            detailParser.loadNews(postId: postId)
         }
         .onDisappear() {
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
@@ -92,12 +95,17 @@ struct PostDetailView: View {
 }
 
 // MARK: - 帖子详情内容视图
-struct PostDetailContent: View {
+struct PostDetailContent: View, Equatable {
     let detail: PostDetail
     let postId: String
-    let detailParser: PostDetailParser
+    @ObservedObject var detailParser: PostDetailParser
     @State private var showUserInfo = false
     @State private var linkUserId = ""
+    
+    static func == (lhs: PostDetailContent, rhs: PostDetailContent) -> Bool {
+        return lhs.detail.id == rhs.detail.id
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             let replay = detail.replies.last
@@ -109,7 +117,7 @@ struct PostDetailContent: View {
             // 帖子内容
             HTMLContentView(
                 content: detail.content,
-                fontSize: 14
+                fontSize: 16
                 
 //                onLinkTap: { url in
 //                    print("Link tapped: \(url)")
@@ -119,6 +127,7 @@ struct PostDetailContent: View {
 //                    showUserInfo = true
 //                }
             )
+            .id(UUID())
             
             ////RichTextView(content: detail.content)
                 .padding(.horizontal)
@@ -167,6 +176,7 @@ struct PostHeaderView: View {
     }
 }
 
+// TODO: 大图优化
 // MARK: - 帖子图片视图
 struct PostImagesView: View {
     let images: [PostImage]
@@ -176,22 +186,20 @@ struct PostImagesView: View {
         let urls = images.map { $0.url }
         VStack(alignment: .leading, spacing: 12) {
             ForEach(urls, id: \.self) { imageUrl in
-                KFImageView(imageUrl)
-                    .aspectRatio(contentMode: .fit)
+                OptimizedImageView(
+                    urlString: imageUrl,
+                    contentMode: .fit,
+                    autoResize: true,
+                    showPreview: true
+                ).frame(height: 200)
             }
-        }
-        .sheet(item: Binding(
-            get: { selectedImage.map { ImagePreview(imageUrl: $0) } },
-            set: { _ in selectedImage = nil }
-        )) { preview in
-            
         }
     }
 }
 
 struct PostFooterView: View {
     var detail: PostDetail
-    let detailParser: PostDetailParser
+    @ObservedObject var detailParser: PostDetailParser
     let postId: String
     @State private var isLoading: Bool = false
     @State private var message: String?
@@ -206,16 +214,11 @@ struct PostFooterView: View {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
                         if model?.success == 1 {
                             hapticFeedback()
-                            //detailParser.loadNews(postId: postId)
-                            DispatchQueue.main.async {
-                                //detailParser.isCollection.toggle()
-                            }
                         }
                     }
                 }
             } label: {
                 Text(detailParser.postDetail?.collectionString ?? "加入收藏")
-                //Text(detailParser.isCollection ? "取消收藏": "加入收藏")
             }
             .padding(.horizontal, 16)
             .font(.caption)
@@ -226,12 +229,7 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
-                            //detailParser.loadNews(postId: postId)
                             hapticFeedback()
-                            DispatchQueue.main.async {
-                                //detailParser.isZan.toggle()
-                                //log("isZan \(detailParser.isZan)")
-                            }
                         }
                     }
                 }
@@ -277,7 +275,7 @@ struct PostFooterView: View {
 
 // MARK: - 回复列表视图
 struct ReplyListView: View {
-    let detailParser: PostDetailParser
+    @ObservedObject var detailParser: PostDetailParser
     let replies: [Reply]
     
     var body: some View {
@@ -298,7 +296,7 @@ struct ReplyListView: View {
 
 // MARK: - 回复项视图
 struct ReplyItemView: View {
-    let detailParser: PostDetailParser
+    @ObservedObject var detailParser: PostDetailParser
     let reply: Reply
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
@@ -313,7 +311,7 @@ struct ReplyItemView: View {
                     .onTapGesture {
                         isAvatarInfoViewActive = true
                     }
-                    .background {
+                    .overlay {
                         NavigationLink(
                             destination: UserInfoView(userId: reply.author.name),
                                 isActive: $isAvatarInfoViewActive
@@ -322,22 +320,28 @@ struct ReplyItemView: View {
                             }.hidden()
                     }
                 
-                Text(reply.author.name)
-                    .font(.subheadline)
-                    .onTapGesture {
-                        isUserNameInfoViewActive = true
+                VStack {
+                    Text(reply.author.name)
+                        .font(.body)
+                        .onTapGesture {
+                            isUserNameInfoViewActive = true
+                        }
+                        .overlay {
+                            NavigationLink(
+                                destination: UserInfoView(userId: reply.author.name),
+                                    isActive: $isUserNameInfoViewActive
+                                ) {
+                                    EmptyView()
+                                }.hidden()
+                        }
+                    
+                    HStack {
+                        Text(reply.time)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    .background {
-                        NavigationLink(
-                            destination: UserInfoView(userId: reply.author.name),
-                                isActive: $isUserNameInfoViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
-                    }
-                
+                }
                 Spacer()
-                
                 Button {
                     showActions = true
                 } label: {
@@ -345,7 +349,7 @@ struct ReplyItemView: View {
                 }
                 .font(.caption)
                 .sheet(isPresented: $showActions) {
-                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: reply.author.name, isPresented: $showActions) {
+                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", isPresented: $showActions) {
                         
                     }
                 }
@@ -366,11 +370,6 @@ struct ReplyItemView: View {
                 Text(reply.floor)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                if AccountState.isSelf(userName: reply.author.name) {
-                    Text("楼主")
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
-                }
             }
             
             // 回复内容
@@ -380,10 +379,6 @@ struct ReplyItemView: View {
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }
-            
-            Text(reply.time)
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color(.systemGray6))
@@ -442,172 +437,3 @@ struct ImagePreview: Identifiable {
         }
     }
 }
-
-//// MARK: - 帖子详情视图
-//struct PostDetailView: View {
-//    @StateObject private var detailParser = PostDetailParser()
-//    let postId: String
-//    @State private var showLoginSheet = false
-//    //@Binding var hideTabBar: Bool
-//
-//    var body: some View {
-//        ScrollView {
-//            if let detail = detailParser.postDetail {
-//                VStack(alignment: .leading, spacing: 16) {
-//                    PostDetailContent(detail: detail, postId: postId)
-//                }
-//            } else if detailParser.isLoading {
-//                ProgressView()
-//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-//            }
-//        }
-//        .refreshable {
-//            detailParser.loadPostDetail(id: postId)
-//        }
-//        .navigationBarTitleDisplayMode(.inline)
-//        .navigationTitle("详情")
-//        .sheet(isPresented: $detailParser.needLogin) {
-//            LoginView(isPresented: $detailParser.needLogin) {
-//                // 登录成功后重新加载
-//                detailParser.loadPostDetail(id: postId)
-//            }
-//        }
-//        .onAppear {
-//            if !detailParser.isLoading  {
-//                detailParser.loadPostDetail(id: postId)
-//            }
-//        }
-//        
-//        .onDisappear {
-//            
-//        }
-//    }
-//}
-//
-//// MARK: - 帖子详情内容视图
-//struct PostDetailContent: View {
-//    let detail: PostDetail
-//    let postId: String
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 16) {
-//            let replay = detail.replies.last
-//            let post = PostItem(title: detail.content, link: postId, author: detail.author.name, avatar: detail.author.avatar, category: detail.author.node, time: detail.author.joinDate ?? "", replyCount: detail.replies.count, lastReplyUser: replay?.author.name)
-//            PostRowView(post: post)
-//                .padding(.horizontal)
-//            // 帖子内容
-//            HTMLContentView(content: detail.content)
-//                .padding(.horizontal)
-//            // 图片展示
-//            if !detail.images.isEmpty {
-//                ScrollView(.horizontal, showsIndicators: false) {
-//                    HStack {
-////                        ForEach(detail.images, id: \.self) { imageUrl in
-////                            AsyncImage(url: URL(string: imageUrl)) { image in
-////                                image
-////                                    .resizable()
-////                                    .aspectRatio(contentMode: .fit)
-////                            } placeholder: {
-////                                Color.gray
-////                            }
-////                            .frame(height: 200)
-////                        }
-//                    }
-//                }
-//                .padding(.horizontal)
-//            }
-//            
-//            Divider()
-//            
-//            // 回复列表
-//            if !detail.replies.isEmpty {
-//                Text("全部回复 (\(detail.replies.count))")
-//                    .font(.headline)
-//                    .padding(.horizontal)
-//                
-//                ForEach(detail.replies) { reply in
-//                    ReplyItemView(reply: reply)
-//                        .padding(.horizontal)
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//struct ReplyListView: View {
-//    let replies: [Reply]
-//    
-//    var body: some View {
-//        VStack(spacing: 16) {
-//            ForEach(replies) { reply in
-//                ReplyItemView(reply: reply)
-//            }
-//        }
-//    }
-//}
-//
-//struct ReplyItemView: View {
-//    let reply: Reply
-//    
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 8) {
-//            HStack {
-//                AsyncImage(url: URL(string: reply.author.avatar)) { image in
-//                    image.resizable()
-//                } placeholder: {
-//                    Color.gray
-//                }
-//                .frame(width: 32, height: 32)
-//                .clipShape(Circle())
-//                
-//                Text(reply.author.name)
-//                    .font(.subheadline)
-//                
-//                Spacer()
-//                
-//                Text("回复")
-//                    .font(.caption)
-//                    .foregroundColor(.secondary)
-//                    .onTapGesture {
-//                        log("点击回复")
-//                    }
-//
-//                Text(reply.like)
-//                    .font(.caption)
-//                    .foregroundColor(.secondary)
-//                    .onTapGesture {
-//                        log("点击喜欢")
-//                    }
-//
-//                Text(reply.floor)
-//                    .font(.caption)
-//                    .foregroundColor(.secondary)
-//                    .onTapGesture {
-//                        log("点击楼层")
-//                    }
-//            }
-//            
-//            Text(reply.content)
-//                .font(.body)
-//            
-////            ForEach(reply.images, id: \.self) { imageUrl in
-////                AsyncImage(url: URL(string: imageUrl)) { image in
-////                    image
-////                        .resizable()
-////                        .aspectRatio(contentMode: .fit)
-////                } placeholder: {
-////                    Color.gray
-////                }
-////            }
-//            
-//            Text(reply.time)
-//                .font(.caption)
-//                .foregroundColor(.secondary)
-//        }
-//        .padding()
-//        .background(Color(.systemGray6))
-//        .cornerRadius(8)
-//        .onLongPressGesture {
-//            log("长按回复")
-//        }
-//    }
-//}

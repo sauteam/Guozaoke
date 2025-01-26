@@ -10,7 +10,7 @@ import SwiftSoup
 
 // MARK: - 帖子详情模型
 struct PostDetail: Identifiable {
-    let id = UUID()
+    let id : String
     let title: String
     var detailId: String?
     let node: String
@@ -34,7 +34,6 @@ struct PostDetail: Identifiable {
     var zanString: String
     /// 取消收藏 加入收藏
     var collectionString: String
-    
 }
 
 struct Author: Identifiable {
@@ -52,7 +51,7 @@ struct ReplyAuthor: Identifiable, Equatable {
     let name: String
     let avatar: String
     let replyTime: String?
-    //let floor: String?
+    let floor: String?
     let replyTo: String?
     //let like: String?
 }
@@ -127,7 +126,8 @@ class PostDetailParser: ObservableObject {
         isLoading = true
         log("详情开始刷新 \(id)")
         postId = id
-        let urlString = id.postDetailUrl() + "?p=\(currentPage)"
+        let footerUrl = currentPage > 1 ? "?p=\(currentPage)" : ""
+        let urlString = id.postDetailUrl() + footerUrl
         
         guard let url = URL(string: urlString) else {
             error = "Invalid URL"
@@ -152,11 +152,11 @@ class PostDetailParser: ObservableObject {
                 }
                 
                 do {
-                    if self.currentPage == 1 {
-                        self.postDetail = nil
-                    }
                     
                     let doc = try SwiftSoup.parse(html)
+                    if self.currentPage == 1 || !self.hasMore {
+                       self.postDetail = nil
+                   }
                     // 检查登录状态
                     let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
                     
@@ -249,6 +249,7 @@ class PostDetailParser: ObservableObject {
         let replies = try parseReplies(doc: doc, node: node)
         
         return PostDetail(
+            id: postId ?? "",
             title: title,
             detailId: postId,
             node: category,
@@ -277,6 +278,7 @@ class PostDetailParser: ObservableObject {
                 name: try item.select(spanUsername).text(),
                 avatar: try item.select(imgAvatar).attr(gsrc),
                 replyTime: try item.select(spanTime).text(),
+                floor: try item.select("span.floor").first()?.text(),
                 replyTo: try item.select(spanTime).text()
             )
             

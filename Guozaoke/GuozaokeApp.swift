@@ -23,6 +23,7 @@ struct GuozaokeApp: App {
         ///UINavigationBar.appearance().tintColor = themeColor
         applyTabBarBackground()
         requestNotificationPermission()
+        _ = ImageCacheManager.shared
     }
 
     var body: some Scene {

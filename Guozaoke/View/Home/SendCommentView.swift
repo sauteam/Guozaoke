@@ -61,7 +61,7 @@ struct SendCommentView: View {
             }
             .onAppear {
                 if let replyUser = replyUser, !replyUser.isEmpty {
-                    content = "@" + replyUser + " "
+                    content = replyUser
                 }
                 self.isFocused = true
             }

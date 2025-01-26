@@ -77,6 +77,14 @@ struct NodeInfoView: View {
                 viewModel.loadNodeInfoLastst(nodeUrl)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+            viewModel.loadNodeInfoLastst(nodeUrl)
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+        }
+
+        
     }
 }
 

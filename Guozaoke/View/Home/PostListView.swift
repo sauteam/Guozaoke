@@ -155,10 +155,10 @@ struct PostListContentView: View {
                 }
                 
                 print("1 type \(type)")
-                NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { _ in
-                    if type == .follows || type == .interest {
-                        viewModel.refresh(type: type)
-                    }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+                if type == .follows || type == .interest {
+                    viewModel.refresh(type: type)
                 }
             }
             .onDisappear() {
