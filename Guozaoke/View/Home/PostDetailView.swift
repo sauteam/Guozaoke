@@ -323,6 +323,7 @@ struct ReplyItemView: View {
                 VStack {
                     Text(reply.author.name)
                         .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .onTapGesture {
                             isUserNameInfoViewActive = true
                         }
@@ -339,6 +340,7 @@ struct ReplyItemView: View {
                         Text(reply.time)
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 Spacer()
