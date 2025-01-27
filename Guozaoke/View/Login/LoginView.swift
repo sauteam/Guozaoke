@@ -13,7 +13,9 @@ struct LoginView: View {
     @StateObject private var loginService = LoginService()
     @Binding var isPresented: Bool
     let onLoginSuccess: () -> Void
-    
+    @State private var showSafariRegister = false
+    @State private var showSafariResetPwd = false
+
     @State private var email = ""
     @State private var password = ""
     
@@ -47,17 +49,17 @@ struct LoginView: View {
                     }
                     .disabled(loginService.isLoading)
                     
-                    Button("注册账号") {
-                        // 跳转到注册页面
-                        APIService.registerUrl.openURL()
-                    }
-                    
-                    Button("忘记密码") {
-                        // 跳转到找回密码页面
-                        if let url = URL(string: APIService.forgotUrl) {
-                            url.openSafari()
-                        }
-                    }
+//                    Button("注册账号") {
+//                        // 跳转到注册页面
+//                        APIService.registerUrl.openURL()
+//                    }
+//                    
+//                    Button("忘记密码") {
+//                        // 跳转到找回密码页面
+//                        if let url = URL(string: APIService.forgotUrl) {
+//                            url.openSafari()
+//                        }
+//                    }
                 }
             }
             .navigationTitle("登录过早客")

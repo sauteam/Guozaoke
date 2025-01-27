@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SettingView: View {
-    let items: [String] = ["帮助反馈", "关于", "退出登录"]
+    let items: [String] = ["帮助反馈", "关于", "退出登录", "删除账户"]
     @State private var showLogoutSheet = false
     @State private var isLoggedOut = false
 
@@ -20,6 +20,11 @@ struct SettingView: View {
                             .onTapGesture {
                                 tapTextEvent(text)
                             }
+                            .padding()
+                        if text == "删除账户" {
+                            Text("删除账户需要去官网操作，删除账号不能恢复，请确认后再操作")
+                                .font(.callout)
+                        }
                         Spacer()
                         SFSymbol.rightIcon
                             .foregroundColor(.gray)
@@ -50,8 +55,10 @@ struct SettingView: View {
              }
          } else {
              var url =  APIService.baseUrlString
-             if urlString == "帮助反馈" {
+             if urlString == "帮助反馈"  {
                  url = APIService.baseUrlString + APIService.feedback
+             } else if urlString == "删除账户" {
+                 url = APIService.baseUrlString + APIService.deleteAccountUrl
              }
              url.openURL()
          }

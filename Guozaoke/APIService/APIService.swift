@@ -91,6 +91,7 @@ struct APIService {
     static let notifications = "/notifications"
     static let favorites     = "/favorites"
     static let feedback      = "/node/feedback"
+    static let deleteAccountUrl = "/t/112831"
 
     private init() {}
     

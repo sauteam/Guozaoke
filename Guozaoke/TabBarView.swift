@@ -68,15 +68,16 @@ struct TabBarView: View {
         
     var body: some View {
         Group {
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                NavigationSplitView {
-                    SidebarView(selection: $tab)
-              } detail: {
-                  TabContentView(tab: $tab)
-              }
-            } else {
-                TabContentView(tab: $tab)
-            }
+//            if UIDevice.current.userInterfaceIdiom == .pad {
+//                NavigationSplitView {
+//                    SidebarView(selection: $tab)
+//              } detail: {
+//                  TabContentView(tab: $tab)
+//              }
+//            } else {
+//                TabContentView(tab: $tab)
+//            }
+            TabContentView(tab: $tab)
         }
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}

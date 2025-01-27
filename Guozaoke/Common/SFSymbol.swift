@@ -18,7 +18,7 @@ enum SFSymbol: String {
     /// 􀉌
     case reply = "arrowshape.turn.up.left"
     /// 􀇾
-    case report = "exclamationmark.triangle"
+    case report = "exclamationmark.bubble"
     /// 􀅴
     case info = "info.circle"
     /// 􀋭

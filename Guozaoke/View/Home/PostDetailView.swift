@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Kingfisher
+import JDStatusBarNotification
 
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
@@ -56,6 +57,20 @@ struct PostDetailView: View {
                     } label: {
                         
                         Label("评论", systemImage: .coment)
+                    }
+                    
+                    Button {
+                        postId.postDetailUrl().openURL()
+                    } label: {
+                        Label("网页查看详情", systemImage: .safari)
+                    }
+
+                    if !AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "") {
+                        Button {
+                            NotificationPresenter.shared.present("谢谢反馈，我们已收到", includedStyle: .dark, duration: toastDuration)
+                        } label: {
+                            Label("举报", systemImage: .report)
+                        }
                     }
 
                 } label: {

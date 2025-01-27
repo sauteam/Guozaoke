@@ -10,6 +10,7 @@ import SwiftUI
 private let guozaokeText = "「过早客」guozaoke.com"
 private let webManagerId = "Mario"
 private let productInfo  = "t/117830"
+private let deleteAccountTopic = "/t/116623"
 
 struct IntroductationView: View {
     var body: some View {
@@ -25,7 +26,7 @@ struct IntroductationView: View {
                 }
                 
                 Section {
-                    Text("\(guozaokeText)没有提供删除接口，可以自行到官网修改主题或联系管理员@Mario，后续也会考虑修改主题。")
+                    Text("\(guozaokeText)修改或删除主题，可以自行到官网修改主题或联系管理员@Mario，后续也会考虑修改主题。")
                         .font(.body)
 
                         .onTapGesture {
@@ -33,6 +34,18 @@ struct IntroductationView: View {
                         }
                 } header: {
                     Text("删除主题")
+                        .font(.subheadline)
+                }
+                
+                Section {
+                    Text("\(guozaokeText)删除账户可以自行到官网删除账户操作，删除账号后不能恢复，请确认后进行删除操作")
+                        .font(.body)
+                        .onTapGesture {
+                            let url = APIService.baseUrlString + deleteAccountTopic
+                            url.openURL()
+                        }
+                } header: {
+                    Text("删除账号")
                         .font(.subheadline)
                 }
                 
