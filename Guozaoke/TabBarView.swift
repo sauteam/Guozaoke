@@ -56,12 +56,29 @@ import SwiftUI
 
 import SwiftUI
 
+// Tab 枚举扩展
+extension TabBarView {
+    enum Tab: String, CaseIterable {
+        case home = "首页", node = "节点", noti = "通知", mine = "我的"
+
+        var icon: String {
+            switch self {
+            case .home: return "list.bullet.circle.fill"
+            case .node: return "ellipsis.circle.fill"
+            case .noti: return "bell.fill"
+            case .mine: return "person.fill"
+            }
+        }
+    }
+}
+
 struct TabBarView: View {
     @State private var tab: Tab = .home
     @State private var hideTabBar = false
     @StateObject var loginChecker = LoginStateChecker.shared
     @ObservedObject var notificationManager = NotificationManager.shared
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @State private var showTabBar = true
 
     @State private var selectedItem: String?
     let items = ["首页", "节点", "通知", "我的"]
@@ -77,7 +94,9 @@ struct TabBarView: View {
 //            } else {
 //                TabContentView(tab: $tab)
 //            }
-            TabContentView(tab: $tab)
+            if showTabBar {
+                TabContentView(tab: $tab)
+            }
         }
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}
@@ -85,6 +104,20 @@ struct TabBarView: View {
         .onChange(of: notificationManager.unreadCount) { newValue in
             updateAppBadge(newValue)
         }
+        .onAppear {
+            showTabBar = true
+        }
+        .onDisappear {
+            showTabBar = false
+        }
+    }
+    
+    static func hideTabBar() {
+        UITabBar.appearance().isHidden = true
+    }
+
+    static func showTabBar() {
+        UITabBar.appearance().isHidden = false
     }
 }
 
@@ -118,7 +151,6 @@ struct TabContentView: View {
     @Binding var tab: TabBarView.Tab
     @ObservedObject var notificationManager = NotificationManager.shared
     @Environment(\.dismiss) var dismiss
-
     var body: some View {
         tabViewContent
     }
@@ -139,7 +171,7 @@ struct TabContentView: View {
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
             .tag(TabBarView.Tab.home)
             .navigationTitle("过早客")
-
+            
             Group {
                 if isiPad {
                     NodeListView()
@@ -152,7 +184,7 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.node.rawValue, systemImage: TabBarView.Tab.node.icon) }
             .tag(TabBarView.Tab.node)
-
+            
             Group {
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     NotificationsView()
@@ -178,21 +210,6 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.mine.rawValue, systemImage: TabBarView.Tab.mine.icon) }
             .tag(TabBarView.Tab.mine)
-        }
-    }}
-
-// Tab 枚举扩展
-extension TabBarView {
-    enum Tab: String, CaseIterable {
-        case home = "首页", node = "节点", noti = "通知", mine = "我的"
-
-        var icon: String {
-            switch self {
-            case .home: return "list.bullet.circle.fill"
-            case .node: return "ellipsis.circle.fill"
-            case .noti: return "bell.fill"
-            case .mine: return "person.fill"
-            }
         }
     }
 }

@@ -61,7 +61,6 @@ struct NotificationsView: View {
                 NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
             }
 
-
 //        }
     }
 }

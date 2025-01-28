@@ -94,6 +94,7 @@ enum ParseError: Error {
 // MARK: - 帖子详情解析器
 class PostDetailParser: ObservableObject {
     @Published var postDetail: PostDetail?
+    @Published var replies: [Reply] = []
     @Published var isLoading = false
     @Published var error: String?
     @Published var needLogin = false
@@ -120,15 +121,24 @@ class PostDetailParser: ObservableObject {
         currentPage = 1
         loadPostDetail(id: postId)
     }
-
+    private func containsReplys(_ id: String) -> String {
+        var url = id
+        if url.contains("#reply") {
+            if let result = url.components(separatedBy: "#").first {
+                url  = result
+            }
+        }
+        return url
+    }
     private func loadPostDetail(id: String) {
-        guard !isLoading || id == "0"  else { return }
-        isLoading = true
-        log("详情开始刷新 \(id)")
-        postId = id
-        let footerUrl = currentPage > 1 ? "?p=\(currentPage)" : ""
-        let urlString = id.postDetailUrl() + footerUrl
+        postId = containsReplys(id)
         
+        guard !isLoading || postId == "0"  else { return }
+        isLoading = true
+        let footerUrl = "?p=\(currentPage)"
+        let urlString = (postId?.postDetailUrl() ?? "") + footerUrl
+        log("详情开始刷新 \(postId ?? "1111") \(urlString)")
+
         guard let url = URL(string: urlString) else {
             error = "Invalid URL"
             isLoading = false
@@ -161,9 +171,8 @@ class PostDetailParser: ObservableObject {
                     let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
                     
                     try self.parsePagination(doc: doc)
-
-                    self.postDetail = try self.parsePostDetail(doc: doc)
                     self.currentPage += 1
+                    self.postDetail = try self.parsePostDetail(doc: doc)
                     self.hasMore = self.currentPage <= self.totalPages
                     log("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
                 } catch {
@@ -247,7 +256,7 @@ class PostDetailParser: ObservableObject {
         }
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
-        
+        self.replies.append(contentsOf: replies)
         return PostDetail(
             id: postId ?? "",
             title: title,

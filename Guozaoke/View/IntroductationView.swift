@@ -70,6 +70,7 @@ struct IntroductationView: View {
                 }
             }
             .navigationTitle("使用说明")
+            .toolbar(.hidden, for: .tabBar)
         }
     }
 }

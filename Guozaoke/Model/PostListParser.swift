@@ -123,7 +123,7 @@ class PostListParser: ObservableObject {
         guard !isLoading, hasMore else { return }
         isLoading = true
         let zhong = url
-        let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
+        let page  = currentPage > 1 ? "?p=\(currentPage)" : ""
         let urlString = APIService.baseUrlString + zhong + page
         guard let url = URL(string: urlString) else {
            error = "Invalid URL"
@@ -142,7 +142,6 @@ class PostListParser: ObservableObject {
         let zhong = type.url
         let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
         let urlString = APIService.baseUrlString + zhong + page
-        log("[url] \(zhong) \(urlString)")
         guard let url = URL(string: urlString) else {
            error = "Invalid URL"
            isLoading = false
@@ -152,6 +151,7 @@ class PostListParser: ObservableObject {
    }
     
     private func loadWithUrl(_ url: URL) {
+        log("url \(url) \(currentPage)")
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
            DispatchQueue.main.async {
                guard let self = self else { return }
@@ -186,9 +186,10 @@ class PostListParser: ObservableObject {
                    if self.navItems.count <= 0 {
                        self.navItems = try self.parseNavbar(doc: doc)
                    }
-                   if self.nodes.count <= 0 {
-                       self.nodes    =  try self.parseNodes(doc: doc)
-                   }
+                   
+                   let nodeList = try self.parseNodes(doc: doc)
+                   self.nodes.append(contentsOf: nodeList)
+                   
                    try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
                    // 累加数据

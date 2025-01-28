@@ -58,6 +58,8 @@ struct MyCollectionView: View {
             .buttonStyle(.plain)
             .listStyle(.plain)
             .navigationTitle(topicType.title)
+            .toolbar(.hidden, for: .tabBar)
+
 //            .refreshable {
 //                viewModel.loadMyTopicRefresh(type: topicType)
 //            }

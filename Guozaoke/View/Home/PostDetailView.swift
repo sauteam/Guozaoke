@@ -39,6 +39,7 @@ struct PostDetailView: View {
         .refreshable {
             detailParser.loadNews(postId: postId)
         }
+        .toolbar(.hidden, for: .tabBar)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("主题详情")
         .toolbar {
@@ -157,7 +158,7 @@ struct PostDetailContent: View, Equatable {
                 .padding(.vertical, 2)
             // 回复列表
             if !detail.replies.isEmpty {
-                ReplyListView(detailParser: detailParser, replies: detail.replies)
+                ReplyListView(detailParser: detailParser, replies: detailParser.replies)
                     .padding(.horizontal)
                     
             }

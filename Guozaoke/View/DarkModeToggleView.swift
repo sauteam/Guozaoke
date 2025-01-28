@@ -20,6 +20,7 @@ struct DarkModeToggleView: View {
             .listStyle(PlainListStyle())
         }
         .navigationTitle("当前模式")
+        .toolbar(.hidden, for: .tabBar)
         .padding()
         .onAppear {
             applyAppearanceMode(appearanceMode)
