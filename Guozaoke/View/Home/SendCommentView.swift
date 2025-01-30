@@ -20,6 +20,7 @@ struct SendCommentView: View {
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
     @FocusState private var isFocused: Bool
+    //var onDismiss: () -> Void
 
     
     var body: some View {
@@ -72,6 +73,7 @@ struct SendCommentView: View {
             .navigationTitle("创建新的回复")
             .navigationBarItems(trailing: Button("取消") {
                 isPresented = false
+                //onDismiss()
             })
         }
     }

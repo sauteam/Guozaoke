@@ -75,7 +75,7 @@ private extension GuozaokeApp {
                     .padding()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.white)
+            .background(Color.contentTextColor)
             .ignoresSafeArea()
         }
         

@@ -217,7 +217,8 @@ class PostListParser: ObservableObject {
                     let numberString = (titleText as NSString).substring(with: match.range)
                     self.notificationLinksCount = Int(numberString) ?? 0
                     NotificationManager.shared.unreadCount = self.notificationLinksCount
-                    //print("解析出的未读通知数量: \(numberString)")
+                    updateAppBadge(NotificationManager.shared.unreadCount)
+                    print("解析出的未读通知数量: \(numberString)")
                 } else {
                     //print("未找到数字")
                 }

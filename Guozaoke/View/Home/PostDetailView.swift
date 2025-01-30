@@ -22,7 +22,7 @@ struct PostDetailView: View {
                     PostDetailContent(detail: detail, postId: postId, detailParser: detailParser)
                 } else if detailParser.isLoading {
                     ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(maxWidth: .infinity)
                 } else if !detailParser.hasMore {
                     HStack {
                         Spacer()
@@ -414,26 +414,13 @@ struct ReplyItemView: View {
 //                Label("回复", systemImage: .reply)
 //            }
             
-//            Button {
-//                
-//            } label: {
-//                Label("举报", systemImage: .report)
-//            }
+            Button {
+                NotificationPresenter.shared.present("谢谢反馈，我们已收到", includedStyle: .dark, duration: toastDuration)
+            } label: {
+                Label("举报", systemImage: .report)
+            }
            
         }
-//        .actionSheet(isPresented: $showActions) {
-//            ActionSheet(
-//                title: Text("回复操作"),
-//                buttons: [
-//                    .default(Text("回复")) {
-//                        
-//                    },
-//                    .default(Text("拷贝")) { },
-//                    .destructive(Text("举报")) { },
-//                    .cancel()
-//                ]
-//            )
-//        }
     }
 }
 

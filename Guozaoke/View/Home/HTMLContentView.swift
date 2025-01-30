@@ -70,6 +70,7 @@ struct HTMLContentView: View {
             Text(content)
                 .textSelection(.enabled)
                 .font(.system(size: fontSize))
+                .foregroundColor(Color.contentTextColor)
         }
     }
     

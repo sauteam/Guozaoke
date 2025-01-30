@@ -77,6 +77,7 @@ struct SettingView: View {
                  url = APIService.baseUrlString + APIService.deleteAccountUrl
              }
              url.openURL()
+             //SafariView(url: URL(string: url) ?? APIService.baseURL)
          }
      }
 }

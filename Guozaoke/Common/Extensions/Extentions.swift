@@ -77,18 +77,6 @@ extension String {
         return self
     }
 
-
-//    var attributedString: AttributedString {
-//        do {
-//            let attributedString = try AttributedString(markdown: self, options:
-//                                                            AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
-//            return attributedString
-//        } catch {
-//            print("Couldn't parse: \(error)")
-//        }
-//        return AttributedString("Error parsing markdown")
-//    }
-
     func urlEncoded()-> String {
         let result = self.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
         return result ?? .empty
@@ -324,6 +312,9 @@ struct DeviceUtils {
 
 
 extension Color {
+    /// 黑色 白色
+    static let contentTextColor = Color("contentTextColor")
+
     private init(_ hex: Int, a: CGFloat = 1.0) {
         self.init(UIColor(hex: hex, alpha: a))
     }
@@ -359,6 +350,8 @@ extension Color {
 }
 
 extension UIColor {
+
+    
     convenience init(hex: Int, alpha: CGFloat = 1.0) {
         let components = (
             R: CGFloat((hex >> 16) & 0xff) / 255,

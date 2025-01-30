@@ -165,7 +165,7 @@ class PostDetailParser: ObservableObject {
                     
                     let doc = try SwiftSoup.parse(html)
                     if self.currentPage == 1 || !self.hasMore {
-                       self.postDetail = nil
+                        self.replies.removeAll()
                    }
                     // 检查登录状态
                     let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)

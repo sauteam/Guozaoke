@@ -10,58 +10,79 @@ import JDStatusBarNotification
 
 struct NotificationsView: View {
     @StateObject private var viewModel = NotificationsParser()
-    
+    @State private var showCommentView = false
+    @State private var selectedNotification: NotificationItem? = nil
     var body: some View {
-//        NavigationView {        
-            List(viewModel.notifications) { notification in
-                NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
-                    NotificationRowView(notification: notification)
-                }
-                if viewModel.isLoading {
-                    ProgressView()
-                } else if viewModel.notifications.isEmpty {
-                    HStack {
-                        Spacer()
-                        Text(NoMoreDataTitle.notiList)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                        Spacer()
+        
+        if viewModel.isLoading {
+            ProgressView()
+        }
+        if viewModel.notifications.isEmpty, !viewModel.isLoading {
+            HStack {
+                Spacer()
+                Text(NoMoreDataTitle.nodata)
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .listRowSeparator(.hidden)
+            .padding(.vertical, 12)
+        }
+        
+        List(viewModel.notifications) { notification in
+            NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
+                NotificationRowView(notification: notification)
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            showCommentView      = true
+                            selectedNotification = notification
+                        } label: {
+                            SFSymbol.reply
+                        }
                     }
-                    .listRowSeparator(.hidden)
-                    .padding(.vertical, 12)
-                }
-            }
-            .padding(.vertical, 5)
-            .buttonStyle(.plain)
-            .listStyle(.plain)
-//            .refreshable {
-//                Task {
-//                    await viewModel.fetchNotifications()
-//                }
-//            }
-            .navigationTitle("通知")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .onAppear {
-                if !AccountState.isLogin() {
-                    NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
-                    LoginStateChecker.clearUserInfo()
-                    return
-                }
-                Task {
-                    await viewModel.fetchNotifications()
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
-                Task {
-                    await viewModel.fetchNotificationsRefresh()
-                }
-            }
-            .onDisappear {
-                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
-            }
 
-//        }
+            }
+        }
+        .padding(.vertical, 5)
+        .buttonStyle(.plain)
+        .listStyle(.plain)
+        .refreshable {
+            Task {
+                await viewModel.fetchNotificationsRefresh()
+            }
+        }
+        .sheet(item: $selectedNotification, content: { notification in
+            let reply = "@" + notification.username + " "
+            SendCommentView(
+                detailId: notification.username,
+                replyUser: reply,
+                isPresented: $showCommentView
+            ) {
+                showCommentView = false
+                selectedNotification = nil
+            } 
+        })
+        .navigationTitle("通知")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .onAppear {
+            if !AccountState.isLogin() {
+                NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+                LoginStateChecker.clearUserInfo()
+                return
+            }
+            Task {
+                await viewModel.fetchNotifications()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+            Task {
+                await viewModel.fetchNotificationsRefresh()
+            }
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+        }
     }
 }
 
@@ -69,6 +90,7 @@ struct NotificationRowView: View {
     let notification: NotificationItem
     @State private var isUserAvatarViewActive = false
     @State private var isUserNameInfoViewActive = false
+    @State private var showCommentView = true
 
     var body: some View {
         HStack {
@@ -109,12 +131,6 @@ struct NotificationRowView: View {
                              }
                         }.hidden()
 
-//                        NavigationLink(
-//                            destination: UserInfoView(userId: notification.username),
-//                                isActive: $isUserNameInfoViewActive
-//                            ) {
-//                                EmptyView()
-//                            }.hidden()
                     }
                 
                 Text(notification.topicTitle)
