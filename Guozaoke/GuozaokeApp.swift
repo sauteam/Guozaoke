@@ -84,13 +84,17 @@ private extension GuozaokeApp {
             dateFormatter.dateFormat = "yyyy-MM-dd"
             
             let today = dateFormatter.string(from: Date())
-
+            let userName = AccountState.userName
             let festivalMessages: [String: String] = [
                 "2025-01-28": "除夕快乐！",   // 2025年除夕
                 "2025-01-29": "新年快乐！",   // 2025年春节
                 "2025-02-03": "元宵节快乐！"  // 2025年元宵节
             ]
-            return festivalMessages[today] ?? "欢迎进入过早客"
+            var text = festivalMessages[today] ?? "欢迎进入过早客"
+            if !userName.isEmpty {
+                text = userName + " " + text
+            }
+            return text
         }
     }
     
