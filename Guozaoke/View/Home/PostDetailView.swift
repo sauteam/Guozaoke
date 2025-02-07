@@ -8,6 +8,7 @@
 import SwiftUI
 import Kingfisher
 import JDStatusBarNotification
+import RichText
 
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
@@ -54,6 +55,12 @@ struct PostDetailView: View {
                     }
                     
                     Button {
+                        postId.postDetailUrl().copyToClipboard()
+                    } label: {
+                        Label("拷贝链接", systemImage: .copy)
+                    }
+
+                    Button {
                         showComentView = true
                     } label: {
                         
@@ -65,7 +72,7 @@ struct PostDetailView: View {
                     } label: {
                         Label("网页查看详情", systemImage: .safari)
                     }
-
+                    
                     if !AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "") {
                         Button {
                             NotificationPresenter.shared.present("谢谢反馈，我们已收到", includedStyle: .dark, duration: toastDuration)
@@ -131,26 +138,42 @@ struct PostDetailContent: View, Equatable {
                 .padding(.horizontal)
             
             // 帖子内容
-            HTMLContentView(
-                content: detail.content,
-                fontSize: 16
-                
-//                onLinkTap: { url in
-//                    print("Link tapped: \(url)")
-//                },
-//                onUserTap: { userUrl in
-//                    linkUserId = userUrl.htmlUserId() ?? ""
-//                    showUserInfo = true
-//                }
-            )
-            .id(UUID())
+//            HTMLContentView(
+//                content: detail.content,
+//                fontSize: 16
+//                
+////                onLinkTap: { url in
+////                    print("Link tapped: \(url)")
+////                },
+////                onUserTap: { userUrl in
+////                    linkUserId = userUrl.htmlUserId() ?? ""
+////                    showUserInfo = true
+////                }
+//            )
+//            .id(UUID())
             
-            ////RichTextView(content: detail.content)
+            //RichTextView(content: detail.content)
+            ScrollView{
+                       RichText(html: detail.content)
+                            .lineHeight(170)
+                            .colorScheme(.auto)
+                            .imageRadius(0)
+                            .fontType(.system)
+                            .foregroundColor(light: Color.primary, dark: Color.white)
+                            .linkColor(light: Color.blue, dark: Color.blue)
+                            .colorPreference(forceColor: .onlyLinks)
+                            .customCSS("")
+                            .linkOpenType(.Safari)
+                            .placeholder {
+                                ProgressView()
+                            }
+                            .transition(.easeOut)
+                    }
                 .padding(.horizontal)
             // 帖子图片
             if !detail.images.isEmpty {
-                PostImagesView(images: detail.images)
-                    .padding(.horizontal)
+                //PostImagesView(images: detail.images)
+                    //.padding(.horizontal)
             }
             
             PostFooterView(detail: detail, detailParser: detailParser, postId: postId)
@@ -391,8 +414,7 @@ struct ReplyItemView: View {
             }
             
             // 回复内容
-            HTMLContentView(content: reply.content)
-            
+            HTMLContentView(content: reply.content, fontSize: 14)
             // 回复图片
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)

@@ -165,6 +165,7 @@ class PostDetailParser: ObservableObject {
                     
                     let doc = try SwiftSoup.parse(html)
                     if self.currentPage == 1 || !self.hasMore {
+                        self.postDetail = nil
                         self.replies.removeAll()
                    }
                     // 检查登录状态
@@ -208,12 +209,11 @@ class PostDetailParser: ObservableObject {
         let category = try metaBox?.select("a.node").text() ?? ""
         let publishTime = try metaBox?.select("span.created-time").text() ?? ""
         
-        // 5. 解析帖子内容
+        // 5. 解析帖子内容 纯文字
         let contentBox = try topicDetail.select("div.ui-content").first()
-        var content = try contentBox?.select("div").text() ?? ""
-        if content.isEmpty {
-            content = title
-        }
+        let content: String = try contentBox?.html() ?? ""
+        //let content = try contentBox?.select("div").text() ?? ""
+        log("[content] \(content)")
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
             let src = try img.attr("src")

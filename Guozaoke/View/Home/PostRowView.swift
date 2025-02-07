@@ -31,17 +31,12 @@ struct PostRowView: View {
                         }
                     }
                     .overlay {
-                        
-                        NavigationStack {
-                             VStack {
-                                 Button("跳转到用户信息") {
-                                     isUserAvatarViewActive = true
-                                 }
-                             }
-                             .navigationDestination(isPresented: $isUserAvatarViewActive) {
-                                 UserInfoView(userId: post.author)
-                             }
-                        }.hidden()
+                        NavigationLink(
+                            destination: UserInfoView(userId: post.author),
+                                isActive: $isUserAvatarViewActive
+                            ) {
+                                EmptyView()
+                            }.hidden()
                     }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -61,16 +56,6 @@ struct PostRowView: View {
                                     isUserNameInfoViewActive = true
                                 }
                             }
-                            .overlay {
-                                NavigationLink(
-                                    destination: UserInfoView(userId: post.author),
-                                        isActive: $isUserNameInfoViewActive
-                                    ) {
-                                        EmptyView()
-                                    }
-                                    .hidden()
-                            }
-                        
                         Text(post.time)
                             .lineLimit(1)
                             .foregroundColor(.gray)
@@ -135,7 +120,7 @@ struct PostRowView: View {
         .padding(.vertical, 4)
         .contextMenu {
             Button {
-                post.link.copyToClipboard()
+                post.link.postDetailUrl().copyToClipboard()
             } label: {
                 Label("拷贝链接", systemImage: .copy)
             }

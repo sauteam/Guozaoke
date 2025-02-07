@@ -18,6 +18,8 @@ struct HTMLContentView: View {
     
     @State private var showUserInfo = false
     @State private var linkUserId = ""
+    @Environment(\.colorScheme) var colorScheme
+
     init(
         content: String,
         fontSize: CGFloat = 16,
@@ -39,14 +41,21 @@ struct HTMLContentView: View {
     var body: some View {
         if let attributedString = createAttributedString() {
             Text(AttributedString(attributedString))
+                .font(.system(size: fontSize))
+                .foregroundColor(Color.primary)
                 .textSelection(.enabled)
                 .environment(\.openURL, OpenURLAction { url in
                     switch url.scheme {
                     case "user":
                         if let urlString = url.absoluteString.removingPercentEncoding {
-                            showUserInfo = true
                             let userId = urlString.replacingOccurrences(of: "user://", with: "")
-                            linkUserId = userId
+                            log("[at] userId \(userId)")
+                            if userId.isEmpty == false {
+                                linkUserId = userId
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    showUserInfo = true
+                                }
+                            }
                             onUserTap?(userId)
                         }
                     case "tag":
@@ -61,20 +70,22 @@ struct HTMLContentView: View {
                     }
                     return .handled
                 })
-            
-            NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
-                EmptyView()
-            }
-
+                NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
+                    EmptyView()
+                }
         } else {
             Text(content)
                 .textSelection(.enabled)
                 .font(.system(size: fontSize))
-                .foregroundColor(Color.contentTextColor)
+                .foregroundColor(Color.primary)
         }
     }
     
     private func createAttributedString() -> NSAttributedString? {
+        let isDarkMode = colorScheme == .dark
+        let textColor = isDarkMode ? "#FFFFFF" : "#000000" // 适配黑暗模式
+        let linkColor = isDarkMode ? "#1E90FF" : "#007AFF" // 调整超链接颜色
+
         var processedContent = content
         // 处理用户链接
         let userPattern = "uid=(\\d+)"
@@ -136,29 +147,29 @@ struct HTMLContentView: View {
             font-family: -apple-system;
             font-size: \(fontSize)px;
             line-height: 1.5;
-            color: #000000;
+            color: \(textColor);
             margin: 0;
             padding: 0;
             word-wrap: break-word;
         }
         a {
-            color: #007AFF;
+            color: \(linkColor);
             text-decoration: none;
         }
         a.user {
-            color: #007AFF;
+            color: \(linkColor);
             font-weight: normal;
         }
         a.tag {
-            color: #007AFF;
+            color: \(linkColor);
             font-weight: normal;
         }
         a.email {
-            color: #007AFF;
+            color: \(linkColor);
             font-weight: normal;
         }
         a.phone {
-            color: #007AFF;
+            color: \(linkColor);
             font-weight: normal;
         }
         img {
@@ -229,3 +240,49 @@ struct HTMLContentView: View {
 //        }
 //    }
 //}
+
+
+import WebKit
+
+struct WebView: UIViewRepresentable {
+    let htmlString: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.loadHTMLString(htmlString, baseURL: nil)
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        webView.loadHTMLString(htmlString, baseURL: nil)
+    }
+}
+
+
+
+struct AttributedTextView: UIViewRepresentable {
+    let htmlString: String
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.isEditable = false
+        textView.dataDetectorTypes = [.link] // 支持超链接
+        textView.backgroundColor = .clear
+        textView.attributedText = convertHtmlToAttributedString(htmlString)
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        textView.attributedText = convertHtmlToAttributedString(htmlString)
+    }
+
+    private func convertHtmlToAttributedString(_ html: String) -> NSAttributedString {
+        guard let data = html.data(using: .utf8) else { return NSAttributedString() }
+        return try! NSAttributedString(data: data,
+                                       options: [.documentType: NSAttributedString.DocumentType.html,
+                                                 .characterEncoding: String.Encoding.utf8.rawValue],
+                                       documentAttributes: nil)
+    }
+}
+
+

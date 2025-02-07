@@ -98,6 +98,8 @@ struct PostListView: View {
 struct PostListContentView: View {
     let type: PostListType
     @StateObject private var viewModel = PostListParser()
+    @State private var showDetailView  = false
+
     var body: some View {
         ZStack {
             if viewModel.posts.isEmpty, !viewModel.isLoading {

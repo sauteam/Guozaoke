@@ -11,6 +11,7 @@
 		322627D12D3555BC00F4AAA8 /* LookinServer in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D02D3555BC00F4AAA8 /* LookinServer */; };
 		322627D42D35566700F4AAA8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D32D35566700F4AAA8 /* Kingfisher */; };
 		322627D92D35608300F4AAA8 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D82D35608300F4AAA8 /* Alamofire */; };
+		32370F552D56665200EFE597 /* RichText in Frameworks */ = {isa = PBXBuildFile; productRef = 32370F542D56665200EFE597 /* RichText */; };
 		324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0532D43EEC2000D2C48 /* Atributika */; };
 		324EF0562D43EEC2000D2C48 /* AtributikaViews in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0552D43EEC2000D2C48 /* AtributikaViews */; };
 		328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */ = {isa = PBXBuildFile; productRef = 328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */; };
@@ -78,6 +79,7 @@
 				322627D42D35566700F4AAA8 /* Kingfisher in Frameworks */,
 				324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */,
 				322627D92D35608300F4AAA8 /* Alamofire in Frameworks */,
+				32370F552D56665200EFE597 /* RichText in Frameworks */,
 				328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */,
 				322627912D33A00000F4AAA8 /* SwiftSoup in Frameworks */,
 				322627D12D3555BC00F4AAA8 /* LookinServer in Frameworks */,
@@ -149,6 +151,7 @@
 				324EF0532D43EEC2000D2C48 /* Atributika */,
 				324EF0552D43EEC2000D2C48 /* AtributikaViews */,
 				328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */,
+				32370F542D56665200EFE597 /* RichText */,
 			);
 			productName = Guozaoke;
 			productReference = 322627622D3393AC00F4AAA8 /* Guozaoke.app */;
@@ -239,6 +242,7 @@
 				322627D72D35608300F4AAA8 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */,
 				328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */,
+				32370F532D56665200EFE597 /* XCRemoteSwiftPackageReference "RichText" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 322627632D3393AC00F4AAA8 /* Products */;
@@ -440,7 +444,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 112;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -457,7 +461,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -476,7 +480,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 112;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -493,7 +497,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -647,6 +651,14 @@
 				minimumVersion = 5.10.2;
 			};
 		};
+		32370F532D56665200EFE597 /* XCRemoteSwiftPackageReference "RichText" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/NuPlay/RichText.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.0;
+			};
+		};
 		324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/psharanda/Atributika.git";
@@ -685,6 +697,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 322627D72D35608300F4AAA8 /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
+		};
+		32370F542D56665200EFE597 /* RichText */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 32370F532D56665200EFE597 /* XCRemoteSwiftPackageReference "RichText" */;
+			productName = RichText;
 		};
 		324EF0532D43EEC2000D2C48 /* Atributika */ = {
 			isa = XCSwiftPackageProductDependency;

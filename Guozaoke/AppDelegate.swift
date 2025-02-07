@@ -5,6 +5,9 @@
 //  Created by scy on 2025/1/21.
 //
 
+// com.guozaoke.app.ios
+// 
+
 import UIKit
 
 class AppDelegate: UIResponder, UIApplicationDelegate {

@@ -73,9 +73,10 @@ private extension GuozaokeApp {
                     .font(.title)
                     .fontWeight(.thin)
                     .padding()
+                    .foregroundColor(Color.primary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.contentTextColor)
+            //.foregroundColor(Color.primary)
             .ignoresSafeArea()
         }
         
@@ -88,7 +89,7 @@ private extension GuozaokeApp {
             let festivalMessages: [String: String] = [
                 "2025-01-28": "除夕快乐！",   // 2025年除夕
                 "2025-01-29": "新年快乐！",   // 2025年春节
-                "2025-02-03": "元宵节快乐！"  // 2025年元宵节
+                "2025-02-12": "元宵节快乐！"  // 2025年元宵节
             ]
             var text = festivalMessages[today] ?? "欢迎进入过早客"
             if !userName.isEmpty {
