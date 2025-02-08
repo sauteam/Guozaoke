@@ -54,6 +54,13 @@ enum SFSymbol: String {
     case coment = "ellipsis.message"
     case topics = "paperplane"
     case rightIcon = "chevron.right"
+    case helper = "questionmark.circle"
+    case pencilCircle = "pencil.circle"
+    case exit = "iphone.and.arrow.forward.outward"
+    case remove = "iphone.slash"
+    case notice = "list.bullet.clipboard"
+    case app = "app"
+    case heartCircle = "heart.circle"
 }
 
 extension SFSymbol: View {

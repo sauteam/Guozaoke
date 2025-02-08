@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import CryptoKit
+import JDStatusBarNotification
 
 let themeColor = UIColor(hex: 303030)
 
@@ -93,6 +94,7 @@ extension String {
         }
 
         UIPasteboard.general.string = self
+        NotificationPresenter.shared.present("拷贝成功", includedStyle: .dark, duration: toastDuration)
     }
     
     var md5: String {
@@ -269,7 +271,6 @@ extension Bundle {
         }
         return result
     }
-
 }
 
 
@@ -361,3 +362,4 @@ extension UIColor {
         self.init(red: components.R, green: components.G, blue: components.B, alpha: alpha)
     }
 }
+

@@ -21,6 +21,7 @@ struct UserInfo {
     let email: String
     var blockText: String?
     var blockLink: String?
+    let profileInfo: [String]
     
     let topics: [PostItem]
     let replies: [MyReply]
@@ -231,6 +232,26 @@ class UserInfoParser: ObservableObject {
         let emailElement = try doc.select("dl:has(dt:contains(Email)) dd").first()
         let email = try emailElement?.text() ?? ""
         
+        let dls = try doc.select("dl")
+        var parsedData: [String: String] = [:]
+        for dl in dls {
+                let key = try dl.select("dt").text()
+                let valueElement = try dl.select("dd")
+                var value = try valueElement.text()
+                // 如果 `dd` 里面包含 `<a>` 链接，则取 `href`
+                if let link = try? valueElement.select("a").attr("href"), !link.isEmpty {
+                    value = link
+                }
+                parsedData[key] = value
+            }
+        
+        var profile:[String] = []
+        // 打印解析结果
+        for (key, value) in parsedData {
+            print("[userInfo]\(key): \(value)")
+            profile.append("\(key): \(value)")
+        }
+        
         var blockText: String = "屏蔽此账号", blockLink: String = ""
         if let linkElement = try doc.select("div.self-introduction.container-box.mt10 a").first() {
             let linkText = try linkElement.text()
@@ -243,7 +264,7 @@ class UserInfoParser: ObservableObject {
             
         }
         
-        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, topics: topics, replies: replies)
+        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topics: topics, replies: replies)
     }
 
     private func parseReply(doc: Document) throws -> [MyReply] {

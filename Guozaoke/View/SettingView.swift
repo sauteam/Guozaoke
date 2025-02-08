@@ -25,24 +25,71 @@ struct SettingView: View {
 
 
     var body: some View {
-            List {
-                ForEach(items, id: \.self) { text in
-                    HStack {
-                        Text(text)
-                            .onTapGesture {
-                                tapTextEvent(text)
-                            }
-                            //.padding()
-                        if text == "删除账户" {
-                            Text("删除账户需要去官网操作，删除账号不能恢复，请确认后再操作")
-                                .font(.footnote)
-                                .foregroundColor(.gray)
-                        }
-                        Spacer()
-                        SFSymbol.rightIcon
-                            .foregroundColor(.gray)
+        Form {
+            Section {
+                
+                NavigationLink(destination: IntroductationView())  {
+                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖") {}
+                }
+
+                NavigationLink(destination: NodeInfoView(node: "意见反馈", nodeUrl: APIService.feedback)) {
+                    ProfileRow(icon: SFSymbol.pencilCircle.rawValue, title: "意见反馈") {
+                        
                     }
                 }
+                
+                NavigationLink(destination: NodeInfoView(node: "公告", nodeUrl: APIService.notice)) {
+                    ProfileRow(icon: SFSymbol.notice.rawValue, title: "公告") {
+                        
+                    }
+                }
+                
+                NavigationLink(destination: AboutGuozaokeView())  {
+                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于") {
+                        
+                    }
+                }
+                
+            } header: {
+                Text("帮助")
+            }
+                   
+            Section {
+                NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
+                    ProfileRow(icon: SFSymbol.remove.rawValue, title: "删除账户") {
+                        
+                    }
+                }
+            } header: {
+                Text("删除账号")
+            }
+
+            Section {
+                ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
+                    
+                }.onTapGesture {
+                    GuozaokeAppInfo.toAppStore()
+                }
+                
+                ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
+                    
+                }.onTapGesture {
+                    GuozaokeAppInfo.toWriteReview()
+                }
+            } header: {
+                Text("App Store查看")
+            }
+                        
+            Section {
+                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录") {
+                    
+                }.onTapGesture {
+                    tapTextEvent("退出登录")
+                }
+            } header: {
+                Text("退出账号")
+            }
+                        
             .padding(.vertical, 10)
             .listStyle(InsetGroupedListStyle())
             .toolbar(.hidden, for: .tabBar)
@@ -69,15 +116,6 @@ struct SettingView: View {
                  return
              }
              presentedSheet = .logout
-         } else {
-             var url =  APIService.baseUrlString
-             if urlString == "帮助反馈"  {
-                 url = APIService.baseUrlString + APIService.feedback
-             } else if urlString == "删除账户" {
-                 url = APIService.baseUrlString + APIService.deleteAccountUrl
-             }
-             url.openURL()
-             //SafariView(url: URL(string: url) ?? APIService.baseURL)
          }
      }
 }

@@ -9,8 +9,6 @@ import SwiftUI
 
 private let guozaokeText = "「过早客」guozaoke.com"
 private let webManagerId = "Mario"
-private let productInfo  = "t/117830"
-private let deleteAccountTopic = "/t/116623"
 
 struct IntroductationView: View {
     var body: some View {
@@ -26,35 +24,32 @@ struct IntroductationView: View {
                 }
                 
                 Section {
-                    Text("\(guozaokeText)修改或删除主题，可以自行到官网修改主题或联系管理员@Mario，后续也会考虑修改主题。")
-                        .font(.body)
+                    NavigationLink(destination: PostDetailView(postId: APIService.deleteTopicUrl)) {
+                        Text("\(guozaokeText)修改或删除主题，可以自行到官网修改主题或联系管理员@Mario，后续也会考虑修改主题。")
+                            .font(.body)
+                    }
 
-                        .onTapGesture {
-                            webManagerId.userProfileUrl().openURL()
-                        }
                 } header: {
                     Text("删除主题")
                         .font(.subheadline)
                 }
                 
                 Section {
-                    Text("\(guozaokeText)删除账户可以自行到官网删除账户操作，删除账号后不能恢复，请确认后进行删除操作")
-                        .font(.body)
-                        .onTapGesture {
-                            let url = APIService.baseUrlString + deleteAccountTopic
-                            url.openURL()
-                        }
+                    NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
+                        Text("\(guozaokeText)删除账户可以自行到官网删除账户操作，删除账号后不能恢复，请确认后进行删除操作")
+                            .font(.body)
+                    }
+
                 } header: {
                     Text("删除账号")
                         .font(.subheadline)
                 }
                 
                 Section {
-                    Text("后续会考虑支持图片上传以及创建主题预览等功能，希望大家多多使用，多多反馈。")
-                        .font(.body)
-                        .onTapGesture {
-                            productInfo.postDetailUrl().openURL()
-                        }
+                    NavigationLink(destination: PostDetailView(postId: APIService.appInfo)) {
+                        Text("后续会考虑支持图片上传以及创建主题预览等功能，希望大家多多使用，多多反馈。")
+                            .font(.body)
+                    }
                         
                 } header: {
                     Text("功能支持")
@@ -62,8 +57,10 @@ struct IntroductationView: View {
                 }
                 
                 Section {
-                    Text("感谢站长的支持与帮助，感谢马哥@mzlogin提供接口教程，感谢小伙伴的支持与关注。")
-                        .font(.body)
+                    NavigationLink(destination: UserInfoView(userId: "mzlogin")) {
+                        Text("感谢站长的支持与帮助，感谢马哥@mzlogin提供接口教程，感谢小伙伴的支持与关注。")
+                            .font(.body)
+                    }
                 } header: {
                     Text("致谢")
                         .font(.subheadline)

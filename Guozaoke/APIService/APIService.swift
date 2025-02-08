@@ -72,6 +72,36 @@ enum MyTopicEnum: String {
     }
 }
 
+/// App 版本信息
+struct GuozaokeAppInfo {
+    static let AppId = "6740704728"
+    static let AppStoreUrl = "https://apps.apple.com/app/id\(AppId)"
+    static let AppStoreReviewUrl = "itms-apps://itunes.apple.com/app/id\(AppId)?action=write-review"
+
+    static var appName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Guozaoke"
+    }
+    
+    static var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+    }
+
+    static var buildNumber: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "100"
+    }
+    
+    
+    /// 去AppStore
+    static func toAppStore() {
+        GuozaokeAppInfo.AppStoreUrl.openURL()
+    }
+    /// 去评论
+    static func toWriteReview() {
+        GuozaokeAppInfo.AppStoreReviewUrl.openURL()
+    }
+}
+
+
 struct BaseResponse: Codable {
     let message: String?
     let success: Int?
@@ -91,7 +121,11 @@ struct APIService {
     static let notifications = "/notifications"
     static let favorites     = "/favorites"
     static let feedback      = "/node/feedback"
-    static let deleteAccountUrl = "/t/112831"
+    static let helper        = "/node/guide"
+    static let notice        = "/node/notice"
+    static let deleteTopicUrl = "/t/112831"
+    static let deleteAccountUrl = "/t/116623"
+    static let appInfo = "/t/117830"
 
     private init() {}
     

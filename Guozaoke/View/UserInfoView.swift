@@ -11,8 +11,8 @@ struct UserInfoView: View {
     let userId: String
     @State private var isLoading = true
     @StateObject private var parser = UserInfoParser()
-    @State private var selectedTab = 0
-    @State private var followText = "+关注"
+    @State private var selectedTab  = 1
+    @State private var followText   = "+关注"
 
     var body: some View {
         VStack() {
@@ -32,34 +32,32 @@ struct UserInfoView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    let isMe = AccountState.isSelf(userName: userId)
-                    if isMe {
-                        Text("账号: \(userInfo.email)")
-                            .font(.caption)
-                            .bold()
-                    } else {
-                        Button(action: {
-                            print("关注按钮点击")
-                            Task {
-                                do {
-                                    let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
-                                    if success == true {
-                                        await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
-                                    }
+//                    let isMe = AccountState.isSelf(userName: userId)
+//                    Text("\(userInfo.profileInfo ?? "")")
+//                        .font(.caption)
+//                        .bold()
+                    
+                    Button(action: {
+                        print("关注按钮点击")
+                        Task {
+                            do {
+                                let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
+                                if success == true {
+                                    await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
                                 }
                             }
-                            
-                        }) {
-                            Text(userInfo.followTextChange)
-                                .font(.headline)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(16)
                         }
+                        
+                    }) {
+                        Text(userInfo.followTextChange)
+                            .font(.headline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(16)
                     }
-                    
+
                     Text("\(userInfo.number) \(userInfo.joinDate)")
                         .font(.footnote)
                         .foregroundColor(.gray)
@@ -69,14 +67,28 @@ struct UserInfoView: View {
                 
                 // Tab Selection
                 Picker("选择列表", selection: $selectedTab) {
-                    Text("主题").tag(0)
-                    Text("回复").tag(1)
+                    Text("资料").tag(0)
+                    Text("主题").tag(1)
+                    Text("回复").tag(2)
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
                 
                 // List Section
                 if selectedTab == 0 {
+                    List {
+                        ForEach(parser.userInfo?.profileInfo ?? [], id: \.self) { userInfo in
+                            MyUserInfoView(userInfo: userInfo)
+                        }
+                        if parser.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .listRowSeparator(.hidden)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .listStyle(.plain)
+                } else if selectedTab == 1 {
                     List {
                         ForEach(parser.topics) { post in
                             NavigationLink {
@@ -114,7 +126,7 @@ struct UserInfoView: View {
                     .refreshable {
                         Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
                     }
-                } else {
+                } else if selectedTab == 2 {
                     List {
                         ForEach(parser.replies) { post in
                             NavigationLink {
@@ -227,6 +239,21 @@ struct UserInfoView: View {
     }
 }
 
+struct MyUserInfoView: View {
+    let userInfo: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(userInfo)
+                    .font(.callout)
+                    .onLongPressGesture {
+                        userInfo.copyToClipboard()
+                    }
+            }
+        }
+    }
+}
+
 struct MyReplyRowView: View {
     @State private var isPostDetailViewActive = false
     @State private var isUserInfoViewActive = false
@@ -295,38 +322,6 @@ struct MyReplyRowView: View {
     }
 }
 
-
-struct UserInfoHeader: View {
-    let userInfo: UserInfo
-    var body: some View {
-        VStack(alignment: .leading) {
-            HStack(alignment: .top) {
-                KFImageView(userInfo.avatar)
-                .frame(width: 60, height: 60)
-                .clipShape(Circle())
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    
-                    Text(userInfo.username)
-                        .font(.title3)
-                        .bold()
-                    
-                    Text("昵称: \(userInfo.nickname)")
-                        .font(.caption)
-                        .bold()
-                    
-                    Text("Email: \(userInfo.email)")
-                        .font(.caption)
-                        .bold()
-                    
-                    Text("\(userInfo.joinDate) \(userInfo.number)")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-            }
-        }
-    }
-}
 
 
 

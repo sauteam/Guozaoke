@@ -87,10 +87,6 @@ struct MyProfileView: View {
                         NavigationLink(destination: MyCollectionView(topicType: .topics))  {
                             ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
                         }
-                                
-                        NavigationLink(destination: IntroductationView())  {
-                            ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖") {}
-                        }
                         
                         NavigationLink(destination: DarkModeToggleView()) {
                             ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {}

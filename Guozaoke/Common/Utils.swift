@@ -102,7 +102,6 @@ extension String {
         //self.copyToClipboard()
         URL(self)?.openSafari()
     }
-    
 }
 
 
@@ -117,3 +116,4 @@ extension EnvironmentValues {
         set { self[ThemeColorKey.self] = newValue }
     }
 }
+

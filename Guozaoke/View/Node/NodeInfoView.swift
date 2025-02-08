@@ -21,6 +21,18 @@ struct NodeInfoView: View {
                     .listRowSeparator(.hidden)
             }
             
+            if viewModel.posts.isEmpty, !viewModel.isLoading {
+                HStack {
+                    Spacer()
+                    Text(NoMoreDataTitle.nodata)
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+                .padding(.vertical, 12)
+            }
+            
             List {
                 ForEach(viewModel.posts) { post in
                     NavigationLink {
