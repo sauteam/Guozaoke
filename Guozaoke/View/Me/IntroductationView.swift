@@ -46,7 +46,7 @@ struct IntroductationView: View {
                 }
                 
                 Section {
-                    NavigationLink(destination: PostDetailView(postId: APIService.appInfo)) {
+                    NavigationLink(destination: PostDetailView(postId: APIService.iosUpdateTopicInfo)) {
                         Text("后续会考虑支持图片上传以及创建主题预览等功能，希望大家多多使用，多多反馈。")
                             .font(.body)
                     }
@@ -72,6 +72,6 @@ struct IntroductationView: View {
     }
 }
 
-#Preview {
-    IntroductationView()
-}
+//#Preview {
+//    IntroductationView()
+//}

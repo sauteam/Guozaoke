@@ -48,15 +48,24 @@ struct NodeItem: Identifiable, Hashable, Equatable {
     let nodes: [Node]
 }
 
-struct Node: Identifiable, Hashable, Equatable {
-    let id = UUID()
+struct Node: Hashable, Equatable {
+    //let id = UUID()
     /// 文字
     var title: String
     /// 比如 /nodes/job 找工作
     var link: String
 }
 
-
+struct NodeInfo: Hashable, Equatable {
+    //let id = UUID()
+    var title: String
+    /// 比如 /nodes/job 找工作
+    var link: String
+    var followText: String
+    var followLink: String
+    var description: String
+    var creatLink: String
+}
 
 // MARK: - 数据模型
 class PostListParser: ObservableObject {
@@ -64,6 +73,7 @@ class PostListParser: ObservableObject {
     @Published var posts: [PostItem] = []
     @Published var nodes: [NodeItem] = []
     @Published var onlyNodes: [Node] = []
+    @Published var nodeInfo: NodeInfo?
     @Published var currentPage = 1
     @Published var totalPages  = 1
     @Published var isLoading   = false
@@ -71,8 +81,11 @@ class PostListParser: ObservableObject {
     @Published var hasMore = true
     @Published var needLogin = false
     @Published var notificationLinksCount = 0
+    @Published var isFollowedNodeInfo = false
+
     private var currentType: PostListType?
     private var urlHeader: String?
+    private var url: String?
     private var rowEnum: PostItemEnum = .homeRow
     var justNodes: [Node] {
         let allNodes: [Node] = nodes.flatMap { $0.nodes }
@@ -82,7 +95,7 @@ class PostListParser: ObservableObject {
     var hadNodeItemData: Bool {
         return self.nodes.count > 0
     }
-    
+            
     // MARK: - 加载我的数据
     
     func loadMyTopicRefresh(type: MyTopicEnum) {
@@ -100,7 +113,7 @@ class PostListParser: ObservableObject {
     
     // MARK: - 刷新主题列表
     
-    func refresh(type: PostListType) {
+    func refreshPostList(type: PostListType) {
         currentPage = 1
         hasMore   = true
         isLoading = false
@@ -117,6 +130,33 @@ class PostListParser: ObservableObject {
         loadNodeInfo(url)
     }
     
+    func followNodeInfoAction(_ nodeLink: String?) async -> (Bool, String) {
+        if !LoginStateChecker.isLogin() {
+            return (false, "")
+        }
+        
+        guard let nodeLink else {
+            return (false, "")
+        }
+        
+        do {
+            let html = try await NetworkManager.shared.get(nodeLink)
+            runInMain {
+                self.isFollowedNodeInfo.toggle()
+                if self.isFollowedNodeInfo  == true {
+                    self.nodeInfo?.title = "取消关注"
+                } else {
+                    self.nodeInfo?.title = "关注主题"
+                }
+                ToastView.toastText(self.isFollowedNodeInfo ? "主题关注成功": "取消关注主题成功")
+            }
+            return (true, html)
+        } catch {
+            log("请求失败: \(error.localizedDescription)")
+        }
+        return (false, "")
+    }
+
     // MARK: - 加载节点详情 加载更多
     
     func loadNodeInfo(_ url: String) {
@@ -132,7 +172,7 @@ class PostListParser: ObservableObject {
         }
         loadWithUrl(url)
     }
-    
+        
     // MARK: - 加载主题列表 加载更多
 
     func loadMorePosts(type: PostListType) {
@@ -140,8 +180,17 @@ class PostListParser: ObservableObject {
         guard !isLoading, hasMore, type == currentType else { return }
         isLoading = true
         let zhong = type.url
-        let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
+        var page  = ""
+        if currentPage > 1 {
+            if zhong.contains("?") {
+                page = "&p=\(currentPage)"
+            } else {
+                page = "?p=\(currentPage)"
+            }
+        }
         let urlString = APIService.baseUrlString + zhong + page
+        urlHeader = zhong
+        url = urlString
         guard let url = URL(string: urlString) else {
            error = "Invalid URL"
            isLoading = false
@@ -196,7 +245,7 @@ class PostListParser: ObservableObject {
                    self.currentPage += 1
                    self.posts.append(contentsOf: newPosts)
                    self.hasMore = self.currentPage <= self.totalPages
-                   log("p \(self.currentPage) t \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
+                   log("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
                } catch {
                    self.error = error.localizedDescription
                }
@@ -282,6 +331,24 @@ class PostListParser: ObservableObject {
     // 解析帖子列表
     func parseTopics(doc: Document) throws -> [PostItem] {
         let topics = try doc.select("div.topic-item")
+        
+        if self.nodeInfo == nil {
+            let createTopicLink = try doc.select("a.btn.btn-default").attr("href")
+            let createTopicText = try doc.select("a.btn.btn-default").text()
+            // 解析板块名称
+            let boardName = try doc.select("span.bread-nav").text()
+            // 解析关注按钮
+            let followLink = try doc.select("span.label-success a").attr("href")
+            let followText = try doc.select("span.label-success a").text()
+            // 解析板块简介
+            let description = try doc.select("span.f14").text()
+            self.nodeInfo = NodeInfo(title: boardName, link: urlHeader ?? "", followText: followText, followLink: followLink, description: description, creatLink: createTopicLink)
+            print("创建主题按钮: \(createTopicText) (\(createTopicLink))")
+            print("板块名称: \(boardName) \(urlHeader ?? "")")
+            print("关注链接: \(followText) (\(followLink))")
+            print("板块简介: \(description)")
+        }
+        
         return try topics.map { element in
             PostItem(
                 title: try element.select("h3.title a").text(),

@@ -14,6 +14,7 @@ struct PostListView: View {
     @State private var isLoading = false
     @State private var showAddPostView = false
     @State private var showSearchView  = false
+    @State private var selectedTopic: Node? = nil // 可以传 nil
 
 //    @Environment(\.themeColor) private var themeColor: Color
     
@@ -22,7 +23,7 @@ struct PostListView: View {
             VStack(spacing: 0) {
                 // 顶部分类按钮
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
+                    HStack(spacing: 10) {
                         ForEach(PostListType.allCases, id: \.self) { type in
                             Button(action: {
                                 selectedTab = type
@@ -79,7 +80,7 @@ struct PostListView: View {
                 }
             }
             .sheet(isPresented: $showAddPostView) {
-                SendPostView(isPresented: $showAddPostView) {
+                SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
                     
                 }
             }
@@ -147,20 +148,20 @@ struct PostListContentView: View {
             .buttonStyle(.plain)
             .listStyle(.plain)
             .refreshable {
-                viewModel.refresh(type: type)
+                viewModel.refreshPostList(type: type)
             }
             .id(type)
             .onAppear() {
 
                 if viewModel.posts.isEmpty {
-                    viewModel.refresh(type: type)
+                    viewModel.refreshPostList(type: type)
                 }
                 
                 print("1 type \(type)")
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
                 if type == .follows || type == .interest {
-                    viewModel.refresh(type: type)
+                    viewModel.refreshPostList(type: type)
                 }
             }
             .onDisappear() {

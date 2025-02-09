@@ -105,7 +105,7 @@ class PostDetailParser: ObservableObject {
     
     @Published var isCollection = false
     @Published var isZan  = false
-            
+
     var zanText: String {
         return isZan ? "已感谢":"感谢"
     }

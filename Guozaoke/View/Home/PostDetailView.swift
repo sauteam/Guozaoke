@@ -13,7 +13,7 @@ import RichText
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
     @StateObject private var detailParser = PostDetailParser()
-    let postId: String
+    let postId: String 
     @State private var showComentView  = false
 
     var body: some View {
@@ -60,17 +60,18 @@ struct PostDetailView: View {
                         Label("拷贝链接", systemImage: .copy)
                     }
 
+                   
+                    Button {
+                        postId.postDetailUrl().openURL()
+                    } label: {
+                        Label("网页查看详情", systemImage: .safari)
+                    }
+                    
                     Button {
                         showComentView = true
                     } label: {
                         
                         Label("评论", systemImage: .coment)
-                    }
-                    
-                    Button {
-                        postId.postDetailUrl().openURL()
-                    } label: {
-                        Label("网页查看详情", systemImage: .safari)
                     }
                     
                     if !AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "") {

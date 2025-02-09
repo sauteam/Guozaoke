@@ -7,7 +7,6 @@
 
 import SwiftSoup
 import SwiftUI
-import JDStatusBarNotification
 
 struct UserInfo {
     let avatar: String
@@ -25,16 +24,13 @@ struct UserInfo {
     
     let topics: [PostItem]
     let replies: [MyReply]
+    var blockUser: Bool = false
     
     var followTextChange: String {
         if followText.isEmpty == true {
             return "+关注"
         }
         return followText == "取消关注" ? "取消关注" : "+关注"
-    }
-    
-    var isBlocked: Bool {
-        return blockText == "屏蔽此帐号" ? false : true
     }
 }
 
@@ -53,6 +49,7 @@ class UserInfoParser: ObservableObject {
     @Published var replies: [MyReply] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    //@Published var blockUser: Bool = false
 
     private var currentPage = 1
     private var totalPages  = 1
@@ -60,8 +57,17 @@ class UserInfoParser: ObservableObject {
     private var baseUrl: String = ""
     private var isUserInfoUrl = false
     
-    func loadMyTopic(type: MyTopicEnum, reset: Bool) async {
-        await fetchUserInfoAndData("/u/"+"\(AccountState.userName)/" + type.rawValue, reset: false)
+    var moreTopicText : String?
+    var moreReplyText : String?
+    var moreTopicLink: String?
+    var moreReplyLink: String?
+    
+    func loadOtherTopic(topicUrl: String, reset: Bool) async {
+        await fetchUserInfoAndData(topicUrl, reset: false)
+    }
+
+    func loadMyTopic(linkUrl: String, reset: Bool) async {
+        await fetchUserInfoAndData(linkUrl, reset: false)
     }
     
     var hadData: Bool {
@@ -73,7 +79,7 @@ class UserInfoParser: ObservableObject {
     
     private func showToast() {
         runInMain {
-            NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+            ToastView.toastText(needLoginTextCanDo)
         }
     }
     
@@ -90,13 +96,16 @@ class UserInfoParser: ObservableObject {
         do {
             let html = try await NetworkManager.shared.get(userId)
             runInMain {
-                if self.userInfo?.isBlocked  == true {
+                self.userInfo?.blockUser.toggle()
+                let isBlocked = self.userInfo?.blockUser
+                if isBlocked  == false {
                     self.userInfo?.blockText = "屏蔽此账号"
                     self.userInfo?.blockLink = self.userInfo?.blockLink?.replacingOccurrences(of: "block", with: "unblock")
                 } else {
                     self.userInfo?.blockText = "取消屏蔽"
                     self.userInfo?.blockLink = self.userInfo?.blockLink?.replacingOccurrences(of: "unblock", with: "block")
                 }
+                ToastView.toastText(isBlocked == true ? "屏蔽成功": "取消屏蔽成功")
             }
             return html
         } catch {
@@ -252,11 +261,18 @@ class UserInfoParser: ObservableObject {
             profile.append("\(key): \(value)")
         }
         
-        var blockText: String = "屏蔽此账号", blockLink: String = ""
+        var blockText: String = "屏蔽此账号"
+        var blockLink: String = ""
+        var blockUser = false
         if let linkElement = try doc.select("div.self-introduction.container-box.mt10 a").first() {
             let linkText = try linkElement.text()
             let linkHref = try linkElement.attr("href")
             blockText = linkText
+            /// 显示这个
+            if linkText != "屏蔽此帐号" {
+                blockText = "取消屏蔽"
+                blockUser = true
+            }
             blockLink = linkHref
             print("文本内容: \(linkText)")
             print("链接地址: \(linkHref)")
@@ -264,11 +280,16 @@ class UserInfoParser: ObservableObject {
             
         }
         
-        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topics: topics, replies: replies)
+        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topics: topics, replies: replies, blockUser: blockUser)
     }
 
     private func parseReply(doc: Document) throws -> [MyReply] {
         let topics = try doc.select("div.reply-item")
+        let footerText = try doc.select("div.ui-footer").text()
+        let replyLink  = try doc.select("div.ui-footer a").attr(ghref)
+        moreReplyText = footerText
+        moreReplyLink = replyLink
+        
         return try topics.map { element in
             MyReply(
                 title: try element.select("span.title").text(),
@@ -282,6 +303,11 @@ class UserInfoParser: ObservableObject {
     
     // 解析帖子列表
     private func parseTopics(doc: Document, isTopic: Bool) throws -> [PostItem] {
+        let footerText = try doc.select("div.ui-footer").text()
+        let topicLink  = try doc.select("div.ui-footer a").attr(ghref)
+        moreTopicText = footerText
+        moreTopicLink = topicLink
+        
         let topics = try doc.select("div.topic-item")
         return try topics.map { element in
             PostItem(

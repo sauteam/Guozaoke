@@ -40,23 +40,9 @@ struct AboutGuozaokeView: View {
                 .padding()
                 .foregroundColor(Color.primary)
             
-            NavigationLink(destination: UserInfoView(userId: "isau")) {
-                Text("过早客iOS开发者：isau")
-                    .font(.callout)
-                    .fontWeight(.thin)
-                    .padding()
-                    .foregroundColor(Color.primary)
-            }
-            
-            NavigationLink(destination: UserInfoView(userId: "Mario")) {
-                Text("网站管理大大：Mario")
-                    .font(.callout)
-                    .fontWeight(.thin)
-                    .padding()
-                    .foregroundColor(Color.primary)
-            }
             Spacer()
         }
+        .navigationTitle("关于过早客")
     }
 }
 

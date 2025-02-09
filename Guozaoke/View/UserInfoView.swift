@@ -27,37 +27,44 @@ struct UserInfoView: View {
                     KFImageView(userInfo.avatar)
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
-                    
-                    Text(userInfo.username)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-//                    let isMe = AccountState.isSelf(userName: userId)
-//                    Text("\(userInfo.profileInfo ?? "")")
-//                        .font(.caption)
-//                        .bold()
-                    
-                    Button(action: {
-                        print("关注按钮点击")
-                        Task {
-                            do {
-                                let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
-                                if success == true {
-                                    await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
+                    let isMe = AccountState.isSelf(userName: userInfo.username)
+                    HStack {
+                        Text(userInfo.username)
+                            .font(.title2)
+                            .fontWeight(.bold)
+//                        Button {
+//                            Task {
+//                                let response = await parser.blockUserAction(parser.userInfo?.blockLink)
+//                                print("block \(response)")
+//                            }
+//                        } label: {
+//                            Label("", systemImage: parser.userInfo?.isBlocked ?? false ? .unblock : .block)
+//                        }
+                    }
+                    if isMe == false {
+                        HStack {
+                            Button(action: {
+                                print("关注按钮点击")
+                                Task {
+                                    do {
+                                        let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
+                                        if success == true {
+                                            await parser.fetchUserInfoAndData(self.userId.userProfileUrl())
+                                        }
+                                    }
                                 }
+                                
+                            }) {
+                                Text(userInfo.followTextChange)
+                                    .font(.headline)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(16)
                             }
                         }
-                        
-                    }) {
-                        Text(userInfo.followTextChange)
-                            .font(.headline)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(16)
                     }
-
                     Text("\(userInfo.number) \(userInfo.joinDate)")
                         .font(.footnote)
                         .foregroundColor(.gray)
@@ -108,17 +115,28 @@ struct UserInfoView: View {
                             ProgressView()
                                 .frame(maxWidth: .infinity)
                                 .listRowSeparator(.hidden)
-                        } else if !parser.hasMoreData, !parser.topics.isEmpty {
-                            
+                        } else if parser.topics.isEmpty {
                             HStack {
                                 Spacer()
-                                Text(NoMoreDataTitle.homeList)
+                                Text(NoMoreDataTitle.nodaText)
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
                                 Spacer()
                             }
                             .listRowSeparator(.hidden)
                             .padding(.vertical, 12)
+                        } else if !parser.topics.isEmpty {
+//                            HStack {
+//                                NavigationLink(destination: MyCollectionView(linkUrl: parser.moreTopicLink, linkText: "\(parser.userInfo?.nickname) \(parser.moreTopcText)")) {
+//                                    //Spacer()
+//                                    Text(parser.topics)
+//                                        .font(.footnote)
+//                                        .foregroundColor(.secondary)
+//                                    //Spacer()
+//                                }
+//                            }
+//                            .listRowSeparator(.hidden)
+//                            .padding(.vertical, 12)
                         }
                     }
                     .buttonStyle(.plain)
@@ -199,7 +217,7 @@ struct UserInfoView: View {
                             }
                         } label: {
                             
-                            Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.isBlocked ?? false ? .block : .unblock)
+                            Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.blockUser ?? false ? .block : .unblock)
                         }
                     }
 

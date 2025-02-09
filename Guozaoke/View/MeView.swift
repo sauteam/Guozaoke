@@ -78,13 +78,16 @@ struct MyProfileView: View {
                     }
                     
                     Section {
-                        NavigationLink(destination: MyCollectionView(topicType: .collections)) {
-                            ProfileRow(icon: SFSymbol.bookmarkFill.rawValue, title: "收藏") {
+                        let username      = AccountState.userName
+                        let collectionUrl = "/u/\(username)/favorites"
+                        let topicUrl = "/u/\(username)/topics"
+                        NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
+                            ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏") {
                                 
                             }
                         }
                         
-                        NavigationLink(destination: MyCollectionView(topicType: .topics))  {
+                        NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
                             ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
                         }
                         

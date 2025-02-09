@@ -27,13 +27,13 @@ enum SFSymbol: String {
     case unblock = "eye"
     /// 􀋯
     case block = "eye.slash"
-    /// 􀊴
-    case collection = "heart"
     /// 􀊵
-    case collectionFill = "heart.fill"
-    /// 􀊴
+    case heartFill = "heart.fill"
+    /// 􀊷
+    case heartSlashFill = "heart.slash.fill"
+    /// 􀉿
     case zan = "hand.thumbsup"
-    /// 􀊵
+    /// 􀊀
     case unzan = "hand.thumbsup.fill"
     /// 􀎬
     case safari = "safari"
@@ -60,6 +60,7 @@ enum SFSymbol: String {
     case remove = "iphone.slash"
     case notice = "list.bullet.clipboard"
     case app = "app"
+    /// 􀊸
     case heartCircle = "heart.circle"
 }
 

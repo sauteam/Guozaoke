@@ -10,10 +10,10 @@ import JDStatusBarNotification
 
 struct SendPostView: View {
     @Binding var isPresented: Bool
+    @Binding var selectedTopic: Node?
     let sendSuccess: () -> Void
-
+    private let defaultNode = Node(title: "IT技术", link: "/node/IT")
     @StateObject private var viewModel = PostListParser()
-    @State private var selectedTopic: Node = Node(title: "IT技术", link: "/node/IT")
     @State private var title = ""
     @State private var content = ""
     @State private var selectedImage: UIImage? = nil
@@ -56,7 +56,7 @@ struct SendPostView: View {
                 Picker("主题", selection: $selectedTopic) {
                     ForEach(viewModel.onlyNodes, id: \.self) { topic in
                         Text(topic.title)
-                            .tag(topic.link)
+                            .tag(Optional(topic))
                     }
                 }
                 
@@ -90,24 +90,31 @@ struct SendPostView: View {
             }
             .onAppear() {
                 if !viewModel.hadNodeItemData {
-                    viewModel.refresh(type: .hot)
+                    viewModel.refreshPostList(type: .hot)
                 }
                 
                 if let postInfo = EditPost.getEditPost() {
-                    title   = postInfo.title ?? ""
-                    content = postInfo.content ?? ""
+                    if postInfo.topicLink == selectedTopic?.link {
+                        title   = postInfo.title ?? ""
+                        content = postInfo.content ?? ""
+                        selectedTopic = Node(title: postInfo.topicId ?? defaultNode.title, link: postInfo.topicLink ?? defaultNode.link)
+                    }
+                }
+                
+                if selectedTopic == nil, let firstTopic = viewModel.onlyNodes.randomElement() {
+                    selectedTopic = firstTopic
                 }
                 self.isFocused = true
             }
             .onDisappear() {
                 self.isFocused = false
                 if !content.isEmpty, !title.isEmpty {
-                    let editPost = EditPost(title: title, content: content, topicId: selectedTopic.link)
+                    let editPost = EditPost(title: title, content: content, topicId: selectedTopic?.title, topicLink: selectedTopic?.link)
                     EditPost.saveEditPost(editPost)
                 }
             }
             .onReceive(viewModel.$onlyNodes) { nodes in
-                if let firstTopic = nodes.randomElement() {
+                if selectedTopic == nil, let firstTopic = nodes.randomElement() {
                     selectedTopic = firstTopic
                }
             }
@@ -125,7 +132,7 @@ struct SendPostView: View {
     private func sendPost() async {
         isPosting = true
         do {
-            let response = try await APIService.sendPost(url: selectedTopic.link.createPostUrl(), title: title, content: content)
+            let response = try await APIService.sendPost(url: selectedTopic?.link.createPostUrl() ?? defaultNode.link.createPostUrl(), title: title, content: content)
             print("Response: \(response)")
             postSuccess = true
             isPresented = false
@@ -133,6 +140,7 @@ struct SendPostView: View {
             title   = ""
             NotificationPresenter.shared.present("发送成功", includedStyle: .dark, duration: toastDuration)
             sendSuccess()
+            EditPost.removeEditPost()
         } catch {
             isPosting = false
             errorMessage = "发布失败: \(error.localizedDescription)"

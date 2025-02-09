@@ -12,6 +12,8 @@ struct NodeInfoView: View {
     let nodeUrl: String
     @StateObject private var viewModel = PostListParser()
     @State private var selectedTab = 0
+    @State private var showAddPostView = false
+    @State private var selectedTopic: Node? = nil
 
     var body: some View {
         VStack {
@@ -55,32 +57,39 @@ struct NodeInfoView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle(node)
-//        .toolbar {
-//            ToolbarItem(placement: .navigationBarTrailing) {
-//                Button(action: {
-//                }) {
-//                    Menu {
-//                        Button {
-//                            
-//                        } label: {
-//                            
-//                            Label("关注", systemImage: .collection)
-//                        }
-//                        
-//                        Button {
-//                            
-//                        } label: {
-//                            
-//                            Label("创建新主题", systemImage: .add)
-//                        }
-//
-//                    } label: {
-//                        SFSymbol.more
-//                    }
-//                }
-//            }
-//        }
+        .navigationTitle(viewModel.nodeInfo?.description ?? node)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                }) {
+                    Menu {
+                        Button {
+                            Task {
+                                let (_, _) = await viewModel.followNodeInfoAction(viewModel.nodeInfo?.followLink)
+                            }
+                        } label: {
+                            let isFollow = viewModel.isFollowedNodeInfo
+                            Label( isFollow ?"取消关注" : "关注", systemImage: isFollow ? .heartSlashFill: .heartFill)
+                        }
+                        
+                        Button {
+                            showAddPostView = true
+                        } label: {
+                            
+                            Label("创建新主题", systemImage: .add)
+                        }
+
+                    } label: {
+                        SFSymbol.more
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showAddPostView) {
+            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
+                
+            }
+        }
         .onAppear {
             if viewModel.posts.isEmpty {
                 viewModel.loadNodeInfoLastst(nodeUrl)
@@ -89,6 +98,7 @@ struct NodeInfoView: View {
                 in
                 viewModel.loadNodeInfoLastst(nodeUrl)
             }
+            selectedTopic = Node(title: node, link: nodeUrl)
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
             viewModel.loadNodeInfoLastst(nodeUrl)

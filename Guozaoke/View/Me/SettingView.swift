@@ -7,7 +7,6 @@
 
 import SwiftUI
 struct SettingView: View {
-    let items: [String] = ["帮助反馈", "关于", "退出登录", "删除账户"]
     @State private var showLogoutSheet = false
     @State private var showLoginView = false
     @State private var presentedSheet: ActiveSheet?
@@ -46,6 +45,12 @@ struct SettingView: View {
                 
                 NavigationLink(destination: AboutGuozaokeView())  {
                     ProfileRow(icon: SFSymbol.info.rawValue, title: "关于") {
+                        
+                    }
+                }
+                
+                NavigationLink(destination: MoreView())  {
+                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多") {
                         
                     }
                 }

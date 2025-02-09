@@ -26,7 +26,8 @@ let needLoginTextCanDo  = "请先登录社区再完成操作"
 
 
 struct NoMoreDataTitle {
-    static let nodata     = LoginStateChecker.isLogin() ? "没有数据" : needLoginTextCanDo
+    static let nodaText   = "没有数据"
+    static let nodata     = LoginStateChecker.isLogin() ? nodaText : needLoginTextCanDo
     static let homeList   = "已经到底啦"
     static let notiList   = "没有通知消息"
     static let commentList = "评论到底了，要不要发一条"
@@ -39,6 +40,11 @@ enum PostListType: String, CaseIterable {
     case elite    = "精华"
     case interest = "兴趣"
     case follows  = "关注"
+    case it       = "IT"
+    case finance  = "金融"
+    case creator  = "创客"
+    case dating   = "相亲"
+
     var url: String {
         switch self {
         case .hot:
@@ -51,6 +57,14 @@ enum PostListType: String, CaseIterable {
             return "/?tab=interest"
         case .follows:
             return "/?tab=follows"
+        case .it:
+            return "/node/IT"
+        case .finance:
+            return "/node/finance"
+        case .creator:
+            return "/node/startup"
+        case .dating:
+            return "/node/date"
         }
     }
 }
@@ -125,7 +139,8 @@ struct APIService {
     static let notice        = "/node/notice"
     static let deleteTopicUrl = "/t/112831"
     static let deleteAccountUrl = "/t/116623"
-    static let appInfo = "/t/117830"
+    static let iosUpdateTopicInfo = "/t/117830"
+    static let androidUpdateTopicInfo = "/t/75634"
 
     private init() {}
     
@@ -375,6 +390,7 @@ extension String {
         }
         return APIService.baseUrlString + url
     }
+    
 }
 
 

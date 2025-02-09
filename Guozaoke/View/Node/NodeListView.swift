@@ -46,7 +46,7 @@ struct NodeListView: View {
 //        }
         .onAppear {
             if !viewModel.hadNodeItemData   {
-                viewModel.refresh(type: .hot)
+                viewModel.refreshPostList(type: .hot)
             }
         }
     }

@@ -9,8 +9,9 @@ import SwiftUI
 
 struct MyCollectionView: View {
     @StateObject private var viewModel = UserInfoParser()
-    let topicType : MyTopicEnum
-    
+    let linkUrl : String
+    let linkText : String
+
     var body: some View {
         ZStack {
             if viewModel.topics.isEmpty, !viewModel.isLoading {
@@ -33,7 +34,7 @@ struct MyCollectionView: View {
                         PostRowView(post: post)
                             .onAppear {
                                 if post == viewModel.topics.last {
-                                    Task { await viewModel.loadMyTopic(type: topicType, reset: false) }
+                                    Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: false) }
                                 }
                             }
                     }
@@ -57,7 +58,7 @@ struct MyCollectionView: View {
             }
             .buttonStyle(.plain)
             .listStyle(.plain)
-            .navigationTitle(topicType.title)
+            .navigationTitle(linkText)
             .toolbar(.hidden, for: .tabBar)
 
 //            .refreshable {
@@ -68,7 +69,7 @@ struct MyCollectionView: View {
                     return
                 }
                 if viewModel.topics.isEmpty {
-                    Task { await viewModel.loadMyTopic(type: topicType, reset: true) }
+                    Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
                 }
             }
         }

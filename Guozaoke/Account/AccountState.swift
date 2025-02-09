@@ -14,7 +14,8 @@ struct EditPost: Codable {
     let title: String?
     let content: String?
     let topicId: String?
-    
+    let topicLink: String?
+
     static func saveEditPost(_ post: EditPost) {
         do {
             let jsonData = try JSONEncoder().encode(post)
@@ -23,6 +24,10 @@ struct EditPost: Codable {
         } catch {
             log("Save post failed")
         }
+    }
+    
+    static func removeEditPost() {
+        Persist.remove(key: editPostInfoKey)
     }
     
     static func getEditPost() -> EditPost? {
@@ -197,7 +202,7 @@ class LoginStateChecker: ObservableObject {
             }
             LoginStateChecker.clearUserInfo()
             runInMain {
-                NotificationPresenter.shared.present(self.error ?? needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
+                NotificationPresenter.shared.present(self.error ?? needLoginTextCanDo, includedStyle: .warning, duration: toastDuration)
                     
                 if !self.needLogin {
                     self.needLogin = true

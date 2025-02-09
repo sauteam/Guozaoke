@@ -16,8 +16,10 @@ struct HTMLContentView: View {
     var onEmailTap: ((String) -> Void)?
     var onPhoneTap: ((String) -> Void)?
     
+    @State private var showTopicInfo = false
     @State private var showUserInfo = false
     @State private var linkUserId = ""
+    @State private var topicId = ""
     @Environment(\.colorScheme) var colorScheme
 
     init(
@@ -52,7 +54,8 @@ struct HTMLContentView: View {
                             log("[at] userId \(userId)")
                             if userId.isEmpty == false {
                                 linkUserId = userId
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                log("linkUserId \(linkUserId)")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     showUserInfo = true
                                 }
                             }
@@ -66,13 +69,27 @@ struct HTMLContentView: View {
                         onPhoneTap?(url.absoluteString.replacingOccurrences(of: "tel:", with: ""))
                     default:
                         onLinkTap?(url)
-                        url.openSafari()
+                        let urlString = url.absoluteString
+                        if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
+                            topicId = urlString.replacingOccurrences(of: APIService.baseUrlString, with: "")
+                            log("topic \(topicId)")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                showTopicInfo = true
+                            }
+                        } else {
+                            url.openSafari()
+                        }
                     }
                     return .handled
                 })
-                NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
-                    EmptyView()
-                }
+            
+            NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
+                EmptyView()
+            }
+
+            NavigationLink(destination: PostDetailView(postId: topicId), isActive: $showTopicInfo) {
+                EmptyView()
+            }
         } else {
             Text(content)
                 .textSelection(.enabled)
