@@ -22,6 +22,15 @@ struct UserInfo {
     var blockLink: String?
     let profileInfo: [String]
     
+    let topicLink: String
+    let replyLink: String
+    let favoritesLink: String
+    let topicCount: Int
+    let replyCount: Int
+    let favoritesCount: Int
+    /// 信用值
+    let reputationNumber: String
+
     let topics: [PostItem]
     let replies: [MyReply]
     var blockUser: Bool = false
@@ -57,11 +66,6 @@ class UserInfoParser: ObservableObject {
     private var baseUrl: String = ""
     private var isUserInfoUrl = false
     
-    var moreTopicText : String?
-    var moreReplyText : String?
-    var moreTopicLink: String?
-    var moreReplyLink: String?
-    
     func loadOtherTopic(topicUrl: String, reset: Bool) async {
         await fetchUserInfoAndData(topicUrl, reset: false)
     }
@@ -75,6 +79,14 @@ class UserInfoParser: ObservableObject {
             return false
         }
         return true
+    }
+    
+    var noMoreTopics: Bool {
+        return topics.count == userInfo?.topicCount
+    }
+    
+    var noMoreReplies: Bool {
+        return replies.count == userInfo?.replyCount
     }
     
     private func showToast() {
@@ -172,20 +184,26 @@ class UserInfoParser: ObservableObject {
             
             var url = "\(baseUrl)"
             if currentPage > 1 {
-                url = "\(baseUrl)?page=\(currentPage)"
+                url = "\(baseUrl)?p=\(currentPage)"
             }
             let html = try await NetworkManager.shared.get(url)
             let doc = try SwiftSoup.parse(html)
+            
+            
 
             let newTopics  = try parseTopics(doc: doc, isTopic: true)
             let newReplies = try parseReply(doc: doc)
             try self.parsePagination(doc: doc)
+            log("currentPage \(currentPage) totalPages \(totalPages) newTopics \(newTopics.count) newReplies \(newReplies)")
             
+
             let _ =  try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
 
-            if reset || userInfo == nil {
+            if reset || userInfo == nil || currentPage <= 1 {
                 let parsedUserInfo = try parseUserInfo(doc: doc)
                 await MainActor.run {
+                    self.topics.removeAll()
+                    self.replies.removeAll()
                     self.userInfo = parsedUserInfo
                 }
             }
@@ -241,6 +259,7 @@ class UserInfoParser: ObservableObject {
         let emailElement = try doc.select("dl:has(dt:contains(Email)) dd").first()
         let email = try emailElement?.text() ?? ""
         
+        
         let dls = try doc.select("dl")
         var parsedData: [String: String] = [:]
         for dl in dls {
@@ -261,6 +280,14 @@ class UserInfoParser: ObservableObject {
             profile.append("\(key): \(value)")
         }
         
+        let topicsCount = try doc.select(".status-topic strong a").text()
+        let topicsLink = try doc.select(".status-topic strong a").attr("href")
+        let repliesCount = try doc.select(".status-reply strong a").text()
+        let repliesLink = try doc.select(".status-reply strong a").attr("href")
+        let favoritesCount = try doc.select(".status-favorite strong a").text()
+        let favoritesLink = try doc.select(".status-favorite strong a").attr("href")
+        let reputation = try doc.select(".status-reputation strong").text()
+        
         var blockText: String = "屏蔽此账号"
         var blockLink: String = ""
         var blockUser = false
@@ -276,19 +303,13 @@ class UserInfoParser: ObservableObject {
             blockLink = linkHref
             print("文本内容: \(linkText)")
             print("链接地址: \(linkHref)")
-        } else {
-            
-        }
+        } 
         
-        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topics: topics, replies: replies, blockUser: blockUser)
+        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topicLink: topicsLink, replyLink: repliesLink, favoritesLink: favoritesLink, topicCount: topicsCount.int, replyCount: repliesCount.int, favoritesCount: favoritesCount.int, reputationNumber: reputation, topics: topics, replies: replies, blockUser: blockUser)
     }
 
     private func parseReply(doc: Document) throws -> [MyReply] {
         let topics = try doc.select("div.reply-item")
-        let footerText = try doc.select("div.ui-footer").text()
-        let replyLink  = try doc.select("div.ui-footer a").attr(ghref)
-        moreReplyText = footerText
-        moreReplyLink = replyLink
         
         return try topics.map { element in
             MyReply(
@@ -303,11 +324,6 @@ class UserInfoParser: ObservableObject {
     
     // 解析帖子列表
     private func parseTopics(doc: Document, isTopic: Bool) throws -> [PostItem] {
-        let footerText = try doc.select("div.ui-footer").text()
-        let topicLink  = try doc.select("div.ui-footer a").attr(ghref)
-        moreTopicText = footerText
-        moreTopicLink = topicLink
-        
         let topics = try doc.select("div.topic-item")
         return try topics.map { element in
             PostItem(

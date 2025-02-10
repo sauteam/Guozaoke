@@ -125,18 +125,26 @@ struct UserInfoView: View {
                             }
                             .listRowSeparator(.hidden)
                             .padding(.vertical, 12)
-                        } else if !parser.topics.isEmpty {
-//                            HStack {
-//                                NavigationLink(destination: MyCollectionView(linkUrl: parser.moreTopicLink, linkText: "\(parser.userInfo?.nickname) \(parser.moreTopcText)")) {
-//                                    //Spacer()
-//                                    Text(parser.topics)
-//                                        .font(.footnote)
-//                                        .foregroundColor(.secondary)
-//                                    //Spacer()
-//                                }
-//                            }
-//                            .listRowSeparator(.hidden)
-//                            .padding(.vertical, 12)
+                        } else if !parser.topics.isEmpty, !parser.noMoreTopics {
+                            HStack {
+                                if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty {
+                                        NavigationLink(
+                                            destination: MyCollectionView(
+                                                linkUrl: linkUrl,
+                                                linkText: (parser.userInfo?.username ?? "") + "的更多主题"
+                                            )
+                                        ) {
+                                            Text("更多主题")
+                                                .font(.footnote)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    } else {
+                                        EmptyView()
+                                    }
+                            }
+                            .frame(height: 20)
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 12)
                         }
                     }
                     .buttonStyle(.plain)
@@ -162,7 +170,7 @@ struct UserInfoView: View {
                             ProgressView()
                                 .frame(maxWidth: .infinity)
                                 .listRowSeparator(.hidden)
-                        } else if !parser.hasMoreData, !parser.replies.isEmpty {
+                        } else if parser.replies.isEmpty {
                             
                             HStack {
                                 Spacer()
@@ -171,6 +179,25 @@ struct UserInfoView: View {
                                     .foregroundColor(.secondary)
                                 Spacer()
                             }
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 12)
+                        } else if !parser.replies.isEmpty, !parser.noMoreReplies {
+                            HStack {
+                                if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty  {
+                                    NavigationLink(
+                                        destination: MyReplyListView(
+                                            linkUrl: linkUrl,
+                                            linkText: (parser.userInfo?.username ?? "") + "的更多回复")) {
+                                                Text("更多回复")
+                                                    .font(.footnote)
+                                                    .foregroundColor(.secondary)
+                                                    .frame(height: 20)
+                                    }
+                                } else {
+                                    EmptyView()
+                                }
+                            }
+                            .frame(height: 20)
                             .listRowSeparator(.hidden)
                             .padding(.vertical, 12)
                         }

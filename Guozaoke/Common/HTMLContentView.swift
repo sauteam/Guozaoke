@@ -102,17 +102,17 @@ struct HTMLContentView: View {
         let isDarkMode = colorScheme == .dark
         let textColor = isDarkMode ? "#FFFFFF" : "#000000" // 适配黑暗模式
         let linkColor = isDarkMode ? "#1E90FF" : "#007AFF" // 调整超链接颜色
-
+        
         var processedContent = content
         // 处理用户链接
         let userPattern = "uid=(\\d+)"
         if let regex = try? NSRegularExpression(pattern: userPattern) {
-           let range = NSRange(processedContent.startIndex..., in: processedContent)
-           processedContent = regex.stringByReplacingMatches(
-               in: processedContent,
-               range: range,
-               withTemplate: "<a href=\"user://$1\">$0</a>"
-           )
+            let range = NSRange(processedContent.startIndex..., in: processedContent)
+            processedContent = regex.stringByReplacingMatches(
+                in: processedContent,
+                range: range,
+                withTemplate: "<a href=\"user://$1\">$0</a>"
+            )
         }
         // 处理已经是HTML格式的链接
         if !content.contains("<a") {
@@ -212,11 +212,16 @@ struct HTMLContentView: View {
             .characterEncoding: String.Encoding.utf8.rawValue
         ]
         
-        return try? NSAttributedString(
-            data: data,
-            options: options,
-            documentAttributes: nil
-        )
+        var attributedString: NSAttributedString?
+            
+            DispatchQueue.main.async {
+                do {
+                    attributedString = try NSAttributedString(data: data, options: options, documentAttributes: nil)
+                } catch {
+                    print("🚨 解析 HTML 失败: \(error)")
+                }
+            }
+            return attributedString
     }
 }
 

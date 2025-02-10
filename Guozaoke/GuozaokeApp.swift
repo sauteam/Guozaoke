@@ -128,6 +128,16 @@ private extension GuozaokeApp {
         }
     }
     
+    func appearanceText() -> String {
+        var text = "跟随系统"
+        if darkMode == "light" {
+            text = "浅色模式"
+        } else if  darkMode == "dark" {
+            text = "暗黑模式"
+        }
+        return text
+    }
+    
     func addNoti() {
         NotificationCenter.default.addObserver(forName: .refreshTokenNoti, object: nil, queue: .main) { _ in
             handleTokenExpiration()

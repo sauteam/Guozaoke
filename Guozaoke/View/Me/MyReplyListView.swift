@@ -1,27 +1,39 @@
 //
-//  MyCollectionView.swift
+//  MyReplyListView.swift
 //  Guozaoke
 //
-//  Created by scy on 2025/1/21.
+//  Created by scy on 2025/2/10.
 //
 
 import SwiftUI
 
-struct MyCollectionView: View {
+struct MyReplyListView: View {
     @StateObject private var viewModel = UserInfoParser()
     let linkUrl : String
     let linkText : String
 
     var body: some View {
-        VStack {            
+        VStack {
+//            if viewModel.replies.isEmpty, !viewModel.isLoading {
+//                HStack {
+//                    Spacer()
+//                    Text(NoMoreDataTitle.nodata)
+//                        .font(.callout)
+//                        .foregroundColor(.secondary)
+//                    Spacer()
+//                }
+//                .listRowSeparator(.hidden)
+//                .padding(.vertical, 12)
+//            }
+            
             List {
-                ForEach(viewModel.topics) { post in
+                ForEach(viewModel.replies) { post in
                     NavigationLink {
-                        PostDetailView(postId: post.link)
+                        PostDetailView(postId: post.titleLink)
                     } label: {
-                        PostRowView(post: post)
+                        MyReplyRowView(myReply: post, userId: linkUrl)
                             .onAppear {
-                                if post == viewModel.topics.last {
+                                if post == viewModel.replies.last {
                                     Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: false) }
                                 }
                             }
@@ -32,7 +44,7 @@ struct MyCollectionView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
-                } else if !viewModel.hasMoreData, !viewModel.topics.isEmpty {
+                } else if !viewModel.hasMoreData, !viewModel.replies.isEmpty {
                     HStack {
                         Spacer()
                         Text(NoMoreDataTitle.homeList)
@@ -55,10 +67,14 @@ struct MyCollectionView: View {
                 if !AccountState.isLogin() {
                     return
                 }
-                if viewModel.topics.isEmpty {
+                if viewModel.replies.isEmpty {
                     Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
                 }
             }
         }
     }
 }
+
+//#Preview {
+//    MyReplyListView()
+//}

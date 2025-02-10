@@ -153,23 +153,23 @@ struct PostDetailContent: View, Equatable {
 //            )
 //            .id(UUID())
             
-            //RichTextView(content: detail.content)
-            ScrollView{
-                       RichText(html: detail.content)
-                            .lineHeight(170)
-                            .colorScheme(.auto)
-                            .imageRadius(0)
-                            .fontType(.system)
-                            .foregroundColor(light: Color.primary, dark: Color.white)
-                            .linkColor(light: Color.blue, dark: Color.blue)
-                            .colorPreference(forceColor: .onlyLinks)
-                            .customCSS("")
-                            .linkOpenType(.Safari)
-                            .placeholder {
-                                ProgressView()
-                            }
-                            .transition(.easeOut)
-                    }
+//            ScrollView{
+//                       RichText(html: detail.content)
+//                            .lineHeight(170)
+//                            .colorScheme(.auto)
+//                            .imageRadius(0)
+//                            .fontType(.system)
+//                            .foregroundColor(light: Color.primary, dark: Color.white)
+//                            .linkColor(light: Color.blue, dark: Color.blue)
+//                            .colorPreference(forceColor: .onlyLinks)
+//                            .customCSS("")
+//                            .linkOpenType(.none)
+//                            .placeholder {
+//                                ProgressView()
+//                            }
+//                            .transition(.easeOut)
+//                    }
+            RichTextView(content: detail.content)
                 .padding(.horizontal)
             // 帖子图片
             if !detail.images.isEmpty {

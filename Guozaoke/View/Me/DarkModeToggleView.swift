@@ -17,7 +17,8 @@ struct DarkModeToggleView: View {
                 modeButton(title: "深色", mode: "dark")
                 modeButton(title: "跟随系统", mode: "system")
             }
-            .listStyle(PlainListStyle())
+            .buttonStyle(.borderless)
+            .listStyle(.plain)
         }
         .navigationTitle("当前模式")
         .toolbar(.hidden, for: .tabBar)
@@ -26,7 +27,7 @@ struct DarkModeToggleView: View {
             applyAppearanceMode(appearanceMode)
         }
     }
-    
+        
     private func modeButton(title: String, mode: String) -> some View {
         Button(action: {
             appearanceMode = mode

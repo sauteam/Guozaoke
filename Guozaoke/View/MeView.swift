@@ -52,7 +52,6 @@ struct MeView: View {
 }
 
 struct MyProfileView: View {
-    //let items: [(icon: String, title: String, destination: Any)]
     @State private var needLogin = false
 
     var body: some View {
@@ -92,7 +91,9 @@ struct MyProfileView: View {
                         }
                         
                         NavigationLink(destination: DarkModeToggleView()) {
-                            ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {}
+                            ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {
+                                
+                            }
                         }
                         
                         NavigationLink(destination: SettingView()) {
