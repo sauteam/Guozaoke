@@ -18,7 +18,9 @@ struct LoginView: View {
 
     @State private var email = ""
     @State private var password = ""
-    
+    @State private var showSafari = false
+    @State private var url: URL?
+
     var body: some View {
         NavigationView {
             Form {
@@ -49,23 +51,26 @@ struct LoginView: View {
                     }
                     .disabled(loginService.isLoading)
                     
-//                    Button("注册账号") {
-//                        // 跳转到注册页面
-//                        APIService.registerUrl.openURL()
-//                    }
-//                    
-//                    Button("忘记密码") {
-//                        // 跳转到找回密码页面
-//                        if let url = URL(string: APIService.forgotUrl) {
-//                            url.openSafari()
-//                        }
-//                    }
+                    Button("注册账号") {
+                        url = URL(string: APIService.registerUrl)
+                        showSafari = true
+                    }
+                    
+                    Button("忘记密码") {
+                        url = URL(string: APIService.forgotUrl)
+                        showSafari = true
+                    }
                 }
             }
             .navigationTitle("登录过早客")
             .navigationBarItems(trailing: Button("取消") {
                 isPresented = false
             })
+            .sheet(isPresented: $showSafari) {
+                if let url = url {
+                    SafariView(url: url)
+                }
+            }
         }
         .onChange(of: loginService.isLoggedIn) { newValue in
             if newValue {

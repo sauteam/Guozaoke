@@ -21,7 +21,7 @@ class ToastView {
     static func reportToast() {
         
         runInMain(delay: 1) {
-            toast("谢谢反馈，我们已收到", subtitle: nil, .success)
+            toast("谢谢反馈，我们已收到", subtitle: "", .success)
         }
     }
 }

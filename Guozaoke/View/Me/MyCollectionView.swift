@@ -33,10 +33,11 @@ struct MyCollectionView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
-                } else if !viewModel.hasMoreData, !viewModel.topics.isEmpty {
+                } else if !viewModel.hasMoreData {
+                    let noData = viewModel.topics.count == 0
                     HStack {
                         Spacer()
-                        Text(NoMoreDataTitle.homeList)
+                        Text(noData ? NoMoreDataTitle.nodata : NoMoreDataTitle.homeList)
                             .font(.footnote)
                             .foregroundColor(.secondary)
                         Spacer()

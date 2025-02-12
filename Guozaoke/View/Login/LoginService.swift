@@ -41,7 +41,7 @@ extension Notification.Name {
 
 private func showToast() {
     runInMain {
-        NotificationPresenter.shared.present("登录成功", includedStyle: .dark, duration: toastDuration)
+        ToastView.toast("登录成功", subtitle: "", .success)
     }
 }
 
@@ -130,12 +130,13 @@ class LoginService: ObservableObject {
                 DispatchQueue.main.async {
                     AccountState.saveAccount(account)
                     showToast()
+                    loginSuccess  = true
+                    NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
                 }
                 log("[userInfo]\(account)")
-                NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
-                isLoggedIn    = true
-                loginSuccess  = true
-                LoginStateChecker.LoginStateHandle()
+                Task {
+                    await updateLoginState()
+                }
             } else {
                 throw LoginError.loginFailed(message: "登录失败")
             }
@@ -143,6 +144,12 @@ class LoginService: ObservableObject {
             throw LoginError.httpError(statusCode: httpResponse.statusCode)
         }
         return loginSuccess
+    }
+    
+    @MainActor
+    func updateLoginState() {
+        isLoggedIn = true
+        LoginStateChecker.LoginStateHandle()
     }
     
 //    func login(email: String, password: String) {

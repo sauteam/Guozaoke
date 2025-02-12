@@ -22,7 +22,6 @@ struct GuozaokeApp: App {
     init() {
         ///UINavigationBar.appearance().tintColor = themeColor
         applyTabBarBackground()
-        requestNotificationPermission()
         _ = ImageCacheManager.shared
     }
 
@@ -69,7 +68,7 @@ private extension GuozaokeApp {
                     .frame(maxWidth: 80, maxHeight: 80)
                     .padding()
                 
-                Text(getFestivalGreeting())
+                Text(FestivalDate.getFestivalGreeting())
                     .font(.title)
                     .fontWeight(.thin)
                     .padding()
@@ -78,24 +77,6 @@ private extension GuozaokeApp {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             //.foregroundColor(Color.primary)
             .ignoresSafeArea()
-        }
-        
-        private func getFestivalGreeting() -> String {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            
-            let today = dateFormatter.string(from: Date())
-            let userName = AccountState.userName
-            let festivalMessages: [String: String] = [
-                "2025-01-28": "除夕快乐！",   // 2025年除夕
-                "2025-01-29": "新年快乐！",   // 2025年春节
-                "2025-02-12": "元宵节快乐！"  // 2025年元宵节
-            ]
-            var text = festivalMessages[today] ?? "欢迎进入过早客"
-            if !userName.isEmpty {
-                text = userName + " " + text
-            }
-            return text
         }
     }
     

@@ -227,10 +227,7 @@ class PostListParser: ObservableObject {
                    }
                    let doc = try SwiftSoup.parse(html)
                    
-                   let success = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
-                   if !success {
-                       self.needLogin = true
-                   }
+                   let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
                    
                    let newPosts  = try self.parseTopics(doc: doc)
                    if self.navItems.count <= 0 {

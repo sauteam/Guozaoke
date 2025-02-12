@@ -94,7 +94,7 @@ extension String {
         }
 
         UIPasteboard.general.string = self
-        NotificationPresenter.shared.present("拷贝成功", includedStyle: .dark, duration: toastDuration)
+        ToastView.toast("拷贝成功", subtitle:"",  .success)
     }
     
     var md5: String {

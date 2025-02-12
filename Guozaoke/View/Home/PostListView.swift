@@ -15,18 +15,19 @@ struct PostListView: View {
     @State private var showAddPostView = false
     @State private var showSearchView  = false
     @State private var selectedTopic: Node? = nil // 可以传 nil
-
 //    @Environment(\.themeColor) private var themeColor: Color
     
     var body: some View {
-//        NavigationView {
-            VStack(spacing: 0) {
-                // 顶部分类按钮
-                ScrollView(.horizontal, showsIndicators: false) {
+        VStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                ScrollViewReader { proxy in
                     HStack(spacing: 10) {
                         ForEach(PostListType.allCases, id: \.self) { type in
                             Button(action: {
-                                selectedTab = type
+                                withAnimation {
+                                    selectedTab = type
+                                }
+                                proxy.scrollTo(type, anchor: .center)
                             }) {
                                 VStack(spacing: 8) {
                                     Text(type.rawValue)
@@ -38,26 +39,27 @@ struct PostListView: View {
                                         .frame(height: 2)
                                 }
                             }
+                            .id(type)
                         }
                     }
                     .padding(.horizontal)
                 }
-                
-                // 分割线
-                Divider()
-                
-                // 帖子列表内容
-                TabView(selection: $selectedTab) {
-                    ForEach(PostListType.allCases, id: \.self) { type in
-                        PostListContentView(type: type)
-                            .tag(type)
-                    }
+            }
+            
+            Divider()
+            
+            TabView(selection: $selectedTab) {
+                ForEach(PostListType.allCases, id: \.self) { type in
+                    PostListContentView(type: type)
+                        .tag(type)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-//            }
-            .navigationTitle("过早客")
-            .navigationBarTitleDisplayMode(.inline)
-            //.navigationBarBackButtonHidden(true)
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .onChange(of: selectedTab) { newValue in
+                
+            }
+            .animation(.easeInOut, value: selectedTab)
+            
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -65,30 +67,23 @@ struct PostListView: View {
                     }) {
                         SFSymbol.add
                     }
-
-//                    Button(action: {
-//                        showSearchView = true
-//                    }) {
-//                        SFSymbol.search
-//                    }
-//                    .background {
-//                        NavigationLink(destination: SearchListView(),
-//                                       isActive: $showSearchView) {
-//                            EmptyView()
-//                        }
-//                    }
                 }
             }
+            .navigationTitle("过早客")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .padding(.top)
             .sheet(isPresented: $showAddPostView) {
-                SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
-                    
+                if LoginStateChecker.isLogin() {
+                    SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
+                        
+                    }
+                } else {
+                    LoginView(isPresented: $showAddPostView) {
+                        
+                    }
                 }
             }
-            
-//            .sheet(isPresented: $showSearchView) {
-//                SearchListView(isPresented: $showSearchView)
-//                log("showSearchView \(showSearchView)")
-//            }
         }
     }
 }
@@ -165,9 +160,7 @@ struct PostListContentView: View {
                 print("1 type \(type)")
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
-                if type == .follows || type == .interest {
-                    viewModel.refreshPostList(type: type)
-                }
+                viewModel.refreshPostList(type: type)
             }
             .onDisappear() {
                 NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
