@@ -98,6 +98,7 @@ class UserInfoParser: ObservableObject {
     func blockUserAction(_ userId: String?) async -> String {
         if !LoginStateChecker.isLogin() {
             self.showToast()
+            LoginStateChecker.LoginStateHandle()
             return ""
         }
         
@@ -129,6 +130,7 @@ class UserInfoParser: ObservableObject {
     func followUserAction(_ userId: String?) async -> (Bool, String)? {
         if !LoginStateChecker.isLogin() {
             runInMain {
+                LoginStateChecker.LoginStateHandle()
                 self.showToast()
             }
             return (false, "")

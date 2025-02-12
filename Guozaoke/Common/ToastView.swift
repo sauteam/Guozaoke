@@ -15,6 +15,13 @@ class ToastView {
     }
     
     static func toastText(_ text: String, subtitle: String? = nil) {
-        toast(text, subtitle: subtitle, .dark)
+        toast(text, subtitle: subtitle, text == needLoginTextCanDo ? .warning: .dark)
+    }
+    
+    static func reportToast() {
+        
+        runInMain(delay: 1) {
+            toast("谢谢反馈，我们已收到", subtitle: nil, .success)
+        }
     }
 }

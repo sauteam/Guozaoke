@@ -13,6 +13,7 @@ struct UserInfoView: View {
     @StateObject private var parser = UserInfoParser()
     @State private var selectedTab  = 1
     @State private var followText   = "+关注"
+    @State private var showCollectionView = false
 
     var body: some View {
         VStack() {
@@ -222,6 +223,21 @@ struct UserInfoView: View {
                     } label: {
                         Label("拷贝个人主页", systemImage: .copy)
                     }
+                    
+//                    if parser.userInfo?.favoritesCount ?? 0 > 0  {
+//                        Button {
+//                            showCollectionView = true
+//                        } label: {
+//                            Label("\(parser.userInfo?.username ?? "TA")的收藏", systemImage: .bookmarkFill)
+//                        }
+//                        
+//                        NavigationLink(value: parser.userInfo?.favoritesLink) {
+//                            EmptyView()
+//                        }
+//                        .navigationDestination(for: String.self) { userId in
+//                            MyCollectionView(linkUrl: userId, linkText: parser.userInfo?.username ?? "")
+//                        }
+//                    }
                     
                     if AccountState.isSelf(userName: userId) {
                         Button {

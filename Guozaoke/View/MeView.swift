@@ -24,8 +24,7 @@ struct MeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if !AccountState.isLogin() {
-                    NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
-                    LoginStateChecker.clearUserInfo()
+                    LoginStateChecker.LoginStateHandle()
                     return
                 }
                 if !parser.hadData {
@@ -45,6 +44,9 @@ struct MeView: View {
                 }
             }
             .onDisappear {
+                if !AccountState.isLogin() {
+                    LoginStateChecker.LoginStateHandle()
+                }
                 NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
             }
 //        }
@@ -80,6 +82,7 @@ struct MyProfileView: View {
                         let username      = AccountState.userName
                         let collectionUrl = "/u/\(username)/favorites"
                         let topicUrl = "/u/\(username)/topics"
+                        let relpyUrl = "/u/\(username)/replies"
                         NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
                             ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏") {
                                 
@@ -88,6 +91,10 @@ struct MyProfileView: View {
                         
                         NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
                             ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
+                        }
+                        
+                        NavigationLink(destination: MyReplyListView(linkUrl: relpyUrl, linkText: "我的回复"))  {
+                            ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复") {}
                         }
                         
                         NavigationLink(destination: DarkModeToggleView()) {

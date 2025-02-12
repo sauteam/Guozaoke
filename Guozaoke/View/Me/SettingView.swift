@@ -89,6 +89,7 @@ struct SettingView: View {
                 ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录") {
                     
                 }.onTapGesture {
+                    
                     tapTextEvent("退出登录")
                 }
             } header: {

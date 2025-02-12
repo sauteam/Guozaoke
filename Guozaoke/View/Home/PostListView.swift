@@ -109,6 +109,11 @@ struct PostListContentView: View {
                     Text(NoMoreDataTitle.nodata)
                         .font(.callout)
                         .foregroundColor(.secondary)
+                        .onTapGesture {
+                            if !LoginStateChecker.isLogin() {
+                                LoginStateChecker.LoginStateHandle()
+                            }
+                        }
                     Spacer()
                 }
                 .listRowSeparator(.hidden)
@@ -178,58 +183,3 @@ struct PostListContentView: View {
         }
     }
 }
-
-
-//VStack {
-//    Spacer()
-//    HStack {
-//        Spacer()
-//        Button(action: {
-//            print("发帖子按钮被点击！")
-//        }) {
-//            SFSymbol.add
-//                .resizable() // 允许调整图标大小
-//                .scaledToFit()
-//                .frame(width: 20, height: 20)
-//                .padding()
-//                .frame(width: 40, height: 40)
-//                .font(.title)
-//                .padding()
-//                .background(Circle().fill(Color.blue))
-//        }
-//        .padding(.bottom, 30)
-//        .padding(.trailing, 30)
-//        .shadow(radius: 5)
-//    }
-//}
-
-
-
-//// 预览
-//struct PostRowView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        List {
-//            PostRowView(post: PostItem(
-//                title: "全国各地的豪车都在赶往魔都武康路",
-//                link: "/t/117529",
-//                author: "FlyRen9",
-//                avatar: "https://cdn.guozaoke.com//static/avatar/9/m_default.png",
-//                category: "汤逊湖",
-//                time: "2 分钟前",
-//                replyCount: 6,
-//                lastReplyUser: "abc_11"
-//            ))
-//
-//            PostRowView(post: PostItem(
-//                title: "武汉电信宽带大家都是多少钱办的",
-//                link: "/t/117479",
-//                author: "harvies",
-//                avatar: "https://cdn.guozaoke.com//static/avatar/19/m_c2a54540-0567-11ef-a0b7-00163e134dca.png",
-//                category: "硬件数码",
-//                time: "1 小时前",
-//                replyCount: 33,
-//                lastReplyUser: "harvies"
-//            ))
-//        }
-//    }
-//}

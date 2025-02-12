@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+let isiPad  = UIDevice.current.userInterfaceIdiom == .pad
+let isiPhone  = UIDevice.current.userInterfaceIdiom == .phone
+
+
 //struct TabBarVisibilityPreferenceKey: PreferenceKey {
 //    static var defaultValue: Bool = false
 //    static func reduce(value: inout Bool, nextValue: () -> Bool) {
@@ -85,17 +89,16 @@ struct TabBarView: View {
         
     var body: some View {
         Group {
-//            if UIDevice.current.userInterfaceIdiom == .pad {
-//                NavigationSplitView {
-//                    SidebarView(selection: $tab)
-//              } detail: {
-//                  TabContentView(tab: $tab)
-//              }
-//            } else {
-//                TabContentView(tab: $tab)
-//            }
-            if showTabBar {
-                TabContentView(tab: $tab)
+            if isiPad {
+                NavigationSplitView {
+                    SidebarView(selection: $tab)
+                } detail: {
+                  TabContentView(tab: $tab)
+                }
+            } else {
+                if showTabBar {
+                    TabContentView(tab: $tab)
+                }
             }
         }
         .sheet(isPresented: $loginChecker.needLogin) {
@@ -105,19 +108,27 @@ struct TabBarView: View {
             updateAppBadge(newValue)
         }
         .onAppear {
-            showTabBar = true
+            if isiPhone {
+                showTabBar = true
+            }
         }
         .onDisappear {
-            showTabBar = false
+            if isiPhone {
+                showTabBar = false
+            }
         }
     }
     
     static func hideTabBar() {
-        UITabBar.appearance().isHidden = true
+        if isiPhone {
+            UITabBar.appearance().isHidden = true
+        }
     }
 
     static func showTabBar() {
-        UITabBar.appearance().isHidden = false
+        if isiPhone {
+            UITabBar.appearance().isHidden = false
+        }
     }
 }
 
@@ -157,20 +168,17 @@ struct TabContentView: View {
     
     private var tabViewContent: some View {
         TabView(selection: $tab) {
-            let isiPad = UIDevice.current.userInterfaceIdiom == .pad
             Group {
                 if isiPad {
                     PostListView()
                 } else {
                     NavigationStack {
                         PostListView()
-                            .navigationTitle("过早客")
                     }
                 }
             }
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
             .tag(TabBarView.Tab.home)
-            .navigationTitle("过早客")
             
             Group {
                 if isiPad {

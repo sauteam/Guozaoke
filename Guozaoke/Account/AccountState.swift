@@ -168,22 +168,12 @@ class LoginStateChecker: ObservableObject {
     
     static func LoginStateHandle() {
         runInMain {
-            LoginStateChecker.shared.needLogin = false
-            LoginStateChecker.shared.isLogin = true
+            let success = isLogin()
+            LoginStateChecker.shared.needLogin = !success
+            LoginStateChecker.shared.isLogin   = success
         }
     }
-    
-    static func userLoginState() -> Bool {
-        var success = false
-        if isLogin() == false {
-            clearUserInfo()
-        } else {
-            LoginStateHandle()
-            success = true
-        }
-        return success
-    }
-    
+        
     static func isLogin() -> Bool {
         return AccountState.isLogin()
     }
@@ -202,7 +192,7 @@ class LoginStateChecker: ObservableObject {
             }
             LoginStateChecker.clearUserInfo()
             runInMain {
-                NotificationPresenter.shared.present(self.error ?? needLoginTextCanDo, includedStyle: .warning, duration: toastDuration)
+                ToastView.toastText(needLoginTextCanDo)
                     
                 if !self.needLogin {
                     self.needLogin = true

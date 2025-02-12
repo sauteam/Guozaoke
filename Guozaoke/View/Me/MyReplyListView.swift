@@ -14,17 +14,17 @@ struct MyReplyListView: View {
 
     var body: some View {
         VStack {
-//            if viewModel.replies.isEmpty, !viewModel.isLoading {
-//                HStack {
-//                    Spacer()
-//                    Text(NoMoreDataTitle.nodata)
-//                        .font(.callout)
-//                        .foregroundColor(.secondary)
-//                    Spacer()
-//                }
-//                .listRowSeparator(.hidden)
-//                .padding(.vertical, 12)
-//            }
+            if viewModel.replies.isEmpty, !viewModel.isLoading {
+                HStack {
+                    Spacer()
+                    Text(NoMoreDataTitle.nodata)
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+                .padding(.vertical, 12)
+            }
             
             List {
                 ForEach(viewModel.replies) { post in

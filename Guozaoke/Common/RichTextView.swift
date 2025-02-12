@@ -1,6 +1,4 @@
 import SwiftUI
-import Atributika
-import AtributikaViews
 import RichText
 
 struct RichTextView: View {
@@ -16,46 +14,64 @@ struct RichTextView: View {
     @State private var linkUserId = ""
     @State private var topicId = ""
 
+    @State private var showSafari = false
+    @State private var url: URL?
     var body: some View {
-        RichText(html: formatContent(content))
-            .lineHeight(170)
-            .colorScheme(.auto)
-            .imageRadius(0)
-            .fontType(.system)
-            .foregroundColor(light: Color.primary, dark: Color.white)
-            .linkColor(light: Color.blue, dark: Color.blue)
-            .colorPreference(forceColor: .onlyLinks)
-            .customCSS("")
-            .linkOpenType(.SFSafariView())
-            .placeholder {
-                ProgressView()
+        NavigationStack {
+            RichText(html: formatContent(content))
+                .lineHeight(170)
+                .colorScheme(.auto)
+                .imageRadius(0)
+                .fontType(.system)
+                .foregroundColor(light: Color.primary, dark: Color.white)
+                .linkColor(light: Color.blue, dark: Color.blue)
+                .colorPreference(forceColor: .onlyLinks)
+                .customCSS("")
+                .linkOpenType(.custom({ url in
+                    handleLink(url)
+                }))
+                .placeholder {
+                    ProgressView()
+                }
+                .transition(.easeOut)
+                .onOpenURL { url in
+                    handleLink(url)
+                }
+            
+                NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
+                    EmptyView()
+                }
+            
+                NavigationLink(destination: PostDetailView(postId: topicId), isActive: $showTopicInfo) {
+                    EmptyView()
+                }
+//                NavigationLink(value: topicId) {
+//                    EmptyView()
+//                }
+//                .navigationDestination(for: String.self) { topicId in
+//                    PostDetailView(postId: topicId)
+//                }
+        }
+        .sheet(isPresented: $showSafari) {
+            if let url = url {
+                SafariView(url: url)
             }
-            .transition(.easeOut)
-            .onOpenURL { url in
-                handleLink(url)
-            }
-        
-//        NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
-//            EmptyView()
-//        }
-//
-//        NavigationLink(destination: PostDetailView(postId: topicId), isActive: $showTopicInfo) {
-//            EmptyView()
-//        }
+        }
     }
 
     private func handleLink(_ url: URL) {
+        self.url = url
         switch url.scheme {
         case "https", "http":
             let urlString = url.absoluteString
             if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
                 topicId = urlString.replacingOccurrences(of: APIService.baseUrlString, with: "")
                 log("topic \(topicId)")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showTopicInfo = true
                 }
             } else {
-                url.openSafari()
+                showSafari = true
             }
             onLinkTap?(url)
         case "mailto":

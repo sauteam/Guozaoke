@@ -23,6 +23,11 @@ struct NotificationsView: View {
                 Text(NoMoreDataTitle.nodata)
                     .font(.callout)
                     .foregroundColor(.secondary)
+                    .onTapGesture {
+                        if !LoginStateChecker.isLogin() {
+                            LoginStateChecker.LoginStateHandle()
+                        }
+                    }
                 Spacer()
             }
             .listRowSeparator(.hidden)
@@ -67,8 +72,7 @@ struct NotificationsView: View {
         .navigationBarBackButtonHidden(true)
         .onAppear {
             if !AccountState.isLogin() {
-                NotificationPresenter.shared.present(needLoginTextCanDo, includedStyle: .dark, duration: toastDuration)
-                LoginStateChecker.clearUserInfo()
+                LoginStateChecker.LoginStateHandle()
                 return
             }
             Task {

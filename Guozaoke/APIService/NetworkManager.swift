@@ -70,6 +70,7 @@ class NetworkManager: ObservableObject {
                     var desc = "出现错误❌: " + "[\(response.response?.statusCode ?? 0)[403-重新登录试试]]"
                     if !LoginStateChecker.isLogin() {
                         desc = needLoginTextCanDo
+                        LoginStateChecker.LoginStateHandle()
                     }
                     if error.responseCode == 403 {
                         log("[403]重新登录处理 \(url)")

@@ -55,7 +55,7 @@ struct HTMLContentView: View {
                             if userId.isEmpty == false {
                                 linkUserId = userId
                                 log("linkUserId \(linkUserId)")
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     showUserInfo = true
                                 }
                             }
@@ -73,7 +73,7 @@ struct HTMLContentView: View {
                         if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
                             topicId = urlString.replacingOccurrences(of: APIService.baseUrlString, with: "")
                             log("topic \(topicId)")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 showTopicInfo = true
                             }
                         } else {
@@ -82,6 +82,7 @@ struct HTMLContentView: View {
                     }
                     return .handled
                 })
+            
             
             NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
                 EmptyView()
@@ -212,16 +213,22 @@ struct HTMLContentView: View {
             .characterEncoding: String.Encoding.utf8.rawValue
         ]
         
-        var attributedString: NSAttributedString?
-            
-            DispatchQueue.main.async {
-                do {
-                    attributedString = try NSAttributedString(data: data, options: options, documentAttributes: nil)
-                } catch {
-                    print("🚨 解析 HTML 失败: \(error)")
-                }
-            }
-            return attributedString
+        return try? NSAttributedString(
+            data: data,
+            options: options,
+            documentAttributes: nil
+        )
+
+//        var attributedString: NSAttributedString?
+//            
+//        DispatchQueue.main.async {
+//            do {
+//                attributedString = try NSAttributedString(data: data, options: options, documentAttributes: nil)
+//            } catch {
+//                print("🚨 解析 HTML 失败: \(error)")
+//            }
+//        }
+//        return attributedString
     }
 }
 

@@ -13,7 +13,8 @@ struct MyCollectionView: View {
     let linkText : String
 
     var body: some View {
-        VStack {            
+        VStack {
+            
             List {
                 ForEach(viewModel.topics) { post in
                     NavigationLink {

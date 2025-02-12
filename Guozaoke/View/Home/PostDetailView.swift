@@ -76,7 +76,7 @@ struct PostDetailView: View {
                     
                     if !AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "") {
                         Button {
-                            NotificationPresenter.shared.present("谢谢反馈，我们已收到", includedStyle: .dark, duration: toastDuration)
+                            ToastView.reportToast()
                         } label: {
                             Label("举报", systemImage: .report)
                         }
@@ -438,7 +438,7 @@ struct ReplyItemView: View {
 //            }
             
             Button {
-                NotificationPresenter.shared.present("谢谢反馈，我们已收到", includedStyle: .dark, duration: toastDuration)
+                ToastView.reportToast()
             } label: {
                 Label("举报", systemImage: .report)
             }

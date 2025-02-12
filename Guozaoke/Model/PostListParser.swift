@@ -132,6 +132,7 @@ class PostListParser: ObservableObject {
     
     func followNodeInfoAction(_ nodeLink: String?) async -> (Bool, String) {
         if !LoginStateChecker.isLogin() {
+            LoginStateChecker.LoginStateHandle()
             return (false, "")
         }
         
