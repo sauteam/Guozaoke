@@ -273,7 +273,7 @@ struct UserInfoView: View {
             if !parser.hadData {
                 Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
             }
-            
+                        
             NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
                 if let userInfo = notification.userInfo,
                    let user = userInfo as? Dictionary<String, Any> {

@@ -66,6 +66,9 @@ class UserInfoParser: ObservableObject {
     private var baseUrl: String = ""
     private var isUserInfoUrl = false
     
+    @Published var faqContent = ""
+    @Published var faqContentBottom = ""
+
     func loadOtherTopic(topicUrl: String, reset: Bool) async {
         await fetchUserInfoAndData(topicUrl, reset: false)
     }
@@ -94,6 +97,56 @@ class UserInfoParser: ObservableObject {
             ToastView.toastText(needLoginTextCanDo)
         }
     }
+    
+    func faqContentValid() -> Bool {
+        return self.faqContent.count > 0
+    }
+    
+    func faqInfo() async -> (Bool, String)? {
+        do {
+            let html = try await NetworkManager.shared.get(APIService.faq)
+            let document = try SwiftSoup.parse(html)
+            
+            var success = false
+
+            let containerText = try document.select("div.container.mt15").html()
+            let footerText = try document.select("div.footer.mt15").html()
+            //let combinedText = "<div>\(containerText)</div><div>\(footerText)</div>"
+            runInMain {
+                self.faqContent = containerText 
+                self.faqContentBottom = footerText
+            }
+            
+            if self.faqContentValid() {
+                success = true
+            }
+//            if let containerDiv = try document.select("div.container.mt15").first() {
+//                let containerText = try containerDiv.text()
+//                print("Container content: \(containerText)")
+//                runInMain {
+//                    self.faqContent = containerText
+//                }
+//                success = true
+//            } else {
+//                print("No div with class 'container mt15' found.")
+//            }
+                
+            if let footerDiv = try document.select("div.footer.mt15").first() {
+                let footerText = try footerDiv.text()
+                runInMain {
+                    self.faqContentBottom = footerText
+                }
+                print("Footer content: \(footerText)")
+            } else {
+                print("No div with class 'footer mt15' found.")
+            }
+            return (success, html)
+        } catch {
+            log("请求失败: \(error.localizedDescription)")
+        }
+        return (false, "")
+    }
+
     
     func blockUserAction(_ userId: String?) async -> String {
         if !LoginStateChecker.isLogin() {
@@ -349,3 +402,4 @@ class UserInfoParser: ObservableObject {
         }
     }
 }
+

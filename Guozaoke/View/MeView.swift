@@ -57,14 +57,14 @@ struct MyProfileView: View {
     @State private var needLogin = false
 
     var body: some View {
-        VStack {
-            List {
+        List {
+            Section {
                 Section {
                     HStack {
                         NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
                             KFImageView(AccountState.avatarUrl)
-                            .frame(width: 60, height: 60)
-                            .clipShape(Circle())
+                                .frame(width: 60, height: 60)
+                                .clipShape(Circle())
                             
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(AccountState.userName)
@@ -77,46 +77,48 @@ struct MyProfileView: View {
                             }
                         }
                     }
+                }
+                
+                Section {
+                    let username      = AccountState.userName
+                    let collectionUrl = "/u/\(username)/favorites"
+                    let topicUrl = "/u/\(username)/topics"
+                    let relpyUrl = "/u/\(username)/replies"
+                    NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
+                        ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏") {
+                            
+                        }
+                    }
                     
-                    Section {
-                        let username      = AccountState.userName
-                        let collectionUrl = "/u/\(username)/favorites"
-                        let topicUrl = "/u/\(username)/topics"
-                        let relpyUrl = "/u/\(username)/replies"
-                        NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
-                            ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏") {
-                                
-                            }
+                    NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
+                        ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
+                    }
+                    
+                    NavigationLink(destination: MyReplyListView(linkUrl: relpyUrl, linkText: "我的回复"))  {
+                        ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复") {}
+                    }
+                    
+                    NavigationLink(destination: DarkModeToggleView()) {
+                        ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {
+                            
                         }
-                        
-                        NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
-                            ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
-                        }
-                        
-                        NavigationLink(destination: MyReplyListView(linkUrl: relpyUrl, linkText: "我的回复"))  {
-                            ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复") {}
-                        }
-                        
-                        NavigationLink(destination: DarkModeToggleView()) {
-                            ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {
-                                
-                            }
-                        }
-                        
-                        NavigationLink(destination: SettingView()) {
-                            ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置") {}
-                        }
+                    }
+                    
+                    NavigationLink(destination: SettingView()) {
+                        ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置") {}
                     }
                 }
             }
-            .listStyle(InsetGroupedListStyle())
         }
-    }    
+        .listStyle(InsetGroupedListStyle())
+
+    }
 }
 
 struct ProfileRow: View {
     let icon: String
     let title: String
+    let rightArrow: Bool? = false
     let action: () -> Void
     
     var body: some View {

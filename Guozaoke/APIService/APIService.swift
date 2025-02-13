@@ -141,6 +141,7 @@ struct APIService {
     static let deleteAccountUrl = "/t/116623"
     static let iosUpdateTopicInfo = "/t/117830"
     static let androidUpdateTopicInfo = "/t/75634"
+    static let faq = "/faq"
 
     private init() {}
     

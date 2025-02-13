@@ -17,12 +17,10 @@ enum SFSymbol: String {
     case copy  = "document.on.document"
     /// 􀉌
     case reply = "arrowshape.turn.up.left"
-    /// 􀇾
+    /// 􀌬
     case report = "exclamationmark.bubble"
     /// 􀅴
     case info = "info.circle"
-    /// 􀋭
-    case see = "eye.circle.fill"
     /// 􀋭
     case unblock = "eye"
     /// 􀋯

@@ -43,6 +43,12 @@ struct SettingView: View {
                     }
                 }
                 
+                NavigationLink(destination: FaqView()) {
+                    ProfileRow(icon: SFSymbol.report.rawValue, title: "faq") {
+                        
+                    }
+                }
+                
                 NavigationLink(destination: AboutGuozaokeView())  {
                     ProfileRow(icon: SFSymbol.info.rawValue, title: "关于") {
                         

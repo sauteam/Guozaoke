@@ -17,44 +17,44 @@ struct RichTextView: View {
     @State private var showSafari = false
     @State private var url: URL?
     var body: some View {
-        NavigationStack {
-            RichText(html: formatContent(content))
-                .lineHeight(170)
-                .colorScheme(.auto)
-                .imageRadius(0)
-                .fontType(.system)
-                .foregroundColor(light: Color.primary, dark: Color.white)
-                .linkColor(light: Color.blue, dark: Color.blue)
-                .colorPreference(forceColor: .onlyLinks)
-                .customCSS("")
-                .linkOpenType(.custom({ url in
-                    handleLink(url)
-                }))
-                .placeholder {
-                    ProgressView()
-                }
-                .transition(.easeOut)
-                .onOpenURL { url in
-                    handleLink(url)
-                }
-            
-                NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
-                    EmptyView()
-                }
-            
-                NavigationLink(destination: PostDetailView(postId: topicId), isActive: $showTopicInfo) {
-                    EmptyView()
-                }
-//                NavigationLink(value: topicId) {
-//                    EmptyView()
-//                }
-//                .navigationDestination(for: String.self) { topicId in
-//                    PostDetailView(postId: topicId)
-//                }
-        }
-        .sheet(isPresented: $showSafari) {
-            if let url = url {
-                SafariView(url: url)
+        ScrollView {
+                RichText(html: formatContent(content))
+                    .lineHeight(170)
+                    .colorScheme(.auto)
+                    .imageRadius(0)
+                    .fontType(.system)
+                    .foregroundColor(light: Color.primary, dark: Color.white)
+                    .linkColor(light: Color.blue, dark: Color.blue)
+                    .colorPreference(forceColor: .onlyLinks)
+                    .customCSS("")
+                    .linkOpenType(.custom({ url in
+                        handleLink(url)
+                    }))
+                    .placeholder {
+                        ProgressView()
+                    }
+                    .transition(.easeOut)
+                    .onOpenURL { url in
+                        handleLink(url)
+                    }
+                
+                    NavigationLink(destination: UserInfoView(userId: linkUserId), isActive: $showUserInfo) {
+                        EmptyView()
+                    }
+                
+                    NavigationLink(destination: PostDetailView(postId: topicId), isActive: $showTopicInfo) {
+                        EmptyView()
+                    }
+    //                NavigationLink(value: topicId) {
+    //                    EmptyView()
+    //                }
+    //                .navigationDestination(for: String.self) { topicId in
+    //                    PostDetailView(postId: topicId)
+    //                }
+            .sheet(isPresented: $showSafari) {
+                if let url = url {
+                    SafariView(url: url)
+                } 
             }
         }
     }
@@ -73,6 +73,7 @@ struct RichTextView: View {
             } else {
                 showSafari = true
             }
+            log("urlString \(urlString) \n url \(url)")
             onLinkTap?(url)
         case "mailto":
             let email = url.absoluteString.replacingOccurrences(of: "mailto:", with: "")

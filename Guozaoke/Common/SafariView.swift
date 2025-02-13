@@ -13,6 +13,7 @@ struct SafariView: UIViewControllerRepresentable {
     let delegate = SafariViewControllerDelegate()
 
     func makeUIViewController(context: Context) -> SFSafariViewController {
+        log("[web] url \(url.absoluteString)")
         let safariVC = SFSafariViewController(url: url)
         safariVC.preferredControlTintColor = .systemBlue
         safariVC.delegate = delegate
