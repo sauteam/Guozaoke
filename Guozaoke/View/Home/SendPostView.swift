@@ -120,7 +120,7 @@ struct SendPostView: View {
             }
             .listRowBackground(Color.clear)
             .navigationTitle("创建新主题")
-            .navigationBarItems(trailing: Button("取消") {
+            .navigationBarItems(trailing: Button("关闭") {
                 isPresented = false
             })
             .sheet(isPresented: $showingImagePicker) {

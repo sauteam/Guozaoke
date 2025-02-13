@@ -118,7 +118,7 @@ struct MyProfileView: View {
 struct ProfileRow: View {
     let icon: String
     let title: String
-    let rightArrow: Bool? = false
+    let showRightArrow: Bool? = false
     let action: () -> Void
     
     var body: some View {
@@ -129,8 +129,10 @@ struct ProfileRow: View {
                 Text(title)
                     .foregroundColor(.primary)
                 Spacer()
-                //Image(systemName: "chevron.right")
-                    //.foregroundColor(.gray)
+                if showRightArrow == true {
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                }
             }
             .padding(.vertical, 8)
         }

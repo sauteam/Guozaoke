@@ -66,6 +66,7 @@ func runInMain(delay: Int = 0, execute work: @escaping @convention(block) () -> 
 
 func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
     let impactHeavy = UIImpactFeedbackGenerator(style: style)
+    impactHeavy.prepare()
     impactHeavy.impactOccurred()
 }
 

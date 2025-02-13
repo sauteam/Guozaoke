@@ -107,6 +107,7 @@ struct GuozaokeAppInfo {
     
     /// 去AppStore
     static func toAppStore() {
+        print("url \(GuozaokeAppInfo.AppStoreUrl)")
         GuozaokeAppInfo.AppStoreUrl.openURL()
     }
     /// 去评论

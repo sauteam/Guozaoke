@@ -14,7 +14,7 @@ struct MoreView: View {
                 NavigationLink(destination: UserInfoView(userId: "isau")) {
                     Text("过早客iOS开发者：isau")
                         .font(.callout)
-                        .fontWeight(.thin)
+                        .fontWeight(.light)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
@@ -22,7 +22,7 @@ struct MoreView: View {
                 NavigationLink(destination: UserInfoView(userId: "Mario")) {
                     Text("网站管理大大：Mario")
                         .font(.callout)
-                        .fontWeight(.thin)
+                        .fontWeight(.light)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
@@ -30,7 +30,7 @@ struct MoreView: View {
                 NavigationLink(destination: PostDetailView(postId: APIService.androidUpdateTopicInfo)) {
                     Text("Android更新说明")
                         .font(.callout)
-                        .fontWeight(.thin)
+                        .fontWeight(.light)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
@@ -38,7 +38,7 @@ struct MoreView: View {
                 NavigationLink(destination: PostDetailView(postId: APIService.iosUpdateTopicInfo)) {
                     Text("iOS更新说明")
                         .font(.callout)
-                        .fontWeight(.thin)
+                        .fontWeight(.light)
                         .padding()
                         .foregroundColor(Color.primary)
                 }

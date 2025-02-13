@@ -70,7 +70,7 @@ struct SendCommentView: View {
             }
             .listRowBackground(Color.clear)
             .navigationTitle("创建新的回复")
-            .navigationBarItems(trailing: Button("取消") {
+            .navigationBarItems(trailing: Button("关闭") {
                 isPresented = false
                 //onDismiss()
             })

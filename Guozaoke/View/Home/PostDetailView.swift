@@ -243,6 +243,7 @@ struct PostFooterView: View {
     let postId: String
     @State private var isLoading: Bool = false
     @State private var message: String?
+    @State private var showComentView  = false
 
     var body: some View {
                 
@@ -309,6 +310,20 @@ struct PostFooterView: View {
             .font(.caption)
             .disabled(true)
             .lineLimit(1)
+            
+            Button {
+                showComentView = true
+            } label: {
+                Text("评论")
+            }
+            .font(.caption)
+        }
+        .sheet(isPresented: $showComentView) {
+            
+            let detailId = detailParser.postDetail?.detailId ?? ""
+            SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
+                
+            }
         }
     }
 }

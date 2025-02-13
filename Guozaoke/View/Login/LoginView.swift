@@ -63,7 +63,7 @@ struct LoginView: View {
                 }
             }
             .navigationTitle("登录过早客")
-            .navigationBarItems(trailing: Button("取消") {
+            .navigationBarItems(trailing: Button("关闭") {
                 isPresented = false
             })
             .sheet(isPresented: $showSafari) {
