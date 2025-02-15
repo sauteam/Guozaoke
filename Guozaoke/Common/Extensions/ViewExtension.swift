@@ -97,7 +97,7 @@ struct RoundedEdgeModifier: ViewModifier {
 }
 
 
-extension UINavigationController: UIGestureRecognizerDelegate {
+extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
     override open func viewDidLoad() {
         super.viewDidLoad()
         interactivePopGestureRecognizer?.delegate = self
@@ -278,32 +278,6 @@ extension View {
 extension LocalizedStringKey {
     static let empty: LocalizedStringKey = ""
 }
-
-extension View {
-    func to<Destination: View>(if: Binding<Bool>? = nil, @ViewBuilder destination: () -> Destination) -> some View {
-        self.modifier(NavigationLinkModifider(if: `if`, destination: destination()))
-    }
-}
-
-struct NavigationLinkModifider<Destination: View>: ViewModifier {
-    var `if`: Binding<Bool>?
-    let destination: Destination
-
-    func body(content: Content) -> some View {
-        if `if` == nil {
-            NavigationLink {
-                destination
-            } label: {
-                content
-            }
-        } else {
-            NavigationLink(destination: destination, isActive: `if`!) {
-                EmptyView()
-            }
-        }
-    }
-}
-
 
 extension View {
     func withHostingWindow(_ callback: @escaping (UIWindow?) -> Void) -> some View {

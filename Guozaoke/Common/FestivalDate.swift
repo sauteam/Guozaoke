@@ -26,7 +26,7 @@ class FestivalDate {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let today = dateFormatter.string(from: Date())
         let festivalMessages: [String: String] = festivalDate2025()
-        var text = festivalMessages[today] ?? nil
+        let text = festivalMessages[today] ?? nil
         return text
     }
     

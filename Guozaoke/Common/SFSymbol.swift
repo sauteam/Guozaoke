@@ -17,6 +17,8 @@ enum SFSymbol: String {
     case copy  = "document.on.document"
     /// 􀉌
     case reply = "arrowshape.turn.up.left"
+    /// nosign 􁝊
+    case nosign = "nosign.app"
     /// 􀌬
     case report = "exclamationmark.bubble"
     /// 􀅴

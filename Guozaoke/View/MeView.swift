@@ -6,135 +6,187 @@
 //
 
 import SwiftUI
-import JDStatusBarNotification
+
+enum ModeTypeEnum: String, CaseIterable {
+    case system
+    case light
+    case dark
+
+    var name: String {
+        switch self {
+        case .system:
+            return "跟随系统"
+        case .light:
+            return "浅色"
+        case .dark:
+            return "深色"
+        }
+    }
+}
 
 struct MeView: View {
-    //@State private var userId: String
-    //@State private var isLoading = true
     @StateObject private var parser = UserInfoParser()
-    @State private var showSettingView  = false
+    @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-//        NavigationView {
-            VStack() {
-                MyProfileView()
+        VStack() {
+            MyProfileView(themeManager: _themeManager)
+        }
+        .navigationBarBackButtonHidden(true)
+        .navigationTitle("我的")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if !AccountState.isLogin() {
+                LoginStateChecker.LoginStateHandle()
+                return
             }
-            .navigationBarBackButtonHidden(true)
-            .navigationTitle("我的")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                if !AccountState.isLogin() {
-                    LoginStateChecker.LoginStateHandle()
+            if !parser.hadData {
+                if AccountState.userName.isEmpty {
                     return
                 }
-                if !parser.hadData {
-                    if AccountState.userName.isEmpty {
-                        return
-                    }
-                    Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl(), reset: true) }
-                }
-                
-                NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
-                    if let userInfo = notification.userInfo,
-                       let user = userInfo as? Dictionary<String, Any> {
-                        let username  = user["userName"] as? String ?? ""
-                        
-                        Task { await parser.fetchUserInfoAndData(username.userProfileUrl(), reset: true) }
-                    }
+                Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl(), reset: true) }
+            }
+            
+            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
+                if let userInfo = notification.userInfo,
+                   let user = userInfo as? Dictionary<String, Any> {
+                    let username  = user["userName"] as? String ?? ""
+                    
+                    Task { await parser.fetchUserInfoAndData(username.userProfileUrl(), reset: true) }
                 }
             }
-            .onDisappear {
-                if !AccountState.isLogin() {
-                    LoginStateChecker.LoginStateHandle()
-                }
-                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+        }
+        .onDisappear {
+            if !AccountState.isLogin() {
+                LoginStateChecker.LoginStateHandle()
             }
-//        }
+            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+        }
     }
 }
 
 struct MyProfileView: View {
-    @State private var needLogin = false
+    @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
+    @State private var currentMode: ModeTypeEnum = .system
 
+    @EnvironmentObject var themeManager: ThemeManager
     var body: some View {
         List {
             Section {
-                Section {
-                    HStack {
-                        NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
-                            KFImageView(AccountState.avatarUrl)
-                                .frame(width: 60, height: 60)
-                                .clipShape(Circle())
+                HStack {
+                    NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
+                        KFImageView(AccountState.avatarUrl)
+                            .frame(width: 60, height: 60)
+                            .clipShape(Circle())
+                        
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(AccountState.userName)
+                                .font(.title2)
+                                .fontWeight(.bold)
                             
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(AccountState.userName)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                
-                                Text("我的主页")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
+                            Text("我的主页")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
                         }
-                    }
-                }
-                
-                Section {
-                    let username      = AccountState.userName
-                    let collectionUrl = "/u/\(username)/favorites"
-                    let topicUrl = "/u/\(username)/topics"
-                    let relpyUrl = "/u/\(username)/replies"
-                    NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
-                        ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏") {
-                            
-                        }
-                    }
-                    
-                    NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
-                        ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题") {}
-                    }
-                    
-                    NavigationLink(destination: MyReplyListView(linkUrl: relpyUrl, linkText: "我的回复"))  {
-                        ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复") {}
-                    }
-                    
-                    NavigationLink(destination: DarkModeToggleView()) {
-                        ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换") {
-                            
-                        }
-                    }
-                    
-                    NavigationLink(destination: SettingView()) {
-                        ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置") {}
                     }
                 }
             }
+            
+            Section {
+                let username      = AccountState.userName
+                let collectionUrl = "/u/\(username)/favorites"
+                let topicUrl = "/u/\(username)/topics"
+                let replyUrl = "/u/\(username)/replies"
+                
+                NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
+                    ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏")
+                }
+                
+                NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
+                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题")
+                }
+                
+                NavigationLink(destination: MyReplyListView(linkUrl: replyUrl, linkText: "我的回复"))  {
+                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复")
+                }
+            }
+        
+            
+             Section {
+                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
+                     .onTapGesture {
+                         GuozaokeAppInfo.toAppStore()
+                     }
+                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
+                     .onTapGesture {
+                         GuozaokeAppInfo.toWriteReview()
+                     }
+             }
+            
+            Section {
+                NavigationLink(destination: DarkModeToggleView()) {
+                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
+                }
+//                HStack {
+//                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
+//                    Spacer()
+//                    Picker("主题", selection: $appearanceMode) {
+//                        ForEach(ModeTypeEnum.allCases, id: \.self) { mode in
+//                            Text(mode.name)
+//                                .tag(mode)
+//                        }
+//                    }
+//                    .padding()
+//                   .pickerStyle(DefaultPickerStyle())
+//                   .onChange(of: currentMode) { newMode in
+//                       appearanceMode = newMode.rawValue
+//                       applyAppearanceMode(newMode)
+//                   }
+//                   .padding()
+//                }
+//                .onAppear {
+//                    if let savedMode = ModeTypeEnum(rawValue: appearanceMode) {
+//                        currentMode = savedMode
+//                        applyAppearanceMode(currentMode)
+//                    }
+//                }
+                NavigationLink(destination: SettingView()) {
+                    ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
+                }
+            }
+         .listStyle(InsetGroupedListStyle())
         }
-        .listStyle(InsetGroupedListStyle())
-
+    }
+    
+    private func applyAppearanceMode(_ mode: ModeTypeEnum) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return
+        }
+        switch mode {
+        case .light:
+            window.overrideUserInterfaceStyle = .light
+        case .dark:
+            window.overrideUserInterfaceStyle = .dark
+        default:
+            window.overrideUserInterfaceStyle = .unspecified
+        }
     }
 }
 
 struct ProfileRow: View {
     let icon: String
     let title: String
-    let showRightArrow: Bool? = false
-    let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                    //.foregroundColor(.black)
-                Text(title)
-                    .foregroundColor(.primary)
-                Spacer()
-                if showRightArrow == true {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.vertical, 8)
+        HStack {
+            Image(systemName: icon)
+                .frame(width: 25, height: 25)
+                .foregroundColor(.primary)
+            Text(title)
+                .foregroundColor(.primary)
+            Spacer()
         }
+        .padding(.vertical, 8)
     }
 }

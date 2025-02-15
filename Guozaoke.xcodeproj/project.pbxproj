@@ -7,13 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		32113EA42D60419000D9B331 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 32113EA32D60419000D9B331 /* MarkdownUI */; };
 		322627912D33A00000F4AAA8 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 322627902D33A00000F4AAA8 /* SwiftSoup */; };
-		322627D12D3555BC00F4AAA8 /* LookinServer in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D02D3555BC00F4AAA8 /* LookinServer */; };
 		322627D42D35566700F4AAA8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D32D35566700F4AAA8 /* Kingfisher */; };
 		322627D92D35608300F4AAA8 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 322627D82D35608300F4AAA8 /* Alamofire */; };
 		32370F552D56665200EFE597 /* RichText in Frameworks */ = {isa = PBXBuildFile; productRef = 32370F542D56665200EFE597 /* RichText */; };
-		324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0532D43EEC2000D2C48 /* Atributika */; };
-		324EF0562D43EEC2000D2C48 /* AtributikaViews in Frameworks */ = {isa = PBXBuildFile; productRef = 324EF0552D43EEC2000D2C48 /* AtributikaViews */; };
 		328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */ = {isa = PBXBuildFile; productRef = 328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */; };
 /* End PBXBuildFile section */
 
@@ -77,13 +75,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				322627D42D35566700F4AAA8 /* Kingfisher in Frameworks */,
-				324EF0542D43EEC2000D2C48 /* Atributika in Frameworks */,
 				322627D92D35608300F4AAA8 /* Alamofire in Frameworks */,
 				32370F552D56665200EFE597 /* RichText in Frameworks */,
+				32113EA42D60419000D9B331 /* MarkdownUI in Frameworks */,
 				328B0EA32D448EEB0023EBE2 /* JDStatusBarNotification in Frameworks */,
 				322627912D33A00000F4AAA8 /* SwiftSoup in Frameworks */,
-				322627D12D3555BC00F4AAA8 /* LookinServer in Frameworks */,
-				324EF0562D43EEC2000D2C48 /* AtributikaViews in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,13 +141,11 @@
 			name = Guozaoke;
 			packageProductDependencies = (
 				322627902D33A00000F4AAA8 /* SwiftSoup */,
-				322627D02D3555BC00F4AAA8 /* LookinServer */,
 				322627D32D35566700F4AAA8 /* Kingfisher */,
 				322627D82D35608300F4AAA8 /* Alamofire */,
-				324EF0532D43EEC2000D2C48 /* Atributika */,
-				324EF0552D43EEC2000D2C48 /* AtributikaViews */,
 				328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */,
 				32370F542D56665200EFE597 /* RichText */,
+				32113EA32D60419000D9B331 /* MarkdownUI */,
 			);
 			productName = Guozaoke;
 			productReference = 322627622D3393AC00F4AAA8 /* Guozaoke.app */;
@@ -227,22 +221,20 @@
 				};
 			};
 			buildConfigurationList = 3226275D2D3393AC00F4AAA8 /* Build configuration list for PBXProject "Guozaoke" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
-				Base,
+				"zh-Hans",
 			);
 			mainGroup = 322627592D3393AC00F4AAA8;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3226278F2D33A00000F4AAA8 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
-				322627CF2D3555BC00F4AAA8 /* XCRemoteSwiftPackageReference "LookinServer" */,
 				322627D22D35566700F4AAA8 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				322627D72D35608300F4AAA8 /* XCRemoteSwiftPackageReference "Alamofire" */,
-				324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */,
 				328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */,
 				32370F532D56665200EFE597 /* XCRemoteSwiftPackageReference "RichText" */,
+				32113EA22D60419000D9B331 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 322627632D3393AC00F4AAA8 /* Products */;
@@ -621,20 +613,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		32113EA22D60419000D9B331 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
 		3226278F2D33A00000F4AAA8 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.7.6;
-			};
-		};
-		322627CF2D3555BC00F4AAA8 /* XCRemoteSwiftPackageReference "LookinServer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/QMUI/LookinServer/";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.8;
 			};
 		};
 		322627D22D35566700F4AAA8 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
@@ -661,14 +653,6 @@
 				minimumVersion = 2.5.0;
 			};
 		};
-		324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/psharanda/Atributika.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.5;
-			};
-		};
 		328B0EA12D448EEB0023EBE2 /* XCRemoteSwiftPackageReference "JDStatusBarNotification" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/calimarkus/JDStatusBarNotification";
@@ -680,15 +664,15 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		32113EA32D60419000D9B331 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 32113EA22D60419000D9B331 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
 		322627902D33A00000F4AAA8 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3226278F2D33A00000F4AAA8 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
-		};
-		322627D02D3555BC00F4AAA8 /* LookinServer */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 322627CF2D3555BC00F4AAA8 /* XCRemoteSwiftPackageReference "LookinServer" */;
-			productName = LookinServer;
 		};
 		322627D32D35566700F4AAA8 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -704,16 +688,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 32370F532D56665200EFE597 /* XCRemoteSwiftPackageReference "RichText" */;
 			productName = RichText;
-		};
-		324EF0532D43EEC2000D2C48 /* Atributika */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */;
-			productName = Atributika;
-		};
-		324EF0552D43EEC2000D2C48 /* AtributikaViews */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 324EF0522D43EEC2000D2C48 /* XCRemoteSwiftPackageReference "Atributika" */;
-			productName = AtributikaViews;
 		};
 		328B0EA22D448EEB0023EBE2 /* JDStatusBarNotification */ = {
 			isa = XCSwiftPackageProductDependency;

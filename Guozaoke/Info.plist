@@ -14,5 +14,7 @@
 			<string></string>
 		</dict>
 	</dict>
+	<key>UIAccessibility</key>
+	<string>Privacy</string>
 </dict>
 </plist>

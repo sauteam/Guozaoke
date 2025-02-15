@@ -34,15 +34,9 @@ struct PostRowView: View {
                             }
                         }
                     }
-                    .overlay {
-                        NavigationLink(
-                            destination: UserInfoView(userId: post.author),
-                                isActive: $isUserAvatarViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
-                    }
-                
+                    .navigationDestination(isPresented: $isUserAvatarViewActive, destination: {
+                        UserInfoView(userId: post.author)
+                    })                
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         //let content = post.title + (post.postType == .elite ? Text(Image(systemName: SFSymbol.bookmark.rawValue)) : Text(""))
@@ -76,14 +70,9 @@ struct PostRowView: View {
                                         isLastReplyUserInfoViewActive = false
                                     }
                                 }
-                                .background {
-                                    NavigationLink(
-                                        destination: UserInfoView(userId: lastReplyUser),
-                                            isActive: $isLastReplyUserInfoViewActive
-                                        ) {
-                                            EmptyView()
-                                        }.hidden()
-                                }
+                                .navigationDestination(isPresented: $isLastReplyUserInfoViewActive, destination: {
+                                    UserInfoView(userId: lastReplyUser)
+                                })
                         }
                                                 
                         if post.rowEnum != .detailRow {
@@ -107,15 +96,9 @@ struct PostRowView: View {
                                     isNodeInfoViewActive = true
                                 }
                             }
-                            .background {
-                                NavigationLink(
-                                    destination: NodeInfoView(node: post.node, nodeUrl: post.nodeUrl),
-                                        isActive: $isNodeInfoViewActive
-                                    ) {
-                                        EmptyView()
-                                    }
-                                    .hidden()
-                            }
+                            .navigationDestination(isPresented: $isNodeInfoViewActive, destination: {
+                                NodeInfoView(node: post.node, nodeUrl: post.nodeUrl)
+                            })
                     }
                     .font(.caption)
                 }
@@ -143,12 +126,6 @@ struct PostRowView: View {
             } label: {
                 Label("网页查看主页", systemImage: .safari)
             }
-                        
-//            Button {
-//                
-//            } label: {
-//                Label("举报帖子", systemImage: .report)
-//            }
         }
     }
 }

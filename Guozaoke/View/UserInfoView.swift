@@ -330,33 +330,24 @@ struct MyReplyRowView: View {
                     .onTapGesture {
                         isPostDetailViewActive = true
                         log("titleLink \(myReply.titleLink)")
-                    }.background {
-                        NavigationLink(
-                            destination: PostDetailView(postId: myReply.titleLink),
-                                isActive: $isPostDetailViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
                     }
+                    .navigationDestination(isPresented: $isPostDetailViewActive, destination: {
+                        PostDetailView(postId: myReply.titleLink)
+                    })
             }
             
             Text(myReply.content)
                 .font(.callout)
                 .lineLimit(2)
-//                .onTapGesture {
-//                    if myReply.userLink.isEmpty == false {
-//                        //isUserInfoViewActive = true
-//                    }
-//                    log("mentionedUser \(myReply.userLink ?? "")")
-//                }
-                .background {
-                    NavigationLink(
-                        destination: UserInfoView(userId: myReply.userLink ?? ""),
-                            isActive: $isUserInfoViewActive
-                        ) {
-                            EmptyView()
-                        }.hidden()
+                .onTapGesture {
+                    if myReply.userLink.isEmpty == false {
+                        isUserInfoViewActive = true
+                    }
+                    log("mentionedUser \(myReply.userLink ?? "")")
                 }
+                .navigationDestination(isPresented: $isUserInfoViewActive, destination: {
+                    UserInfoView(userId: myReply.userLink ?? "")
+                })
         }
         .contextMenu {
             

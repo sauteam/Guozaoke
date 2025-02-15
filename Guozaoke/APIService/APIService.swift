@@ -38,6 +38,7 @@ enum PostListType: String, CaseIterable {
     case hot      = "默认"
     case latest   = "最新"
     case elite    = "精华"
+    //case today    = "今日"
     case interest = "兴趣"
     case follows  = "关注"
     case it       = "IT"

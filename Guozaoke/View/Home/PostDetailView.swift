@@ -6,9 +6,6 @@
 //
 
 import SwiftUI
-import Kingfisher
-import JDStatusBarNotification
-import RichText
 
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
@@ -137,38 +134,6 @@ struct PostDetailContent: View, Equatable {
 
             PostRowView(post: post)
                 .padding(.horizontal)
-            
-            // 帖子内容
-//            HTMLContentView(
-//                content: detail.content,
-//                fontSize: 16
-//                
-////                onLinkTap: { url in
-////                    print("Link tapped: \(url)")
-////                },
-////                onUserTap: { userUrl in
-////                    linkUserId = userUrl.htmlUserId() ?? ""
-////                    showUserInfo = true
-////                }
-//            )
-//            .id(UUID())
-            
-//            ScrollView{
-//                       RichText(html: detail.content)
-//                            .lineHeight(170)
-//                            .colorScheme(.auto)
-//                            .imageRadius(0)
-//                            .fontType(.system)
-//                            .foregroundColor(light: Color.primary, dark: Color.white)
-//                            .linkColor(light: Color.blue, dark: Color.blue)
-//                            .colorPreference(forceColor: .onlyLinks)
-//                            .customCSS("")
-//                            .linkOpenType(.none)
-//                            .placeholder {
-//                                ProgressView()
-//                            }
-//                            .transition(.easeOut)
-//                    }
             RichTextView(content: detail.content)
                 .padding(.horizontal)
             // 帖子图片
@@ -179,7 +144,8 @@ struct PostDetailContent: View, Equatable {
             
             PostFooterView(detail: detail, detailParser: detailParser, postId: postId)
             Divider()
-                .padding(.vertical, 2)
+                .padding(.horizontal)
+                .frame(maxWidth: .infinity)
             // 回复列表
             if !detail.replies.isEmpty {
                 ReplyListView(detailParser: detailParser, replies: detailParser.replies)
@@ -334,17 +300,15 @@ struct ReplyListView: View {
     let replies: [Reply]
     
     var body: some View {
-        LazyVStack(alignment: .leading, spacing: 16) {
-            Text("全部回复 (\(replies.count))")
-                .font(.headline)
-            ForEach(replies) { reply in
-                ReplyItemView(detailParser: detailParser, reply: reply)
-                    .onAppear {
-                        if reply == replies.last {
-                            detailParser.loadMore()
-                        }
+        Text("全部回复 (\(replies.count))")
+            .font(.headline)
+        ForEach(replies) { reply in
+            ReplyItemView(detailParser: detailParser, reply: reply)
+                .onAppear {
+                    if reply == replies.last {
+                        detailParser.loadMore()
                     }
-            }
+                }
         }
     }
 }
@@ -352,13 +316,13 @@ struct ReplyListView: View {
 // MARK: - 回复项视图
 struct ReplyItemView: View {
     @ObservedObject var detailParser: PostDetailParser
-    let reply: Reply
+    var reply: Reply
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
     @State private var isAvatarInfoViewActive = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        LazyVStack(alignment: .leading, spacing: 16) {
             // 回复头部
             HStack {
                 KFImageView(reply.author.avatar)
@@ -366,15 +330,9 @@ struct ReplyItemView: View {
                     .onTapGesture {
                         isAvatarInfoViewActive = true
                     }
-                    .overlay {
-                        NavigationLink(
-                            destination: UserInfoView(userId: reply.author.name),
-                                isActive: $isAvatarInfoViewActive
-                            ) {
-                                EmptyView()
-                            }.hidden()
+                    .navigationDestination(isPresented: $isAvatarInfoViewActive) {
+                        UserInfoView(userId: reply.author.name)
                     }
-                
                 VStack {
                     Text(reply.author.name)
                         .font(.body)
@@ -382,15 +340,9 @@ struct ReplyItemView: View {
                         .onTapGesture {
                             isUserNameInfoViewActive = true
                         }
-                        .overlay {
-                            NavigationLink(
-                                destination: UserInfoView(userId: reply.author.name),
-                                    isActive: $isUserNameInfoViewActive
-                                ) {
-                                    EmptyView()
-                                }.hidden()
-                        }
-                    
+                        .navigationDestination(isPresented: $isUserNameInfoViewActive, destination: {
+                            UserInfoView(userId: reply.author.name)
+                        })                    
                     HStack {
                         Text(reply.time)
                             .font(.caption)
@@ -410,9 +362,12 @@ struct ReplyItemView: View {
                         
                     }
                 }
-                Text(reply.like)
+                let number = (detailParser.replyZanNumber)
+                Text("赞 \(number)")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .disabled(detailParser.replyZan > 0)
+                    .tag(reply.likeLink)
                     .onTapGesture {
                         Task {
                             do {
@@ -429,29 +384,19 @@ struct ReplyItemView: View {
                     .foregroundColor(.secondary)
             }
             
-            // 回复内容
-            HTMLContentView(content: reply.content, fontSize: 14)
-            // 回复图片
+            HTMLContentView(content: reply.content, fontSize: 15)
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }
+            Divider()
+                .frame(maxWidth: .infinity)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(8)
         .contextMenu {
             Button {
                 reply.content.copyToClipboard()
             } label: {
                 Label("拷贝内容", systemImage: .copy)
             }
-                        
-//            Button {
-//                
-//            } label: {
-//                Label("回复", systemImage: .reply)
-//            }
-            
             Button {
                 ToastView.reportToast()
             } label: {

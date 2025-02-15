@@ -18,9 +18,10 @@ struct GuozaokeApp: App {
     public static var window: UIWindow?
     public static var tabbarView = TabBarView()
     @State private var isActive = false
+    @StateObject var themeManager = ThemeManager(theme: Theme(primaryColor: .systemBlue, secondaryColor: .red))
 
     init() {
-        ///UINavigationBar.appearance().tintColor = themeColor
+        //UINavigationBar.appearance().tintColor = UIColor.brown
         applyTabBarBackground()
         _ = ImageCacheManager.shared
     }
@@ -30,15 +31,15 @@ struct GuozaokeApp: App {
             if isActive {
                 GuozaokeApp.tabbarView
                     //.accentColor(.brown)
-                    ///.environment(\.themeColor, .brown)
                     .onAppear {
                         applyAppearance()
                         addNoti()
                     }
+                    .environmentObject(themeManager)
             } else {
                 LaunchScreenView()
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             withAnimation {
                                 isActive = true
                             }
@@ -108,17 +109,7 @@ private extension GuozaokeApp {
             }
         }
     }
-    
-    func appearanceText() -> String {
-        var text = "跟随系统"
-        if darkMode == "light" {
-            text = "浅色模式"
-        } else if  darkMode == "dark" {
-            text = "暗黑模式"
-        }
-        return text
-    }
-    
+        
     func addNoti() {
         NotificationCenter.default.addObserver(forName: .refreshTokenNoti, object: nil, queue: .main) { _ in
             handleTokenExpiration()

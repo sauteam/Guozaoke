@@ -3,7 +3,8 @@ struct SettingView: View {
     @State private var showLogoutSheet = false
     @State private var showLoginView = false
     @State private var presentedSheet: ActiveSheet?
-    
+    @EnvironmentObject var themeManager: ThemeManager  // Access the themeManager
+
     enum ActiveSheet: Identifiable {
         case logout, login
 
@@ -19,57 +20,59 @@ struct SettingView: View {
         Form {
             Section {
                 NavigationLink(destination: IntroductationView())  {
-                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖") {}
+                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖")
                 }
 
                 NavigationLink(destination: NodeInfoView(node: "意见反馈", nodeUrl: APIService.feedback)) {
-                    ProfileRow(icon: SFSymbol.pencilCircle.rawValue, title: "意见反馈") {}
+                    ProfileRow(icon: SFSymbol.pencilCircle.rawValue, title: "意见反馈")
                 }
                 
                 NavigationLink(destination: NodeInfoView(node: "公告", nodeUrl: APIService.notice)) {
-                    ProfileRow(icon: SFSymbol.notice.rawValue, title: "公告") {}
+                    ProfileRow(icon: SFSymbol.notice.rawValue, title: "公告")
                 }
                 
                 NavigationLink(destination: FaqView()) {
-                    ProfileRow(icon: SFSymbol.report.rawValue, title: "faq") {}
+                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "faq")
                 }
                 
                 NavigationLink(destination: AboutGuozaokeView())  {
-                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于") {}
+                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
                 }
                 
                 NavigationLink(destination: MoreView())  {
-                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多") {}
+                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
                 }
             } header: {
                 Text("帮助")
             }
-                   
-            Section {
-                ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
-                    GuozaokeAppInfo.toAppStore()
-                }
-                ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
-                    GuozaokeAppInfo.toWriteReview()
-                }
-               
-            } header: {
-                Text("App Store查看")
-            }
-                        
             
+//            Section {
+//                HStack {
+//                    ProfileRow(icon: SFSymbol.exit.rawValue, title: "主题色")
+//                    Picker("主题色", selection: $themeManager.selectedColor) {
+//                       Text("系统蓝").tag(ThemeColor.systemBlue)
+//                       Text("咖啡色").tag(ThemeColor.coffeeBrown)
+//                       Text("红色").tag(ThemeColor.red)
+//                   }
+//                   .pickerStyle(SegmentedPickerStyle())
+//                   .padding()
+//                }
+//            } header: {
+//                Text("主题色")
+//            }
+                        
             Section {
-                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录") {
-                    tapTextEvent("退出登录")
-                }
+                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录")
+                    .onTapGesture {
+                        tapTextEvent("退出登录")
+                    }
                 NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
-                    ProfileRow(icon: SFSymbol.remove.rawValue, title: "删除账户") {}
+                    ProfileRow(icon: SFSymbol.remove.rawValue, title: "删除账户") 
                 }
             } header: {
                 Text("账号管理")
             }
         }
-        .padding(.vertical, 10)
         .listStyle(InsetGroupedListStyle())
         .toolbar(.hidden, for: .tabBar)
         .sheet(item: $presentedSheet) { sheetType in

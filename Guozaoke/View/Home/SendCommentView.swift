@@ -99,6 +99,7 @@ struct SendCommentView: View {
             }
             let response = try await APIService.sendComment(url: APIService.baseUrlString + getDetailId(), content: content)
             print("Response: \(response)")
+            
             postSuccess = true
             isPresented = false
             sendSuccess()
@@ -106,7 +107,7 @@ struct SendCommentView: View {
         } catch {
             isPosting = false
             errorMessage = "发送失败: \(error.localizedDescription)"
-            ToastView.toastText("评论成功")
+            ToastView.toastText("发送失败")
         }
     }
 

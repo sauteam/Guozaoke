@@ -10,8 +10,6 @@ import SwiftUI
 import CryptoKit
 import JDStatusBarNotification
 
-let themeColor = UIColor(hex: 303030)
-
 
 extension String {
     
@@ -92,7 +90,7 @@ extension String {
         guard self.count > 0 else {
             return
         }
-        hapticFeedback(.heavy)
+        hapticFeedback()
         UIPasteboard.general.string = self
         ToastView.toast("拷贝成功", subtitle:"",  .success)
     }
@@ -315,7 +313,7 @@ struct DeviceUtils {
 extension Color {
     /// 黑色 白色
     static let contentTextColor = Color("contentTextColor")
-
+    
     private init(_ hex: Int, a: CGFloat = 1.0) {
         self.init(UIColor(hex: hex, alpha: a))
     }

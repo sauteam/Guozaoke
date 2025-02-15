@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import RichText
 
 struct FaqView: View {
     @StateObject private var viewModel = UserInfoParser()

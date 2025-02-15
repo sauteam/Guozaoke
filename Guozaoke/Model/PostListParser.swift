@@ -67,6 +67,14 @@ struct NodeInfo: Hashable, Equatable {
     var creatLink: String
 }
 
+struct HotTodayTopic: Identifiable {
+    let id = UUID()
+    let title: String
+    let link: String
+    let user: String
+    let avatar: String
+}
+
 // MARK: - 数据模型
 class PostListParser: ObservableObject {
     @Published var navItems: [NavItem] = []
@@ -74,6 +82,7 @@ class PostListParser: ObservableObject {
     @Published var nodes: [NodeItem] = []
     @Published var onlyNodes: [Node] = []
     @Published var nodeInfo: NodeInfo?
+    @Published var hotTodayTopic: [HotTodayTopic] = []
     @Published var currentPage = 1
     @Published var totalPages  = 1
     @Published var isLoading   = false
@@ -223,7 +232,8 @@ class PostListParser: ObservableObject {
                
                do {
                    if self.currentPage == 1 {
-                       self.posts = []
+                       self.posts.removeAll()
+                       self.hotTodayTopic.removeAll()
                    }
                    let doc = try SwiftSoup.parse(html)
                    
@@ -237,8 +247,12 @@ class PostListParser: ObservableObject {
                    let nodeList = try self.parseNodes(doc: doc)
                    self.nodes.append(contentsOf: nodeList)
                    
+                   let hots = try self.hotTodayTopic(doc: doc)
+                   self.hotTodayTopic.append(contentsOf: hots)
+                   
                    try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
+                   log("hotTodayTopic \(self.hotTodayTopic)")
                    // 累加数据
                    self.currentPage += 1
                    self.posts.append(contentsOf: newPosts)
@@ -360,6 +374,19 @@ class PostListParser: ObservableObject {
                 lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(),
                 rowEnum: rowEnum,
                 postType: try element.select("i.icon-bookmark-empty").last() == nil ? .none: .elite
+            )
+        }
+    }
+    
+    // 今日最热
+    func hotTodayTopic(doc: Document) throws -> [HotTodayTopic] {
+        let topicElements = try doc.select("div.cell")
+        return try topicElements.map { element in
+            HotTodayTopic(
+                title: try element.select("span.hot_topic_title a").first()?.text() ?? "未知标题",
+                link: try element.select("span.hot_topic_title a").first()?.attr("href") ?? "#",
+                user: try element.select("a[href^=/u/]").first()?.attr("href").replacingOccurrences(of: "/u/", with: "") ?? "未知用户",
+                avatar: try element.select("img.avatar").first()?.attr("src") ?? ""
             )
         }
     }

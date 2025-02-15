@@ -81,7 +81,7 @@ struct Reply: Identifiable, Equatable {
     let links: [PostLink]
     let time: String
     let location: String
-    let like: String
+    var like: Int = 0
     let likeLink: String
 }
 
@@ -105,6 +105,8 @@ class PostDetailParser: ObservableObject {
     
     @Published var isCollection = false
     @Published var isZan  = false
+    @Published var replyZan  = 0
+    @Published var replyZanNumber  = 0
 
     var zanText: String {
         return isZan ? "已感谢":"感谢"
@@ -211,9 +213,9 @@ class PostDetailParser: ObservableObject {
         
         // 5. 解析帖子内容 纯文字
         let contentBox = try topicDetail.select("div.ui-content").first()
-        let content: String = try contentBox?.html() ?? ""
+        let topicContent: String = try contentBox?.html() ?? ""
         //let content = try contentBox?.select("div").text() ?? ""
-        log("[content] \(content)")
+        log("[content] \(topicContent)")
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
             let src = try img.attr("src")
@@ -256,6 +258,7 @@ class PostDetailParser: ObservableObject {
         }
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
+        log("replies \(replies)")
         self.replies.append(contentsOf: replies)
         return PostDetail(
             id: postId ?? "",
@@ -264,7 +267,7 @@ class PostDetailParser: ObservableObject {
             node: category,
             nodeUrl: nodeUrl,
             author: author,
-            content: content,
+            content: topicContent,
             images: images,
             links: links,
             publishTime: publishTime,
@@ -293,8 +296,8 @@ class PostDetailParser: ObservableObject {
             
             // 2. 解析回复内容
             let contentBox = try item.select("span.content").first()
+            //let content = try contentBox?.html() ?? ""
             let content = try contentBox?.text() ?? ""
-            
             // 3. 解析回复中的图片
             let images = try contentBox?.select("img").compactMap { img -> PostImage? in
                 let src = try img.attr("src")
@@ -333,7 +336,8 @@ class PostDetailParser: ObservableObject {
                 let text = try item.select(".floor").last()?.text() ?? "0"
                 return text
             }()
-            
+            let zanNumber = likeCount.replacingOccurrences(of: "赞 ", with: "")
+            replyZanNumber = Int(zanNumber) ?? 0
             let likeLink = try item.select("a.J_replyVote").first()?.attr("href")
             return Reply(
                 floor: floor,
@@ -343,7 +347,7 @@ class PostDetailParser: ObservableObject {
                 links: links,
                 time: time,
                 location: location,
-                like: likeCount,
+                like: replyZanNumber,
                 likeLink: likeLink ?? ""
             )
         }
@@ -369,7 +373,7 @@ class PostDetailParser: ObservableObject {
             return Int(try element.text())
         }.max() ?? currentPage
         self.totalPages = pageNumbers
-        log("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl) nextPageUrl\(nextPageUrl) pageNumbers\(pageNumbers)")
+        log("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl ?? "1") nextPageUrl\(nextPageUrl ?? "") pageNumbers\(pageNumbers)")
 //        if totalPages == 1 {
 //            let mobilePaginationText = try doc.select("div.pagination-wap div").text()
 //            if let range = mobilePaginationText.range(of: "/") {
@@ -396,8 +400,8 @@ class PostDetailParser: ObservableObject {
                             LoginStateChecker.clearUserInfo()
                         }
                     }
-                    if model.success == 1 {
-                        runInMain {
+                    runInMain {
+                        if model.success == 1 {
                             if link.contains("favorite") {
                                 self.isCollection.toggle()
                                 log("isCollection \(self.isCollection)")
@@ -420,6 +424,13 @@ class PostDetailParser: ObservableObject {
                                 } else {
                                     self.postDetail?.zanString = "感谢"
                                 }
+                            } else if link.contains("replyVote") {
+                                self.replyZan = 1
+                                self.replyZanNumber += 1
+                            }
+                        } else {
+                            if model.message?.contains("already_voted") == true {
+                                self.replyZan = 2
                             }
                         }
                     }

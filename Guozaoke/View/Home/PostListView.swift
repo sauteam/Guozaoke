@@ -14,7 +14,7 @@ struct PostListView: View {
     @State private var isLoading = false
     @State private var showAddPostView = false
     @State private var showSearchView  = false
-    @State private var selectedTopic: Node? = nil // 可以传 nil
+    @State private var selectedTopic: Node? = nil
 //    @Environment(\.themeColor) private var themeColor: Color
     
     var body: some View {
@@ -29,7 +29,7 @@ struct PostListView: View {
                                 }
                                 proxy.scrollTo(type, anchor: .center)
                             }) {
-                                VStack(spacing: 8) {
+                                VStack(spacing: 5) {
                                     Text(type.rawValue)
                                         .foregroundColor(selectedTab == type ? .blue : .gray)
                                         .font(.system(size: 16, weight: .medium))
@@ -72,7 +72,6 @@ struct PostListView: View {
             .navigationTitle("过早客")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .padding(.top)
             .sheet(isPresented: $showAddPostView) {
                 if LoginStateChecker.isLogin() {
                     SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
@@ -115,7 +114,7 @@ struct PostListContentView: View {
                 .padding(.vertical, 12)
             }
             List {
-                ForEach(viewModel.posts) { post in
+                ForEach(viewModel.posts) { post in                    
                     NavigationLink {
                         PostDetailView(postId: post.link)
                     } label: {

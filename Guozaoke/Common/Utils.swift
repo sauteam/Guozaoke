@@ -64,7 +64,7 @@ func runInMain(delay: Int = 0, execute work: @escaping @convention(block) () -> 
     DispatchQueue.main.asyncAfter(deadline: .now() + .microseconds(delay), execute: work)
 }
 
-func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
+func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
     let impactHeavy = UIImpactFeedbackGenerator(style: style)
     impactHeavy.prepare()
     impactHeavy.impactOccurred()
@@ -105,16 +105,4 @@ extension String {
     }
 }
 
-
-// 自定义环境值，存储主题色
-struct ThemeColorKey: EnvironmentKey {
-    static let defaultValue: Color = .brown
-}
-
-extension EnvironmentValues {
-    var themeColor: Color {
-        get { self[ThemeColorKey.self] }
-        set { self[ThemeColorKey.self] = newValue }
-    }
-}
 
