@@ -235,8 +235,6 @@ struct DividerModifier: ViewModifier {
     }
 }
 
-
-
 extension Divider {
     func light() -> some View {
         frame(height: 0.2)
@@ -277,6 +275,31 @@ extension View {
 
 extension LocalizedStringKey {
     static let empty: LocalizedStringKey = ""
+}
+
+extension View {
+    func to<Destination: View>(if: Binding<Bool>? = nil, @ViewBuilder destination: () -> Destination) -> some View {
+        self.modifier(NavigationLinkModifider(if: `if`, destination: destination()))
+    }
+}
+
+struct NavigationLinkModifider<Destination: View>: ViewModifier {
+    var `if`: Binding<Bool>?
+    let destination: Destination
+
+    func body(content: Content) -> some View {
+        if `if` == nil {
+            NavigationLink {
+                destination
+            } label: {
+                content
+            }
+        } else {
+            NavigationLink(destination: destination, isActive: `if`!) {
+                EmptyView()
+            }
+        }
+    }
 }
 
 extension View {

@@ -12,6 +12,7 @@ struct PostListView: View {
     @State private var selectedTab: PostListType = .latest
     @State private var posts: [PostItem] = []
     @State private var isLoading = false
+    @State private var showMembersView = false
     @State private var showAddPostView = false
     @State private var showSearchView  = false
     @State private var selectedTopic: Node? = nil
@@ -21,7 +22,7 @@ struct PostListView: View {
         VStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
                 ScrollViewReader { proxy in
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         ForEach(PostListType.allCases, id: \.self) { type in
                             Button(action: {
                                 withAnimation {
@@ -68,7 +69,18 @@ struct PostListView: View {
                         SFSymbol.add
                     }
                 }
+                
+                ToolbarItemGroup(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showMembersView = true
+                    }) {
+                        SFSymbol.person3
+                    }
+                }
             }
+            .navigationDestination(isPresented: $showMembersView, destination: {
+                MembersGridView()
+            })
             .navigationTitle("过早客")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
@@ -94,6 +106,8 @@ struct PostListContentView: View {
     let type: PostListType
     @StateObject private var viewModel = PostListParser()
     @State private var showDetailView  = false
+    @State private var showUserInfoView  = false
+    @State private var selectedHotTodayTopic: HotTodayTopic? = nil
 
     var body: some View {
         ZStack {
@@ -114,42 +128,64 @@ struct PostListContentView: View {
                 .padding(.vertical, 12)
             }
             List {
-                ForEach(viewModel.posts) { post in                    
-                    NavigationLink {
-                        PostDetailView(postId: post.link)
-                    } label: {
-                        PostRowView(post: post)
-                            .onAppear {
-                                if post == viewModel.posts.last {
-                                    viewModel.loadMorePosts(type: type)
-                                    print("2 type \(type)")
+                if type == .today {
+                    ForEach(viewModel.hotTodayTopic) { item in
+                        HStack(spacing: 12) {
+                            KFImageView(item.avatar)
+                                .avatar()
+                                .onTapGesture {
+                                    self.selectedHotTodayTopic = item
+                                    showUserInfoView = true
                                 }
-                            }
+                            Text(item.title)
+                                .lineLimit(2)
+                                .greedyWidth(.leading)
+                        }
+                        .to { PostDetailView(postId: item.link) }
                     }
-                }
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
+                } else {
+                    ForEach(viewModel.posts) { post in
+                        NavigationLink {
+                            PostDetailView(postId: post.link)
+                        } label: {
+                            PostRowView(post: post)
+                                .onAppear {
+                                    if post == viewModel.posts.last {
+                                        viewModel.loadMorePosts(type: type)
+                                        print("2 type \(type)")
+                                    }
+                                }
+                        }
+                    }
+                    
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .listRowSeparator(.hidden)
+                    } else if !viewModel.hasMore, !viewModel.posts.isEmpty {
+                        HStack {
+                            Spacer()
+                            Text(NoMoreDataTitle.homeList)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
                         .listRowSeparator(.hidden)
-                } else if !viewModel.hasMore, !viewModel.posts.isEmpty {
-                    HStack {
-                        Spacer()
-                        Text(NoMoreDataTitle.homeList)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                        Spacer()
+                        .padding(.vertical, 12)
                     }
-                    .listRowSeparator(.hidden)
-                    .padding(.vertical, 12)
                 }
             }
             .buttonStyle(.plain)
             .listStyle(.plain)
+            .id(type)
             .refreshable {
                 viewModel.refreshPostList(type: type)
             }
-            .id(type)
+            .navigationDestination(isPresented: $showUserInfoView, destination: {
+                if let item = self.selectedHotTodayTopic {
+                    UserInfoView(userId: item.user)
+                }
+            })
             .onAppear() {
 
                 if viewModel.posts.isEmpty {

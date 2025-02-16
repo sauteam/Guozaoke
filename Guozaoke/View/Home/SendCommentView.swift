@@ -14,14 +14,13 @@ struct SendCommentView: View {
     let sendSuccess: () -> Void
     @StateObject private var viewModel = PostListParser()
     @State private var content = ""
-    
+    @Environment(\.dismiss) var dismiss
+
     @State private var isPosting = false
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
     @FocusState private var isFocused: Bool
     //var onDismiss: () -> Void
-
-    
     var body: some View {
         NavigationView {
             Form {
@@ -71,8 +70,12 @@ struct SendCommentView: View {
             .listRowBackground(Color.clear)
             .navigationTitle("创建新的回复")
             .navigationBarItems(trailing: Button("关闭") {
-                isPresented = false
-                //onDismiss()
+                isPresented    = false
+                self.isFocused = false
+                dismiss()
+                /// isPresented 是 Sheet，检查 @Binding 是否正确传递
+                ///  如果 isPresented 是 NavigationStack，用 dismiss()
+                ///onDismiss()
             })
         }
     }

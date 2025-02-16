@@ -67,6 +67,7 @@ struct NodeInfo: Hashable, Equatable {
     var creatLink: String
 }
 
+/// 今日最热
 struct HotTodayTopic: Identifiable {
     let id = UUID()
     let title: String
@@ -75,11 +76,22 @@ struct HotTodayTopic: Identifiable {
     let avatar: String
 }
 
+/// 运行状态
+struct CommunityStatus: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: String
+}
+
 // MARK: - 数据模型
 class PostListParser: ObservableObject {
     @Published var navItems: [NavItem] = []
     @Published var posts: [PostItem] = []
+    /// 节点导航 所有节点
     @Published var nodes: [NodeItem] = []
+    /// 最热节点
+    @Published var hotNodes: [NodeItem] = []
+    @Published var communityStatusList: [CommunityStatus] = []
     @Published var onlyNodes: [Node] = []
     @Published var nodeInfo: NodeInfo?
     @Published var hotTodayTopic: [HotTodayTopic] = []
@@ -102,7 +114,7 @@ class PostListParser: ObservableObject {
     }
     
     var hadNodeItemData: Bool {
-        return self.nodes.count > 0
+        return self.nodes.count > 0 && self.hotNodes.count > 0
     }
             
     // MARK: - 加载我的数据
@@ -264,7 +276,9 @@ class PostListParser: ObservableObject {
         }.resume()
 
     }
-    
+}
+
+private extension PostListParser {
     func parseNotification(doc: Document) throws {
         let notificationLinks = try doc.select("a[href*='notifications']")
         if !notificationLinks.isEmpty() {
@@ -314,9 +328,38 @@ class PostListParser: ObservableObject {
         }
     }
     
+    /// 节点信息
     func parseNodes(doc: Document) throws -> [NodeItem] {
+
+        var statusList: [CommunityStatus] = []
+
+        let containerStatus = try doc.select("div.sidebox.container-box.mt10.community-status.hidden-xs").first()
+            let items = try containerStatus?.select("dl").array()
+            for item in items ?? [] {
+                let title = try item.select("dt").text()
+                let value = try item.select("dd").text()
+                let status = CommunityStatus(title: title, value: value)
+                statusList.append(status)
+         }
+        self.communityStatusList = statusList
+        
         var nodeItems: [NodeItem] = []
         var allNodes: [Node] = []
+        var hotNodes: [NodeItem] = []
+        
+        let container = try doc.select("div.sidebox.container-box.mt10.hot-nodes").first()
+           let links = try container?.select("a").array()
+           let category = try container?.select("span.title").text() ?? ""
+           var nodes: [Node] = []
+           for link in links ?? [] {
+               let title = try link.text()
+               let url = try link.attr("href")
+               let node = Node(title: title, link: url)
+               nodes.append(node)
+           }
+          hotNodes.append(NodeItem(category: category, nodes: nodes))
+          self.hotNodes = hotNodes
+        
         if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")
             for item in listItems {
@@ -338,6 +381,8 @@ class PostListParser: ObservableObject {
         }
         return nodeItems
     }
+    
+    
     
     // 解析帖子列表
     func parseTopics(doc: Document) throws -> [PostItem] {

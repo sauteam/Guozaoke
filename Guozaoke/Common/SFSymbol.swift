@@ -8,6 +8,10 @@
 import SwiftUI
 
 enum SFSymbol: String {
+    /// 􀻷
+    case person3 = "person.3.sequence"
+    ///􀻸
+    case person3fill = "person.3.sequence.fill"
     /// 􀅼
     case add = "plus"
     case edit = "pencil"

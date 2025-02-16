@@ -13,79 +13,80 @@ struct NotificationsView: View {
     @State private var showCommentView = false
     @State private var selectedNotification: NotificationItem? = nil
     var body: some View {
-        
-        if viewModel.isLoading {
-            ProgressView()
-        }
-        if viewModel.notifications.isEmpty, !viewModel.isLoading {
-            HStack {
-                Spacer()
-                Text(NoMoreDataTitle.nodata)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .onTapGesture {
-                        if !LoginStateChecker.isLogin() {
-                            LoginStateChecker.LoginStateHandle()
-                        }
-                    }
-                Spacer()
+        VStack {
+            if viewModel.isLoading, viewModel.notifications.isEmpty  {
+                ProgressView()
             }
-            .listRowSeparator(.hidden)
-            .padding(.vertical, 12)
-        }
-        
-        List(viewModel.notifications) { notification in
-            NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
-                NotificationRowView(notification: notification)
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            showCommentView      = true
-                            selectedNotification = notification
-                        } label: {
-                            SFSymbol.reply
+            if viewModel.notifications.isEmpty, !viewModel.isLoading {
+                HStack {
+                    Spacer()
+                    Text(NoMoreDataTitle.nodata)
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .onTapGesture {
+                            if !LoginStateChecker.isLogin() {
+                                LoginStateChecker.LoginStateHandle()
+                            }
                         }
-                    }
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+                .padding(.vertical, 12)
+            }
+            
+            List(viewModel.notifications) { notification in
+                NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
+                    NotificationRowView(notification: notification)
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                showCommentView      = true
+                                selectedNotification = notification
+                            } label: {
+                                SFSymbol.reply
+                            }
+                        }
 
+                }
             }
-        }
-        .padding(.vertical, 5)
-        .buttonStyle(.plain)
-        .listStyle(.plain)
-        .refreshable {
-            Task {
-                await viewModel.fetchNotificationsRefresh()
+            .padding(.vertical, 5)
+            .buttonStyle(.plain)
+            .listStyle(.plain)
+            .refreshable {
+                Task {
+                    await viewModel.fetchNotificationsRefresh()
+                }
             }
-        }
-        .sheet(item: $selectedNotification, content: { notification in
-            let reply = "@" + notification.username + " "
-            SendCommentView(
-                detailId: notification.username,
-                replyUser: reply,
-                isPresented: $showCommentView
-            ) {
-                showCommentView = false
-                selectedNotification = nil
-            } 
-        })
-        .navigationTitle("通知")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .onAppear {
-            if !AccountState.isLogin() {
-                LoginStateChecker.LoginStateHandle()
-                return
+            .sheet(item: $selectedNotification, content: { notification in
+                let reply = "@" + notification.username + " "
+                SendCommentView(
+                    detailId: notification.username,
+                    replyUser: reply,
+                    isPresented: $showCommentView
+                ) {
+                    showCommentView = false
+                    selectedNotification = nil
+                }
+            })
+            .navigationTitle("通知")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .onAppear {
+                if !AccountState.isLogin() {
+                    LoginStateChecker.LoginStateHandle()
+                    return
+                }
+                Task {
+                    await viewModel.fetchNotifications()
+                }
             }
-            Task {
-                await viewModel.fetchNotifications()
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+                Task {
+                    await viewModel.fetchNotificationsRefresh()
+                }
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
-            Task {
-                await viewModel.fetchNotificationsRefresh()
+            .onDisappear {
+                NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
             }
-        }
-        .onDisappear {
-            NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
         }
     }
 }

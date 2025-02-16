@@ -82,7 +82,8 @@ struct Reply: Identifiable, Equatable {
     let links: [PostLink]
     let time: String
     let location: String
-    var like: Int = 0
+    var like: Int
+    var isLiked: Bool = false
     let likeLink: String
 }
 
@@ -106,8 +107,8 @@ class PostDetailParser: ObservableObject {
     
     @Published var isCollection = false
     @Published var isZan  = false
-    @Published var replyZan  = 0
-    @Published var replyZanNumber  = 0
+//    @Published var replyZan  = 0
+//    @Published var replyZanNumber  = 0
 
     var zanText: String {
         return isZan ? "已感谢":"感谢"
@@ -344,8 +345,8 @@ class PostDetailParser: ObservableObject {
                 let text = try item.select(".floor").last()?.text() ?? "0"
                 return text
             }()
-            let zanNumber = likeCount.replacingOccurrences(of: "赞 ", with: "")
-            replyZanNumber = Int(zanNumber) ?? 0
+            let zanNumber  = likeCount.replacingOccurrences(of: "赞 ", with: "")
+            let replyZanNumber = Int(zanNumber) ?? 0
             let likeLink = try item.select("a.J_replyVote").first()?.attr("href")
             return Reply(
                 floor: floor,
@@ -356,6 +357,7 @@ class PostDetailParser: ObservableObject {
                 time: time,
                 location: location,
                 like: replyZanNumber,
+                isLiked: false,
                 likeLink: likeLink ?? ""
             )
         }
@@ -433,12 +435,11 @@ class PostDetailParser: ObservableObject {
                                     self.postDetail?.zanString = "感谢"
                                 }
                             } else if link.contains("replyVote") {
-                                self.replyZan = 1
-                                self.replyZanNumber += 1
+                                
                             }
                         } else {
                             if model.message?.contains("already_voted") == true {
-                                self.replyZan = 2
+                                
                             }
                         }
                     }

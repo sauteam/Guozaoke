@@ -37,8 +37,8 @@ struct NoMoreDataTitle {
 enum PostListType: String, CaseIterable {
     case hot      = "默认"
     case latest   = "最新"
+    case today    = "今日"
     case elite    = "精华"
-    //case today    = "今日"
     case interest = "兴趣"
     case follows  = "关注"
     case it       = "IT"
@@ -52,6 +52,8 @@ enum PostListType: String, CaseIterable {
             return ""
         case .latest:
             return "/?tab=latest"
+        case .today:
+            return ""
         case .elite:
             return "/?tab=elite"
         case .interest:

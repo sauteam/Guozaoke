@@ -278,15 +278,15 @@ struct PostFooterView: View {
 // MARK: - 回复列表视图
 struct ReplyListView: View {
     @ObservedObject var detailParser: PostDetailParser
-    let replies: [Reply]
+    @State  var replies: [Reply]
     
     var body: some View {
         Text("全部回复 (\(replies.count))")
             .font(.headline)
-        ForEach(replies) { reply in
-            ReplyItemView(detailParser: detailParser, reply: reply)
+        ForEach($replies) { $reply in
+            ReplyItemView(detailParser: detailParser, reply: $reply)
                 .onAppear {
-                    if reply == replies.last {
+                    if reply.id == replies.last?.id {
                         detailParser.loadMore()
                     }
                 }
@@ -297,7 +297,7 @@ struct ReplyListView: View {
 // MARK: - 回复项视图
 struct ReplyItemView: View {
     @ObservedObject var detailParser: PostDetailParser
-    var reply: Reply
+    @Binding var reply: Reply
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
     @State private var isAvatarInfoViewActive = false
@@ -343,18 +343,31 @@ struct ReplyItemView: View {
                         
                     }
                 }
-                let number = (detailParser.replyZanNumber)
-                Text("赞 \(number)")
+                let number  = reply.like
+                let zanText = "赞 \(number)"
+                Text(zanText)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .disabled(detailParser.replyZan > 0)
+                    .disabled(reply.isLiked)
                     .tag(reply.likeLink)
                     .onTapGesture {
+                        if reply.isLiked {
+                            return
+                        }
                         Task {
                             do {
                                 let model = await detailParser.fetchCollectionAction(link: reply.likeLink)
                                 if model?.success == 1 {
+                                    DispatchQueue.main.async {
+                                        reply.isLiked = true
+                                        reply.like += 1
+                                    }
                                     hapticFeedback()
+                                } else {
+                                    if model?.message?.contains("already_voted") == true {
+                                        reply.isLiked = true
+                                        ToastView.toast("已点赞", .success)
+                                    }
                                 }
                             }
                         }
