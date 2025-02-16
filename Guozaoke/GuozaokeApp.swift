@@ -63,20 +63,25 @@ private extension GuozaokeApp {
     struct LaunchScreenView: View {
         var body: some View {
             VStack {
-                Image("zaoIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 80, maxHeight: 80)
-                    .padding()
+                Spacer()
                 
-                Text(FestivalDate.getFestivalGreeting())
-                    .font(.title)
-                    .fontWeight(.thin)
-                    .padding()
-                    .foregroundColor(Color.primary)
+                VStack {
+                    Image("zaoIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 80, maxHeight: 80)
+                        .padding()
+                    
+                    Text(FestivalDate.getFestivalGreeting())
+                        .font(.title)
+                        .fontWeight(.thin)
+                        .padding()
+                        .foregroundColor(Color.primary)
+                }
+                .offset(y: -30)
+                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            //.foregroundColor(Color.primary)
             .ignoresSafeArea()
         }
     }

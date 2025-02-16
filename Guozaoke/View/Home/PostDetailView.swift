@@ -139,8 +139,7 @@ struct PostDetailContent: View, Equatable {
                 RichTextView(content: detail.contentHtml)
                     .padding(.horizontal)
             } else {
-                Text(detail.content)
-                    .font(.body)
+                CopyTextView(content: detail.content)
                     .padding(.horizontal)
             }
             // 帖子图片

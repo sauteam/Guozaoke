@@ -155,10 +155,46 @@ struct RichTextView: View {
 
 struct MarkdownTextView: View {
     let content: String
-
     var body: some View {
         Markdown(content)
             .lineSpacing(6)
+    }
+}
+
+struct CopyTextView: View {
+    let content: String
+    var body: some View {
+        ScrollView {
+            Text(formatContent(content))
+                .font(.body)
+                .contextMenu {
+                    Button(action: {
+                        content.copyToClipboard()
+                    }) {
+                        Text("拷贝内容")
+                        SFSymbol.copy
+                    }
+                }
+        }
+    }
+
+    private func formatContent(_ content: String) -> String {
+        var processedContent = content
+        // 转换 @用户
+        processedContent = processedContent.replacingOccurrences(
+            of: "@(\\w+)",
+            with: "<a href=\"user://$1\">@$1</a>",
+            options: .regularExpression
+        )
+
+        // 转换 #标签#
+        processedContent = processedContent.replacingOccurrences(
+            of: "#([^#]+)#",
+            with: "<a href=\"tag://$1\">#$1#</a>",
+            options: .regularExpression
+        )
+
+        return processedContent
     }
 }
 
