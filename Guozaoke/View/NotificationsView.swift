@@ -117,29 +117,10 @@ struct NotificationRowView: View {
             }
             
             VStack(alignment: .leading) {
-                Text(notification.username)
-                    .font(.headline)
-                    .onTapGesture {
-                        isUserNameInfoViewActive = true
-                    }
-                    .overlay {
-                        
-                        NavigationStack {
-                             VStack {
-                                 Button("跳转到用户信息") {
-                                     isUserNameInfoViewActive = true
-                                 }
-                             }
-                             .navigationDestination(isPresented: $isUserNameInfoViewActive) {
-                                 UserInfoView(userId: notification.username)
-                             }
-                        }.hidden()
-
-                    }
-                
-                Text(notification.topicTitle)
-                    .font(.footnote)
-                Text(notification.content)
+                let text = "\(notification.username) 回复了你的主题 \(notification.topicTitle)"
+                Text(text)
+                    .font(.callout)
+                Text("\(notification.content)")
                     .font(.callout)
                     .foregroundColor(.gray)
                     

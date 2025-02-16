@@ -19,6 +19,12 @@ struct RichTextView: View {
     @State private var url: URL?
     @State private var formattedContent: String = ""
     @State private var isContentProcessed = false
+    
+    private struct SafariState {
+        var url: URL
+        var isPresented: Bool
+    }
+    @State private var safariState: SafariState?
 
     var body: some View {
         NavigationStack {
@@ -39,10 +45,9 @@ struct RichTextView: View {
                         ProgressView()
                     }
                     .transition(.easeOut)
-                    .onOpenURL { url in
-                        handleLink(url)
-                    }
-                
+//                    .onOpenURL { url in
+//                        handleLink(url)
+//                    }
                     .navigationDestination(isPresented: $showUserInfo) {
                         UserInfoView(userId: linkUserId)
                     }
@@ -60,15 +65,19 @@ struct RichTextView: View {
                     }
             }
         }
-        .sheet(isPresented: $showSafari) {
-            if let url = url {
-                SafariView(url: url)
+        .sheet(
+            isPresented: Binding(
+                get: { safariState != nil },
+                set: { if !$0 { safariState = nil } }
+            )
+        ) {
+            if let state = safariState {
+                SafariView(url: state.url)
             }
         }
     }
 
     private func handleLink(_ url: URL) {
-        self.url = url
         log("content url \(url)")
         switch url.scheme {
         case "https", "http":
@@ -79,8 +88,13 @@ struct RichTextView: View {
                     showTopicInfo = true
                 }
             } else {
+                self.url = url
+                log("content url \(url)")
                 if urlString.contains(".png") || urlString.contains(".jpg") || urlString.contains(".webp") || urlString.contains(".gif") {
                     return
+                }
+                withAnimation {
+                    safariState = SafariState(url: url, isPresented: true)
                 }
                 self.showSafari = true
             }
@@ -120,7 +134,6 @@ struct RichTextView: View {
 
     private func formatContent(_ content: String) -> String {
         var processedContent = content
-        log("topicContent \n \(content)")
         // 转换 @用户
         processedContent = processedContent.replacingOccurrences(
             of: "@(\\w+)",
@@ -140,10 +153,9 @@ struct RichTextView: View {
 }
 
 
-
 struct MarkdownTextView: View {
     let content: String
-    
+
     var body: some View {
         Markdown(content)
             .lineSpacing(6)

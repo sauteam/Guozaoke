@@ -9,7 +9,8 @@ import SwiftUI
 
 struct DarkModeToggleView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = "system"
-    
+    @EnvironmentObject var themeManager: ThemeManager
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             List {
@@ -35,6 +36,7 @@ struct DarkModeToggleView: View {
         }) {
             HStack {
                 Text(title)
+                    //.foregroundColor(.gray)
                 Spacer()
                 if appearanceMode == mode {
                     Image(systemName: "checkmark")

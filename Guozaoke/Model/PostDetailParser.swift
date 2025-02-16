@@ -17,6 +17,7 @@ struct PostDetail: Identifiable {
     let nodeUrl: String
     let author: Author
     let content: String
+    let contentHtml: String
     let images: [PostImage]
     let links: [PostLink]
     let publishTime: String
@@ -213,8 +214,14 @@ class PostDetailParser: ObservableObject {
         
         // 5. 解析帖子内容 纯文字
         let contentBox = try topicDetail.select("div.ui-content").first()
-        let topicContent: String = try contentBox?.html() ?? ""
-        //let content = try contentBox?.select("div").text() ?? ""
+        let contentHtml   = try contentBox?.html() ?? ""
+        let topicContent  = try contentBox?.select("div").text() ?? ""
+//        let result = TextChecker.checkText(content)
+//        if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
+//            topicContent = try contentBox?.html() ?? ""
+//        } else {
+//            topicContent = content
+//        }
         log("[content] \(topicContent)")
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
@@ -268,6 +275,7 @@ class PostDetailParser: ObservableObject {
             nodeUrl: nodeUrl,
             author: author,
             content: topicContent,
+            contentHtml: contentHtml,
             images: images,
             links: links,
             publishTime: publishTime,

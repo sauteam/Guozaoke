@@ -62,8 +62,7 @@ struct SettingView: View {
 //            }
                         
             Section {
-                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录")
-                    .onTapGesture {
+                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录") {
                         tapTextEvent("退出登录")
                     }
                 NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
@@ -110,28 +109,32 @@ struct LogoutConfirmationSheet: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("退出后将不能评论和发帖等操作，您确定要退出登录吗？")
+            Text("退出后将不能评论和发帖等操作，您确定Ô退出登录吗？")
                 .font(.body)
                 .padding(.horizontal)
                 .foregroundColor(.black)
             
-            Button("确定退出") {
+            Button {
                 logoutUser()
+            } label: {
+                Text("确定退出")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.red)
-            .foregroundColor(.white)
-            .cornerRadius(10)
             
-            Button("取消退出") {
+            Button {
                 presentedSheet = nil
+            } label: {
+                Text("取消退出")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.gray)
-            .foregroundColor(.white)
-            .cornerRadius(10)
         }
         .frame(height: 230)
         .padding()

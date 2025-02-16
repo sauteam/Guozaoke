@@ -23,6 +23,13 @@ struct HTMLContentView: View {
     @State private var lightModeContent: AttributedString?
     @State private var darkModeContent: AttributedString?
     
+    private struct SafariState {
+        var url: URL
+        var isPresented: Bool
+    }
+    @State private var safariState: SafariState?
+
+    
     var body: some View {
         Group {
             if let attributedString = attributedContent {
@@ -41,9 +48,14 @@ struct HTMLContentView: View {
                             PostDetailView(postId: topicId)
                         }
                 }
-                .sheet(isPresented: $showSafari) {
-                    if let url = url {
-                        SafariView(url: url)
+                .sheet(
+                    isPresented: Binding(
+                        get: { safariState != nil },
+                        set: { if !$0 { safariState = nil } }
+                    )
+                ) {
+                    if let state = safariState {
+                        SafariView(url: state.url)
                     }
                 }
             } else {
@@ -254,6 +266,9 @@ struct HTMLContentView: View {
                 }
             } else {
                 self.url = url
+                withAnimation {
+                    safariState = SafariState(url: url, isPresented: true)
+                }
                 showSafari = true
             }
         }

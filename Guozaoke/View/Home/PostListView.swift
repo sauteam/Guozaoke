@@ -155,7 +155,6 @@ struct PostListContentView: View {
                 if viewModel.posts.isEmpty {
                     viewModel.refreshPostList(type: type)
                 }
-                
                 print("1 type \(type)")
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in

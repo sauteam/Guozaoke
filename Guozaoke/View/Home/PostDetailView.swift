@@ -134,8 +134,15 @@ struct PostDetailContent: View, Equatable {
 
             PostRowView(post: post)
                 .padding(.horizontal)
-            RichTextView(content: detail.content)
-                .padding(.horizontal)
+            let result = TextChecker.checkText(detail.contentHtml)
+            if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
+                RichTextView(content: detail.contentHtml)
+                    .padding(.horizontal)
+            } else {
+                Text(detail.content)
+                    .font(.body)
+                    .padding(.horizontal)
+            }
             // 帖子图片
             if !detail.images.isEmpty {
                 //PostImagesView(images: detail.images)
@@ -156,31 +163,6 @@ struct PostDetailContent: View, Equatable {
     }
 }
 
-// MARK: - 帖子头部视图
-struct PostHeaderView: View {
-    let detail: PostDetail
-    let postId: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                KFImageView(detail.author.avatar)
-                    .avatar()
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(detail.author.name)
-                        .font(.headline)
-                    Text(detail.author.joinDate ?? "")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Text(detail.node)
-                .font(.subheadline)
-                .foregroundColor(.blue)
-        }
-    }
-}
 
 // TODO: 大图优化
 // MARK: - 帖子图片视图

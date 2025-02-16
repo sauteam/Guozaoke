@@ -7,8 +7,173 @@
 
 import SwiftUI
 
-let isiPad  = UIDevice.current.userInterfaceIdiom == .pad
-let isiPhone  = UIDevice.current.userInterfaceIdiom == .phone
+let isiPad   = UIDevice.current.userInterfaceIdiom == .pad
+let isiPhone = UIDevice.current.userInterfaceIdiom == .phone
+
+// Tab 枚举扩展
+extension TabBarView {
+    enum Tab: String, CaseIterable {
+        case home = "首页", node = "节点", noti = "通知", mine = "我的"
+
+        var icon: String {
+            switch self {
+            case .home: return "list.bullet.circle.fill"
+            case .node: return "ellipsis.circle.fill"
+            case .noti: return "bell.fill"
+            case .mine: return "person.fill"
+            }
+        }
+    }
+}
+
+struct TabBarView: View {
+    @State private var tab: Tab   = .home
+    @StateObject var loginChecker = LoginStateChecker.shared
+    @ObservedObject var notificationManager = NotificationManager.shared
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    
+    init() {
+       let appearance = UITabBarAppearance()
+       appearance.configureWithDefaultBackground()
+       
+       UITabBar.appearance().scrollEdgeAppearance = appearance
+       UITabBar.appearance().standardAppearance = appearance
+       
+       if isiPad {
+           UITabBar.appearance().isTranslucent = false
+       }
+   }
+
+    var body: some View {
+        TabView(selection: $tab) {
+            TabContentView(tab: $tab)
+                .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
+                .tag(TabBarView.Tab.home)
+            
+            TabContentView(tab: $tab)
+                .tabItem { Label(TabBarView.Tab.node.rawValue, systemImage: TabBarView.Tab.node.icon) }
+                .tag(TabBarView.Tab.node)
+            
+            TabContentView(tab: $tab)
+                .tabItem { Label(TabBarView.Tab.noti.rawValue, systemImage: TabBarView.Tab.noti.icon) }
+                .tag(TabBarView.Tab.noti)
+            
+            TabContentView(tab: $tab)
+                .tabItem { Label(TabBarView.Tab.mine.rawValue, systemImage: TabBarView.Tab.mine.icon) }
+                .tag(TabBarView.Tab.mine)
+        }
+        .tabViewStyle(.automatic)
+        .sheet(isPresented: $loginChecker.needLogin) {
+            LoginView(isPresented: $loginChecker.needLogin) {}
+        }
+        .if(isiPad) { view in
+            view.modifier(IPadTabBarModifier())
+        }
+        .onChange(of: notificationManager.unreadCount) { newValue in
+            updateAppBadge(newValue)
+        }
+    }
+}
+
+// Tab 内容视图
+struct TabContentView: View {
+    @Binding var tab: TabBarView.Tab
+    @ObservedObject var notificationManager = NotificationManager.shared
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            switch tab {
+            case .home:
+                PostListView()
+                    .navigationTitle(TabBarView.Tab.home.rawValue)
+            case .node:
+                NodeListView()
+                    .navigationTitle(TabBarView.Tab.node.rawValue)
+            case .noti:
+                NotificationsView()
+                    .navigationTitle(TabBarView.Tab.noti.rawValue)
+            case .mine:
+                MeView()
+                    .navigationTitle(TabBarView.Tab.mine.rawValue)
+            }
+        }
+    }
+}
+
+// iPad TabBar 修饰符
+struct IPadTabBarModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    windowScene.windows.forEach { window in
+                        if let tabBarController = window.rootViewController as? UITabBarController {
+                            tabBarController.tabBar.frame.size.height = 50
+                            tabBarController.tabBar.isHidden = false
+                        }
+                    }
+                }
+            }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
+// 为子视图添加导航配置
+extension View {
+    func setupNavigation(title: String) -> some View {
+        self.navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(title)
+                        .font(.headline)
+                }
+            }
+    }
+}
+
+//// 为子视图添加导航配置
+//extension View {
+//    func configureNavigationForIPad() -> some View {
+//        self.modifier(IPadNavigationModifier())
+//    }
+//}
+//
+//struct IPadNavigationModifier: ViewModifier {
+//    func body(content: Content) -> some View {
+//        content
+//            .navigationBarTitleDisplayMode(.inline)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    iPadBackButton()
+//                }
+//            }
+//    }
+//}
+//
+//// 自定义返回按钮
+//struct iPadBackButton: View {
+//    @Environment(\.dismiss) var dismiss
+//    
+//    var body: some View {
+//        Button(action: {
+//            dismiss()
+//        }) {
+//            Image(systemName: "chevron.left")
+//                .foregroundColor(.blue)
+//        }
+//    }
+//}
 
 
 //struct TabBarVisibilityPreferenceKey: PreferenceKey {
@@ -30,18 +195,18 @@ let isiPhone  = UIDevice.current.userInterfaceIdiom == .phone
 //                .tabItem {
 //                    Label(Tab.home.rawValue, systemImage: .home)
 //                }.tag(Tab.home)
-//            
+//
 //            NodeListView()
 //                .tabItem {
 //                    Label(Tab.node.rawValue, systemImage: .node)
 //                }.tag(Tab.node)
-//            
+//
 //            NotificationsView()
 //                .tabItem {
 //                    Label(Tab.noti.rawValue, systemImage: .noti)
 //                }.tag(Tab.noti)
 //                .badge(notificationManager.unreadCount)
-//            
+//
 //            MeView()
 //                .tabItem {
 //                    Label(Tab.mine.rawValue, systemImage: .mine)
@@ -49,196 +214,11 @@ let isiPhone  = UIDevice.current.userInterfaceIdiom == .phone
 //        }
 //        .sheet(isPresented: $loginChecker.needLogin) {
 //            LoginView(isPresented: $loginChecker.needLogin) {
-//                
+//
 //            }
 //        }
 //        .onChange(of: notificationManager.unreadCount) { newValue in
-//            updateAppBadge(newValue) 
+//            updateAppBadge(newValue)
 //        }
 //    }
-//}
-
-import SwiftUI
-
-// Tab 枚举扩展
-extension TabBarView {
-    enum Tab: String, CaseIterable {
-        case home = "首页", node = "节点", noti = "通知", mine = "我的"
-
-        var icon: String {
-            switch self {
-            case .home: return "list.bullet.circle.fill"
-            case .node: return "ellipsis.circle.fill"
-            case .noti: return "bell.fill"
-            case .mine: return "person.fill"
-            }
-        }
-    }
-}
-
-struct TabBarView: View {
-    @State private var tab: Tab = .home
-    @State private var hideTabBar = false
-    @StateObject var loginChecker = LoginStateChecker.shared
-    @ObservedObject var notificationManager = NotificationManager.shared
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @State private var showTabBar = true
-
-    @State private var selectedItem: String?
-    let items = ["首页", "节点", "通知", "我的"]
-        
-    var body: some View {
-        Group {
-            if isiPad {
-                NavigationSplitView {
-                    SidebarView(selection: $tab)
-                } detail: {
-                  TabContentView(tab: $tab)
-                }
-            } else {
-                if showTabBar {
-                    TabContentView(tab: $tab)
-                }
-            }
-        }
-        .sheet(isPresented: $loginChecker.needLogin) {
-            LoginView(isPresented: $loginChecker.needLogin) {}
-        }
-        .onChange(of: notificationManager.unreadCount) { newValue in
-            updateAppBadge(newValue)
-        }
-        .onAppear {
-            if isiPhone {
-                showTabBar = true
-            }
-        }
-        .onDisappear {
-            if isiPhone {
-                showTabBar = false
-            }
-        }
-    }
-    
-    static func hideTabBar() {
-        if isiPhone {
-            UITabBar.appearance().isHidden = true
-        }
-    }
-
-    static func showTabBar() {
-        if isiPhone {
-            UITabBar.appearance().isHidden = false
-        }
-    }
-}
-
-// 侧边栏 (iPad)
-struct SidebarView: View {
-    @Binding var selection: TabBarView.Tab
-
-    var body: some View {
-        List {
-            ForEach(TabBarView.Tab.allCases, id: \.self) { item in
-                let selected = selection == item
-                HStack {
-                    Image(systemName: item.icon)
-                        .foregroundColor(.blue)
-                    Text(item.rawValue)
-                        .foregroundColor(selected ? .blue: .black)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selection = item
-                }
-                .listRowBackground(selected ? Color.gray.opacity(0.2) : Color.clear)
-            }
-        }
-        .navigationTitle("过早客")
-    }
-}
-
-// 内容视图 (iPhone & iPad detail)
-struct TabContentView: View {
-    @Binding var tab: TabBarView.Tab
-    @ObservedObject var notificationManager = NotificationManager.shared
-    @Environment(\.dismiss) var dismiss
-    var body: some View {
-        tabViewContent
-    }
-    
-    private var tabViewContent: some View {
-        TabView(selection: $tab) {
-            Group {
-                if isiPad {
-                    PostListView()
-                } else {
-                    NavigationStack {
-                        PostListView()
-                    }
-                }
-            }
-            .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
-            .tag(TabBarView.Tab.home)
-            
-            Group {
-                if isiPad {
-                    NodeListView()
-                } else {
-                    NavigationStack {
-                        NodeListView()
-                            .navigationTitle(TabBarView.Tab.home.rawValue)
-                    }
-                }
-            }
-            .tabItem { Label(TabBarView.Tab.node.rawValue, systemImage: TabBarView.Tab.node.icon) }
-            .tag(TabBarView.Tab.node)
-            
-            Group {
-                if UIDevice.current.userInterfaceIdiom == .pad {
-                    NotificationsView()
-                } else {
-                    NavigationStack {
-                        NotificationsView()
-                            .navigationTitle(TabBarView.Tab.noti.rawValue)
-                    }
-                }
-            }
-            .tabItem { Label(TabBarView.Tab.noti.rawValue, systemImage: TabBarView.Tab.noti.icon) }
-            .tag(TabBarView.Tab.noti)
-            
-            Group {
-                if UIDevice.current.userInterfaceIdiom == .pad {
-                    MeView()
-                } else {
-                    NavigationStack {
-                        MeView()
-                            .navigationTitle(TabBarView.Tab.mine.rawValue)
-                    }
-                }
-            }
-            .tabItem { Label(TabBarView.Tab.mine.rawValue, systemImage: TabBarView.Tab.mine.icon) }
-            .tag(TabBarView.Tab.mine)
-        }
-    }
-}
-
-///// 􀻧
-//case home = "list.bullet.circle"
-///// 􀍡
-//case node = "ellipsis.circle"
-///// 􀌤 评论
-//case noti = "bell.badge.fill"
-///// 􀉩
-//case mine = "person"
-
-
-//private extension TabBarView {
-//    enum Tab: String {
-//        case home = "首页", node = "节点", noti = "通知", mine = "我的"
-//    }
-//}
-
-
-//#Preview {
-//    TabBarView()
 //}

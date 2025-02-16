@@ -30,7 +30,7 @@ struct MeView: View {
 
     var body: some View {
         VStack() {
-            MyProfileView(themeManager: _themeManager)
+            MyProfileView()
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitle("我的")
@@ -69,7 +69,7 @@ struct MyProfileView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
     @State private var currentMode: ModeTypeEnum = .system
 
-    @EnvironmentObject var themeManager: ThemeManager
+    //@EnvironmentObject var themeManager: ThemeManager
     var body: some View {
         List {
             Section {
@@ -113,12 +113,10 @@ struct MyProfileView: View {
         
             
              Section {
-                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
-                     .onTapGesture {
+                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
                          GuozaokeAppInfo.toAppStore()
                      }
-                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
-                     .onTapGesture {
+                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
                          GuozaokeAppInfo.toWriteReview()
                      }
              }
@@ -177,16 +175,24 @@ struct MyProfileView: View {
 struct ProfileRow: View {
     let icon: String
     let title: String
+    var action: (() -> Void)?
     
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .frame(width: 25, height: 25)
-                .foregroundColor(.primary)
-            Text(title)
-                .foregroundColor(.primary)
-            Spacer()
+        Button(action: {
+            action?()
+        }) {
+            HStack {
+                Image(systemName: icon)
+                    .frame(width: 25, height: 25)
+                    .foregroundColor(.primary)
+                Text(title)
+                    .foregroundColor(.primary)
+                Spacer()
+                //SFSymbol.rightIcon
+                //    .foregroundColor(.primary)
+            }
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
+        .buttonStyle(PlainButtonStyle())
     }
 }

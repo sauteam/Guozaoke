@@ -253,7 +253,6 @@ class PostListParser: ObservableObject {
                    try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
                    log("hotTodayTopic \(self.hotTodayTopic)")
-                   // 累加数据
                    self.currentPage += 1
                    self.posts.append(contentsOf: newPosts)
                    self.hasMore = self.currentPage <= self.totalPages
