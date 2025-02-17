@@ -76,7 +76,7 @@ class NetworkManager: ObservableObject {
                         log("[403]重新登录处理 \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
-                    NotificationPresenter.shared.present(desc, includedStyle: .dark, duration: toastDuration)
+                    ToastView.toast(desc, subtitle: "", .warning)
                 }
             }
         }

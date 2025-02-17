@@ -38,29 +38,34 @@ struct MeView: View {
         .onAppear {
             if !AccountState.isLogin() {
                 LoginStateChecker.LoginStateHandle()
-                return
             }
+                        
+            NotificationCenter.default.addObserver(forName: .logoutSuccessNoti, object: nil, queue: .main) { _ in
+                print("[logout] me")
+            }
+
             if !parser.hadData {
                 if AccountState.userName.isEmpty {
                     return
                 }
                 Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl(), reset: true) }
             }
-            
-            NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
-                if let userInfo = notification.userInfo,
-                   let user = userInfo as? Dictionary<String, Any> {
-                    let username  = user["userName"] as? String ?? ""
-                    
-                    Task { await parser.fetchUserInfoAndData(username.userProfileUrl(), reset: true) }
-                }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
+            print("[login] me")
+            if let userInfo = notification.userInfo,
+               let user = userInfo as? Dictionary<String, Any> {
+                let username  = user["userName"] as? String ?? ""
+                Task { await parser.fetchUserInfoAndData(username.userProfileUrl(), reset: true) }
             }
+
         }
         .onDisappear {
             if !AccountState.isLogin() {
                 LoginStateChecker.LoginStateHandle()
             }
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+            NotificationCenter.default.removeObserver(self, name: .logoutSuccessNoti, object: nil)
         }
     }
 }
@@ -68,7 +73,7 @@ struct MeView: View {
 struct MyProfileView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
     @State private var currentMode: ModeTypeEnum = .system
-
+    //let parser: UserInfoParser
     //@EnvironmentObject var themeManager: ThemeManager
     var body: some View {
         List {

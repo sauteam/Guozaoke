@@ -91,6 +91,7 @@ class PostListParser: ObservableObject {
     @Published var nodes: [NodeItem] = []
     /// 最热节点
     @Published var hotNodes: [NodeItem] = []
+    @Published var onlyHotNodes: [Node] = []
     @Published var communityStatusList: [CommunityStatus] = []
     @Published var onlyNodes: [Node] = []
     @Published var nodeInfo: NodeInfo?
@@ -114,7 +115,7 @@ class PostListParser: ObservableObject {
     }
     
     var hadNodeItemData: Bool {
-        return self.nodes.count > 0 && self.hotNodes.count > 0
+        return self.hotNodes.count > 0 && self.justNodes.count > 0
     }
             
     // MARK: - 加载我的数据
@@ -358,6 +359,7 @@ private extension PostListParser {
                nodes.append(node)
            }
           hotNodes.append(NodeItem(category: category, nodes: nodes))
+        self.onlyHotNodes = nodes
           self.hotNodes = hotNodes
         
         if let nodesCloud = try doc.select("div.nodes-cloud").first() {
@@ -377,6 +379,10 @@ private extension PostListParser {
             }
             onlyNodes = allNodes
         } else {
+            if !LoginStateChecker.isLogin() {
+                LoginStateChecker.LoginStateHandle()
+                NotificationCenter.default.post(name: .loginViewAlertNoti, object: nil)
+            }
             log("未找到节点导航部分")
         }
         return nodeItems

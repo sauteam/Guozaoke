@@ -42,7 +42,7 @@ enum PostListType: String, CaseIterable {
     case interest = "兴趣"
     case follows  = "关注"
     case it       = "IT"
-    case finance  = "金融"
+    //case finance  = "金融"
     case creator  = "创客"
     case dating   = "相亲"
 
@@ -62,8 +62,8 @@ enum PostListType: String, CaseIterable {
             return "/?tab=follows"
         case .it:
             return "/node/IT"
-        case .finance:
-            return "/node/finance"
+//        case .finance:
+//            return "/node/finance"
         case .creator:
             return "/node/startup"
         case .dating:
@@ -146,6 +146,7 @@ struct APIService {
     static let iosUpdateTopicInfo = "/t/117830"
     static let androidUpdateTopicInfo = "/t/75634"
     static let faq = "/faq"
+    static let members = "/members"
 
     private init() {}
     
@@ -207,6 +208,7 @@ struct APIService {
         let response: String = try await NetworkManager.shared.get(APIService.baseUrlString + "/logout")
         if response.isEmpty == false {
             LoginStateChecker.clearUserInfo()
+            NotificationCenter.default.post(name: .logoutSuccessNoti, object: nil)
         }
         return response
     }

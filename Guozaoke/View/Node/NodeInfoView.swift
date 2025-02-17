@@ -73,9 +73,12 @@ struct NodeInfoView: View {
                         }
                         
                         Button {
-                            showAddPostView = true
+                            if LoginStateChecker.isLogin() {
+                                showAddPostView = true
+                            } else {
+                                LoginStateChecker.LoginStateHandle()
+                            }
                         } label: {
-                            
                             Label("创建新主题", systemImage: .add)
                         }
 

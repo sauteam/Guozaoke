@@ -20,6 +20,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showSafari = false
     @State private var url: URL?
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationView {
@@ -29,7 +30,8 @@ struct LoginView: View {
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
-                    
+                        .textFieldStyle(PlainTextFieldStyle())
+
                     SecureField("密码", text: $password)
                         .textContentType(.password)
                 }
@@ -64,7 +66,7 @@ struct LoginView: View {
             }
             .navigationTitle("登录过早客")
             .navigationBarItems(trailing: Button("关闭") {
-                isPresented = false
+                closeView()
             })
             .sheet(isPresented: $showSafari) {
                 if let url = url {
@@ -82,7 +84,12 @@ struct LoginView: View {
     private func successAsyn() {
         LoginStateChecker.shared.isLogin = true
         onLoginSuccess()
+        closeView()
+    }
+    
+    private func closeView() {
         isPresented = false
+        dismiss()
     }
     
     private func performLogin() {
@@ -91,7 +98,6 @@ struct LoginView: View {
                 let success = try await loginService.login(email: email, password: password)
                 if success {
                     successAsyn()
-                    
                 }
             } catch {
                 loginService.error = error.localizedDescription

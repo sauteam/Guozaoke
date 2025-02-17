@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import JDStatusBarNotification
 
 struct SendPostView: View {
     @Binding var isPresented: Bool
@@ -54,9 +53,9 @@ struct SendPostView: View {
 //                }
                 
                 Picker("主题", selection: $selectedTopic) {
-                    ForEach(viewModel.onlyNodes, id: \.self) { topic in
-                        Text(topic.title)
-                            .tag(Optional(topic))
+                    ForEach(viewModel.onlyHotNodes, id: \.self) { node in
+                        Text(node.title)
+                            .tag(Optional(node))
                     }
                 }
                 
@@ -67,7 +66,7 @@ struct SendPostView: View {
                 }
                 Button(action: {
                     if title.trim().isEmpty || content.trim().isEmpty {
-                        NotificationPresenter.shared.present("输入内容", includedStyle: .dark, duration: toastDuration)
+                        ToastView.toastText("输入内容")
                         return
                     }
                     
@@ -101,7 +100,7 @@ struct SendPostView: View {
                     }
                 }
                 
-                if selectedTopic == nil, let firstTopic = viewModel.onlyNodes.randomElement() {
+                if selectedTopic == nil, let firstTopic = viewModel.onlyHotNodes.randomElement() {
                     selectedTopic = firstTopic
                 }
                 self.isFocused = true
@@ -113,7 +112,7 @@ struct SendPostView: View {
                     EditPost.saveEditPost(editPost)
                 }
             }
-            .onReceive(viewModel.$onlyNodes) { nodes in
+            .onReceive(viewModel.$onlyHotNodes) { nodes in
                 if selectedTopic == nil, let firstTopic = nodes.randomElement() {
                     selectedTopic = firstTopic
                }
@@ -138,7 +137,8 @@ struct SendPostView: View {
             isPresented = false
             content = ""
             title   = ""
-            NotificationPresenter.shared.present("发送成功", includedStyle: .dark, duration: toastDuration)
+            ToastView.toast("发送成功", subtitle: "", .success)
+            hapticFeedback()
             sendSuccess()
             EditPost.removeEditPost()
         } catch {

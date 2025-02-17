@@ -54,9 +54,6 @@ struct MyCollectionView: View {
                 Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
             }
             .onAppear() {
-                if !AccountState.isLogin() {
-                    return
-                }
                 if viewModel.topics.isEmpty {
                     Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
                 }

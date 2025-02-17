@@ -100,13 +100,9 @@ struct AccountState {
 
 
     static func deleteAccount() {
-        if getAccount() != nil {
-            Persist.remove(key: loginUserKey)
-            ACCOUNT = nil
-            APIService.clearCookie()
-        } else {
-            log("没登录用户信息")
-        }
+        Persist.remove(key: loginUserKey)
+        ACCOUNT = nil
+        APIService.clearCookie()
     }
 
     static func getAccount() -> AccountInfo? {

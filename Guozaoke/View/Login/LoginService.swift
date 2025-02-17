@@ -35,8 +35,10 @@ enum LoginError: LocalizedError {
 
 // MARK: - 通知名称扩展
 extension Notification.Name {
-    static let loginSuccessNoti = Notification.Name("loginSuccessNoti")
-    static let refreshTokenNoti = Notification.Name("refreshTokenNoti")
+    static let refreshTokenNoti  = Notification.Name("refreshTokenNoti")
+    static let loginSuccessNoti  = Notification.Name("loginSuccessNoti")
+    static let logoutSuccessNoti = Notification.Name("logoutSuccessNoti")
+    static let loginViewAlertNoti = Notification.Name("loginViewAlertNoti")
 }
 
 private func showToast() {
@@ -56,6 +58,10 @@ class LoginService: ObservableObject {
     private var xsrfToken: String = ""
     
     func login(email: String, password: String) async throws -> Bool {
+        if email.isEmpty || password.isEmpty {
+            ToastView.toast("填写账号和密码", subtitle: "", .warning)
+            return (false)
+        }
         var loginSuccess = false
         guard xsrfToken.isEmpty == false else {
             let (success, token) = try await APIService.fetchLoginPage()

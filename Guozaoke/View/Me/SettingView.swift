@@ -4,6 +4,7 @@ struct SettingView: View {
     @State private var showLoginView = false
     @State private var presentedSheet: ActiveSheet?
     @EnvironmentObject var themeManager: ThemeManager  // Access the themeManager
+    @Environment(\.dismiss) var dismiss
 
     enum ActiveSheet: Identifiable {
         case logout, login
@@ -92,7 +93,7 @@ struct SettingView: View {
         if urlString == "退出登录" {
             print("退出登录")
             if !AccountState.isLogin() {
-                //LoginStateChecker.LoginStateHandle()
+                ///LoginStateChecker.LoginStateHandle()
                 presentedSheet = .login
                 return
             }
@@ -106,10 +107,11 @@ struct SettingView: View {
 
 struct LogoutConfirmationSheet: View {
     @Binding var presentedSheet: SettingView.ActiveSheet?
-    
+    @Environment(\.dismiss) var dismiss
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("退出后将不能评论和发帖等操作，您确定Ô退出登录吗？")
+            Text("退出后将不能评论和发帖等操作，您确定退出登录吗？")
                 .font(.body)
                 .padding(.horizontal)
                 .foregroundColor(.black)
@@ -146,9 +148,9 @@ struct LogoutConfirmationSheet: View {
             print("response \(response)")
             if !response.isEmpty {
                 presentedSheet = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    presentedSheet = .login
-                }
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+//                    presentedSheet = .login
+//                }
             }
         }
     }

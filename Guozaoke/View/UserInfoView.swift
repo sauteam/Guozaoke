@@ -128,7 +128,7 @@ struct UserInfoView: View {
                             .padding(.vertical, 12)
                         } else if !parser.topics.isEmpty, !parser.noMoreTopics {
                             HStack {
-                                if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty {
+                                if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty, parser.topics.count > 5  {
                                         NavigationLink(
                                             destination: MyCollectionView(
                                                 linkUrl: linkUrl,
@@ -175,7 +175,7 @@ struct UserInfoView: View {
                             
                             HStack {
                                 Spacer()
-                                Text(NoMoreDataTitle.homeList)
+                                Text(NoMoreDataTitle.nodaText)
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
                                 Spacer()
@@ -184,7 +184,7 @@ struct UserInfoView: View {
                             .padding(.vertical, 12)
                         } else if !parser.replies.isEmpty, !parser.noMoreReplies {
                             HStack {
-                                if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty  {
+                                if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty, parser.replies.count > 5  {
                                     NavigationLink(
                                         destination: MyReplyListView(
                                             linkUrl: linkUrl,
@@ -251,6 +251,12 @@ struct UserInfoView: View {
                             userId.userProfileUrl().openURL()
                         } label: {
                             Label("网页查看主页", systemImage: .safari)
+                        }
+                        
+                        Button {
+                            ToastView.reportToast()
+                        } label: {
+                            Label("举报", systemImage: .safari)
                         }
                         
                         Button {
@@ -339,15 +345,15 @@ struct MyReplyRowView: View {
             Text(myReply.content)
                 .font(.callout)
                 .lineLimit(2)
-                .onTapGesture {
-                    if myReply.userLink.isEmpty == false {
-                        isUserInfoViewActive = true
-                    }
-                    log("mentionedUser \(myReply.userLink ?? "")")
-                }
-                .navigationDestination(isPresented: $isUserInfoViewActive, destination: {
-                    UserInfoView(userId: myReply.userLink ?? "")
-                })
+//                .onTapGesture {
+//                    if myReply.userLink.isEmpty == false {
+//                        isUserInfoViewActive = true
+//                    }
+//                    log("mentionedUser \(myReply.userLink ?? "")")
+//                }
+//                .navigationDestination(isPresented: $isUserInfoViewActive, destination: {
+//                    UserInfoView(userId: myReply.userLink ?? "")
+//                })
         }
         .contextMenu {
             

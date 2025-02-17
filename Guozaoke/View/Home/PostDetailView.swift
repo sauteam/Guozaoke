@@ -65,7 +65,11 @@ struct PostDetailView: View {
                     }
                     
                     Button {
-                        showComentView = true
+                        if LoginStateChecker.isLogin() {
+                            showComentView = true
+                        } else {
+                            LoginStateChecker.LoginStateHandle()
+                        }
                     } label: {
                         
                         Label("评论", systemImage: .coment)
@@ -85,6 +89,7 @@ struct PostDetailView: View {
             }
         }
         .sheet(isPresented: $showComentView) {
+            
             let detailId = detailParser.postDetail?.detailId ?? ""
             SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
                 
@@ -259,7 +264,11 @@ struct PostFooterView: View {
             .lineLimit(1)
             
             Button {
-                showComentView = true
+                if LoginStateChecker.isLogin() {
+                    showComentView = true
+                } else {
+                    LoginStateChecker.LoginStateHandle()
+                }
             } label: {
                 Text("评论")
             }

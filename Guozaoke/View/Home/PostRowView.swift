@@ -28,11 +28,7 @@ struct PostRowView: View {
                         log("点击 \(post.avatar)")
                         if !profile {
                             isUserAvatarViewActive = true
-                        } else {
-                            if !AccountState.isSelf(userName: post.author) {
-                                isUserAvatarViewActive = true
-                            }
-                        }
+                        } 
                     }
                     .navigationDestination(isPresented: $isUserAvatarViewActive, destination: {
                         UserInfoView(userId: post.author)

@@ -64,7 +64,11 @@ struct PostListView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
-                        showAddPostView = true
+                        if LoginStateChecker.isLogin() {
+                            showAddPostView = true
+                        } else {
+                            LoginStateChecker.LoginStateHandle()
+                        }
                     }) {
                         SFSymbol.add
                     }
@@ -85,14 +89,7 @@ struct PostListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showAddPostView) {
-                if LoginStateChecker.isLogin() {
-                    SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
-                        
-                    }
-                } else {
-                    LoginView(isPresented: $showAddPostView) {
-                        
-                    }
+                SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
                 }
             }
         }

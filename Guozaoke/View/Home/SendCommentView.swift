@@ -1,5 +1,4 @@
 //
-//  SendCommentView.swift
 //  Guozaoke
 //
 //  Created by scy on 2025/1/23.
@@ -70,14 +69,18 @@ struct SendCommentView: View {
             .listRowBackground(Color.clear)
             .navigationTitle("创建新的回复")
             .navigationBarItems(trailing: Button("关闭") {
-                isPresented    = false
                 self.isFocused = false
-                dismiss()
+                closeView()
                 /// isPresented 是 Sheet，检查 @Binding 是否正确传递
                 ///  如果 isPresented 是 NavigationStack，用 dismiss()
                 ///onDismiss()
             })
         }
+    }
+    
+    private func closeView() {
+        isPresented = false
+        dismiss()
     }
     
     private func getDetailId() -> String {
@@ -92,6 +95,7 @@ struct SendCommentView: View {
     private func sendComment() async {
         if !LoginStateChecker.isLogin() {
             LoginStateChecker.LoginStateHandle()
+            closeView()
             return
         }
 
@@ -102,11 +106,10 @@ struct SendCommentView: View {
             }
             let response = try await APIService.sendComment(url: APIService.baseUrlString + getDetailId(), content: content)
             print("Response: \(response)")
-            
             postSuccess = true
-            isPresented = false
             sendSuccess()
             ToastView.toastText("评论成功")
+            closeView()
         } catch {
             isPosting = false
             errorMessage = "发送失败: \(error.localizedDescription)"

@@ -52,10 +52,25 @@ struct MyReply: Identifiable, Equatable {
     let userLink: String?
 }
 
+/// 社区成员
+struct Member: Identifiable {
+    let id = UUID()
+    let username: String
+    let avatar: String
+    let userLink: String
+}
+
+struct MemberInfo: Identifiable {
+    let id = UUID()
+    let title: String
+    let member: [Member]
+}
+
 class UserInfoParser: ObservableObject {
     @Published var userInfo: UserInfo?
     @Published var topics: [PostItem] = []
     @Published var replies: [MyReply] = []
+    @Published var memberInfo: [MemberInfo] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     //@Published var blockUser: Bool = false
@@ -68,6 +83,8 @@ class UserInfoParser: ObservableObject {
     
     @Published var faqContent = ""
     @Published var faqContentBottom = ""
+    
+    
 
     func loadOtherTopic(topicUrl: String, reset: Bool) async {
         await fetchUserInfoAndData(topicUrl, reset: false)
@@ -100,6 +117,40 @@ class UserInfoParser: ObservableObject {
     
     func faqContentValid() -> Bool {
         return self.faqContent.count > 0
+    }
+    
+    func fetchMemberList() async {
+        do {
+            guard !isLoading  else { return }
+            await MainActor.run {
+                self.isLoading = true
+                errorMessage = nil
+            }
+            let html = try await NetworkManager.shared.get(APIService.members)
+            let document = try SwiftSoup.parse(html)
+            let memberLists = try document.select(".member-lists")
+            
+            var memberInfo: [MemberInfo] = []
+            for (index, memberList) in memberLists.enumerated() {
+                print("列表 \(index + 1):")
+                var memberModel: [Member] = []
+                let members = try memberList.select(".member")
+                let title   = try memberList.select("span.title").text()
+                for member in members {
+                    let avatarURL = try member.select("img.avatar").attr("src")
+                    let username = try member.select("span.username a").text()
+                    let userLink = try member.select("a").attr("href")
+                    memberModel.append(Member(username: username, avatar: avatarURL, userLink: userLink))
+                }
+                memberInfo.append(MemberInfo(title: title, member: memberModel))
+            }
+            runInMain {
+                self.memberInfo = memberInfo
+            }
+            
+        } catch {
+            log("请求失败: \(error.localizedDescription)")
+        }
     }
     
     func faqInfo() async -> (Bool, String)? {

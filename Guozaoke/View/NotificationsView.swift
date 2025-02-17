@@ -73,19 +73,25 @@ struct NotificationsView: View {
             .onAppear {
                 if !AccountState.isLogin() {
                     LoginStateChecker.LoginStateHandle()
-                    return
                 }
                 Task {
                     await viewModel.fetchNotifications()
                 }
+                
+                NotificationCenter.default.addObserver(forName: .logoutSuccessNoti, object: nil, queue: .main) { _ in
+                    viewModel.notifications.removeAll()
+                    print("[logout] noti")
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
+                print("[login] noti")
                 Task {
                     await viewModel.fetchNotificationsRefresh()
                 }
             }
             .onDisappear {
                 NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)
+                NotificationCenter.default.removeObserver(self, name: .logoutSuccessNoti, object: nil)
             }
         }
     }
