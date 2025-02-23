@@ -1,8 +1,14 @@
 # Guozaoke
 Guozaoke iOS 
 
-[官网](guozaoke.com)
+<a href="https://apps.apple.com/id6740704728" target="_blank">
+    <img src="screenshot/appstore.png" alt="Guozaoke Button" style="width: 150px; height: auto;"></a>
 
-[接口参考](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md#发表新主题)
+![过早客](screenshot/guozaokeinfo.png)
 
-[App Store 下载](https://apps.apple.com/cn/app/id6740704728 )
+### 介绍
+
+[guozaoke官网](guozaoke.com)
+
+[接口参考](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
+

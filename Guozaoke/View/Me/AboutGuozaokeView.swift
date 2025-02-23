@@ -9,7 +9,7 @@ import SwiftUI
 import MessageUI
 
 struct AboutGuozaokeView: View {
-    let feedbackEmail =  "268144637@qq.com"
+    let feedbackEmail =  "isau@qq.com"
     let info = """
                    过早客「guozaoke.com」武汉互联网精神家园
                
@@ -59,9 +59,10 @@ struct AboutGuozaokeView: View {
             if let mailResult = mailResult {
                 switch mailResult {
                 case .success(let result):
-                    Text("邮件发送结果: \(result.rawValue)")
+                    let isSend = result.rawValue == 2
+                    Text("邮件\(isSend ? "已发送": "去发送")")
                 case .failure(let error):
-                    Text("发送邮件失败: \(error.localizedDescription)")
+                    Text("发送失败: \(error.localizedDescription)")
                 }
             }
             Spacer()

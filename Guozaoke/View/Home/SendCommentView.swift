@@ -23,7 +23,6 @@ struct SendCommentView: View {
     var body: some View {
         NavigationView {
             Form {
-                Text("输入内容")
                 TextEditor(text: $content)
                     .frame(minHeight: 180)
                     .padding(.top)
