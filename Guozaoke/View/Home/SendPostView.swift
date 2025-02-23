@@ -10,10 +10,12 @@ import SwiftUI
 struct SendPostView: View {
     @Binding var isPresented: Bool
     @Binding var selectedTopic: Node?
+    
+    var postDetail: PostDetail?
     let sendSuccess: () -> Void
     private let defaultNode = Node(title: "IT技术", link: "/node/IT")
     @StateObject private var viewModel = PostListParser()
-    @State private var title = ""
+    @State private var title   = ""
     @State private var content = ""
     @State private var selectedImage: UIImage? = nil
     @State private var showingImagePicker = false
@@ -22,17 +24,18 @@ struct SendPostView: View {
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
     @FocusState private var isFocused: Bool
+    @State private var isEditPost = false
 
     var body: some View {
         NavigationView {
-            Form {
+            List {
                 TextField("输入标题", text: $title)
                     .padding(.vertical)
                     .frame(height: 30)
                     .focused($isFocused)
 
                 TextEditor(text: $content)
-                    .frame(minHeight: 180)
+                    .frame(minHeight: 300)
                     .padding(.top)
                                 
 //                HStack {
@@ -86,20 +89,30 @@ struct SendPostView: View {
                 }
                 .disabled(isPosting || title.isEmpty || content.isEmpty)
                 .pickerStyle(DefaultPickerStyle())
+                .buttonStyle(.plain)
+                .listStyle(.plain)
             }
+            .listRowBackground(Color.clear)
             .onAppear() {
                 if !viewModel.hadNodeItemData {
                     viewModel.refreshPostList(type: .hot)
                 }
-                
-                if let postInfo = EditPost.getEditPost() {
-                    if postInfo.topicLink == selectedTopic?.link {
-                        title   = postInfo.title ?? ""
-                        content = postInfo.content ?? ""
-                        selectedTopic = Node(title: postInfo.topicId ?? defaultNode.title, link: postInfo.topicLink ?? defaultNode.link)
+                if let postDetail = postDetail  {
+                    isEditPost.toggle()
+                    selectedTopic = Node(title: postDetail.author.node, link: postDetail.nodeUrl)
+                    title   = postDetail.title
+                    content = postDetail.content
+                    print("[edit] post\(postDetail)")
+                } else {
+                    
+                    if let postInfo = EditPost.getEditPost() {
+                        if postInfo.topicLink == selectedTopic?.link {
+                            title   = postInfo.title ?? ""
+                            content = postInfo.content ?? ""
+                            selectedTopic = Node(title: postInfo.topicId ?? defaultNode.title, link: postInfo.topicLink ?? defaultNode.link)
+                        }
                     }
                 }
-                
                 if selectedTopic == nil, let firstTopic = viewModel.onlyHotNodes.randomElement() {
                     selectedTopic = firstTopic
                 }
@@ -107,7 +120,7 @@ struct SendPostView: View {
             }
             .onDisappear() {
                 self.isFocused = false
-                if !content.isEmpty, !title.isEmpty {
+                if !content.isEmpty, !title.isEmpty, !isEditPost {
                     let editPost = EditPost(title: title, content: content, topicId: selectedTopic?.title, topicLink: selectedTopic?.link)
                     EditPost.saveEditPost(editPost)
                 }
@@ -117,7 +130,6 @@ struct SendPostView: View {
                     selectedTopic = firstTopic
                }
             }
-            .listRowBackground(Color.clear)
             .navigationTitle("创建新主题")
             .navigationBarItems(trailing: Button("关闭") {
                 isPresented = false
@@ -169,9 +181,5 @@ struct PlaceholderTextEditor: View {
     }
 }
 
-//#Preview {
-//let topics = ["生活百科", "社会信息", "科学技术", "文化人文", "艺术时尚", "休闲娱乐", "社区管理"]
-//    SendPostView()
-//}
 
 

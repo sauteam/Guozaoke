@@ -15,7 +15,7 @@ struct IntroductationView: View {
         VStack {
             Form {
                 Section {
-                    Text("有时候发表评论或创建主题不成功，这里有可能受到\(guozaokeText)的相关限制，可能返回403，有可能我们在网页或App都登录了(guozaokeText)，导致校验问题，如果多次不成功你也可尝试退出后再评论或创建主题。")
+                    Text("有时候发表评论或创建主题不成功，可能返回403，有可能我们在网页或App都登录了\(guozaokeText)，导致校验问题，如果多次不成功你也可尝试退出后再评论或创建主题。")
                         .font(.body)
                         .frame(maxWidth: .infinity)
                 } header: {
@@ -58,7 +58,7 @@ struct IntroductationView: View {
                 
                 Section {
                     NavigationLink(destination: UserInfoView(userId: "mzlogin")) {
-                        Text("感谢站长的支持与帮助，感谢马哥@mzlogin提供接口教程，感谢小伙伴的支持与关注。")
+                        Text("感谢站长的支持与帮助，感谢马哥@mzlogin提供接口教程，感谢@caipod设计过早客logo，感谢小伙伴的支持与关注。")
                             .font(.body)
                     }
                 } header: {
@@ -66,7 +66,7 @@ struct IntroductationView: View {
                         .font(.subheadline)
                 }
             }
-            .navigationTitle("评论发帖异常")
+            .navigationTitle("评论发帖")
             .toolbar(.hidden, for: .tabBar)
         }
     }

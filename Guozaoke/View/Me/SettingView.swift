@@ -48,6 +48,11 @@ struct SettingView: View {
             }
             
 //            Section {
+//                NavigationLink(destination: AppIconListView())  {
+//                    ProfileRow(icon: SFSymbol.appFill.rawValue, title: "App Icon") 
+//                }
+//            }
+//            Section {
 //                HStack {
 //                    ProfileRow(icon: SFSymbol.exit.rawValue, title: "主题色")
 //                    Picker("主题色", selection: $themeManager.selectedColor) {

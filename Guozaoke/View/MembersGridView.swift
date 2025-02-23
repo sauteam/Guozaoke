@@ -38,26 +38,8 @@ struct MembersGridView: View {
 
 
 struct MemberItemView: View {
-    let columns = isiPad ? [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ] : [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
-    
+    let columns = Array(repeating: GridItem(.flexible()), count: isiPad ? 10: 6)
+        
     let data: MemberInfo
     @State private var showUserInfoView = false
     @State private var selectedNode: Member? = nil
@@ -78,25 +60,25 @@ struct MemberItemView: View {
                     ForEach(data.member) { member in
                         VStack {
                             KFImageView(member.avatar)
+                                .avatar(size: 50)
                                 .scaledToFit()
-                                .frame(width: 50, height: 50)
                             Text(member.username)
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .lineLimit(1)
                         }
                         .onTapGesture {
-                            showUserInfoView = true
+                            showUserInfoView.toggle()
                             selectedNode     = member
                         }
                     }
                 }
-                .navigationDestination(isPresented: $showUserInfoView) {
-                    if let member = selectedNode {
-                        UserInfoView(userId: member.username)
-                    }
-                }
             }
+            .navigationDestination(isPresented: $showUserInfoView, destination: {
+                if let member = selectedNode {
+                    UserInfoView(userId: member.username)
+                }
+            })
         }
     }
 }

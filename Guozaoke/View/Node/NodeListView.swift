@@ -9,53 +9,27 @@ import SwiftUI
 
 struct NodeListView: View {
     @StateObject private var viewModel  = PostListParser()
+    @State private var showMembersView = false
+    @State private var showSearchView  = false
 
+    
     var body: some View {
-//        let hotTodayTopic =
-//        VStack(alignment: .leading, spacing: 0) {
-//            SectionTitleView("今日热议")
-//                .padding(.horizontal, 10)
-//            ForEach(viewModel.hotTodayTopic) { item in
-//                HStack(spacing: 12) {
-//                    KFImageView(item.avatar)
-//                        .avatar()
-//                    
-//                    Text(item.title)
-//                        .foregroundColor(.bodyText)
-//                        .lineLimit(2)
-//                        .greedyWidth(.leading)
-//                }
-//                .padding(.vertical, 12)
-//                .padding(.horizontal, 10)
-//                .background(Color.itemBg)
-//                .divider()
-//                .to { PostDetailView(postId: item.link) }
-//            }
-//        }
-//        
-//        let navNodesItem =
-//        VStack(spacing: 0) {
-//            SectionTitleView("节点导航")
-//            ForEach(viewModel.nodes) {
-//                NodeNavItemView(data: $0)
-//            }
-//        }
         
         VStack(alignment: .leading, spacing: 0) {
             List {
-//                SectionTitleView("今日热议")
-//                    .padding(.horizontal, 10)
-//                ForEach(viewModel.hotTodayTopic) { item in
-//                    HStack(spacing: 12) {
-//                        KFImageView(item.avatar)
-//                            .avatar()
-//                        
-//                        Text(item.title)
-//                            .lineLimit(2)
-//                            .greedyWidth(.leading)
-//                    }
-//                    .to { PostDetailView(postId: item.link) }
-//                }
+                SectionTitleView("今日热议")
+                    .padding(.horizontal, 10)
+                ForEach(viewModel.hotTodayTopic) { item in
+                    HStack(spacing: 12) {
+                        KFImageView(item.avatar)
+                            .avatar()
+                        
+                        Text(item.title)
+                            .lineLimit(2)
+                            .greedyWidth(.leading)
+                    }
+                    .to { PostDetailView(postId: item.link) }
+                }
                 
                 SectionTitleView("节点导航")
                 ForEach(viewModel.hotNodes) {
@@ -77,9 +51,31 @@ struct NodeListView: View {
         .navigationTitle("节点")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showSearchView.toggle()
+                }) {
+                    SFSymbol.search
+                }
+            }
+            
+            ToolbarItemGroup(placement: .navigationBarLeading) {
+                Button(action: {
+                    showMembersView.toggle()
+                }) {
+                    SFSymbol.person3
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showSearchView, destination: {
+            SearchListView()
+        })
+        .navigationDestination(isPresented: $showMembersView, destination: {
+            MembersGridView()
+        })
         .onAppear {
             if !viewModel.hadNodeItemData  {
-                log("节点请求")
                 viewModel.refreshPostList(type: .hot)
             }
         }

@@ -40,7 +40,8 @@ extension KFImageView {
     // 头像样式
     func avatar(size: CGFloat = 40) -> some View {
         self.frame(width: size, height: size)
-            .clipShape(Circle())
+            //.clipShape(Circle())
+            .cornerRadius(8)
     }
     
     // 缩略图样式

@@ -13,7 +13,7 @@ struct PostDetail: Identifiable {
     let id : String
     let title: String
     var detailId: String?
-    let node: String
+    var node: String
     let nodeUrl: String
     let author: Author
     let content: String

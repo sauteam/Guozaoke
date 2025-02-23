@@ -73,7 +73,7 @@ class NetworkManager: ObservableObject {
                         LoginStateChecker.LoginStateHandle()
                     }
                     if error.responseCode == 403 {
-                        log("[403]重新登录处理 \(url)")
+                        log("[403]重新登录处理  refreshTokenNoti \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
                     ToastView.toast(desc, subtitle: "", .warning)

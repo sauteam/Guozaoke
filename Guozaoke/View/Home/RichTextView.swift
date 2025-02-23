@@ -186,6 +186,20 @@ struct CopyTextView: View {
             with: "<a href=\"user://$1\">@$1</a>",
             options: .regularExpression
         )
+        
+        let emailPattern = "([\\w\\.-]+@[\\w\\.-]+\\.[\\w-]{2,})"
+        processedContent = processedContent.replacingOccurrences(
+            of: emailPattern,
+            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
+            options: .regularExpression
+        )
+        
+        let phonePattern = "(1[3-9]\\d{9})"
+        processedContent = processedContent.replacingOccurrences(
+            of: phonePattern,
+            with: "<a href=\"tel:$1\" class=\"phone\">$1</a>",
+            options: .regularExpression
+        )
 
         // 转换 #标签#
         processedContent = processedContent.replacingOccurrences(

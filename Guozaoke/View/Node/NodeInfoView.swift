@@ -89,7 +89,7 @@ struct NodeInfoView: View {
             }
         }
         .sheet(isPresented: $showAddPostView) {
-            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
+            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
                 
             }
         }

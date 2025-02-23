@@ -19,51 +19,57 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showSafari = false
+    @State private var isSecured = true
     @State private var url: URL?
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("登录账户")) {
+            List {
+                Section {
                     TextField("邮箱或手机号", text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                         .textFieldStyle(PlainTextFieldStyle())
+                        .frame(height: 40)
+//                        .background(Color(.secondarySystemBackground))
+//                        .cornerRadius(5)
+//                        .padding(.horizontal, 16)
 
-                    SecureField("密码", text: $password)
-                        .textContentType(.password)
+
+                    SecureTextField(text: $password)
+                        .frame(height: 40)
                 }
-                
-                if let error = loginService.error {
-                    Section {
+
+                Section {
+                    if let error = loginService.error {
                         Text(error)
                             .foregroundColor(.red)
                     }
+
                 }
                 
                 Section {
+                    let enable = password.count < 5 || email.count < 5
                     Button(action: performLogin) {
                         if loginService.isLoading {
                             ProgressView()
                         } else {
                             Text("登录")
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(!enable ? Color.blue: Color.gray)
+                                .cornerRadius(5)
                         }
                     }
                     .disabled(loginService.isLoading)
-                    
-                    Button("注册账号") {
-                        url = URL(string: APIService.registerUrl)
-                        showSafari = true
-                    }
-                    
-                    Button("忘记密码") {
-                        url = URL(string: APIService.forgotUrl)
-                        showSafari = true
-                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .listRowSeparator(.hidden)
             }
+            .listStyle(.plain)
             .navigationTitle("登录过早客")
             .navigationBarItems(trailing: Button("关闭") {
                 closeView()

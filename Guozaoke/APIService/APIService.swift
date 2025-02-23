@@ -37,7 +37,7 @@ struct NoMoreDataTitle {
 enum PostListType: String, CaseIterable {
     case hot      = "默认"
     case latest   = "最新"
-    case today    = "今日"
+    //case today    = "今日"
     case elite    = "精华"
     case interest = "兴趣"
     case follows  = "关注"
@@ -52,8 +52,8 @@ enum PostListType: String, CaseIterable {
             return ""
         case .latest:
             return "/?tab=latest"
-        case .today:
-            return ""
+//        case .today:
+//            return ""
         case .elite:
             return "/?tab=elite"
         case .interest:
@@ -380,11 +380,19 @@ extension String {
     /// 详情主页
     func postDetailUrl() -> String {
         let uid = self
+        let postDetail = APIService.baseUrlString + "/"
+        
+        if uid.contains(postDetail) {
+            return uid
+        }
+        
         if uid.hasPrefix("/") {
             return APIService.baseUrlString + uid
         }
+        
         return APIService.baseUrlString + "/" + uid
     }
+    
     
     /// /node/IT => /t/create/IT
     func createPostUrl() -> String {

@@ -62,10 +62,10 @@ struct PostListView: View {
             .animation(.easeInOut, value: selectedTab)
             
             .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button(action: {
                         if LoginStateChecker.isLogin() {
-                            showAddPostView = true
+                            showAddPostView.toggle()
                         } else {
                             LoginStateChecker.LoginStateHandle()
                         }
@@ -74,22 +74,22 @@ struct PostListView: View {
                     }
                 }
                 
-                ToolbarItemGroup(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
-                        showMembersView = true
+                        showSearchView.toggle()
                     }) {
-                        SFSymbol.person3
+                        SFSymbol.search
                     }
                 }
             }
-            .navigationDestination(isPresented: $showMembersView, destination: {
-                MembersGridView()
-            })
             .navigationTitle("过早客")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
+            .navigationDestination(isPresented: $showSearchView, destination: {
+                SearchListView()
+            })
             .sheet(isPresented: $showAddPostView) {
-                SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic) {
+                SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
                 }
             }
         }
@@ -125,51 +125,34 @@ struct PostListContentView: View {
                 .padding(.vertical, 12)
             }
             List {
-                if type == .today {
-                    ForEach(viewModel.hotTodayTopic) { item in
-                        HStack(spacing: 12) {
-                            KFImageView(item.avatar)
-                                .avatar()
-                                .onTapGesture {
-                                    self.selectedHotTodayTopic = item
-                                    showUserInfoView = true
+                ForEach(viewModel.posts) { post in
+                    NavigationLink {
+                        PostDetailView(postId: post.link)
+                    } label: {
+                        PostRowView(post: post)
+                            .onAppear {
+                                if post == viewModel.posts.last {
+                                    viewModel.loadMorePosts(type: type)
+                                    print("2 type \(type)")
                                 }
-                            Text(item.title)
-                                .lineLimit(2)
-                                .greedyWidth(.leading)
-                        }
-                        .to { PostDetailView(postId: item.link) }
+                            }
                     }
-                } else {
-                    ForEach(viewModel.posts) { post in
-                        NavigationLink {
-                            PostDetailView(postId: post.link)
-                        } label: {
-                            PostRowView(post: post)
-                                .onAppear {
-                                    if post == viewModel.posts.last {
-                                        viewModel.loadMorePosts(type: type)
-                                        print("2 type \(type)")
-                                    }
-                                }
-                        }
-                    }
-                    
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .listRowSeparator(.hidden)
-                    } else if !viewModel.hasMore, !viewModel.posts.isEmpty {
-                        HStack {
-                            Spacer()
-                            Text(NoMoreDataTitle.homeList)
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
+                }
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
-                        .padding(.vertical, 12)
+                } else if !viewModel.hasMore, !viewModel.posts.isEmpty {
+                    HStack {
+                        Spacer()
+                        Text(NoMoreDataTitle.homeList)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        Spacer()
                     }
+                    .listRowSeparator(.hidden)
+                    .padding(.vertical, 12)
                 }
             }
             .buttonStyle(.plain)
@@ -184,7 +167,6 @@ struct PostListContentView: View {
                 }
             })
             .onAppear() {
-
                 if viewModel.posts.isEmpty {
                     viewModel.refreshPostList(type: type)
                 }
@@ -206,4 +188,5 @@ struct PostListContentView: View {
             }
         }
     }
+    
 }

@@ -386,6 +386,7 @@ class UserInfoParser: ObservableObject {
             profile.append("\(key): \(value)")
         }
         
+        
         let topicsCount = try doc.select(".status-topic strong a").text()
         let topicsLink = try doc.select(".status-topic strong a").attr("href")
         let repliesCount = try doc.select(".status-reply strong a").text()
@@ -393,7 +394,9 @@ class UserInfoParser: ObservableObject {
         let favoritesCount = try doc.select(".status-favorite strong a").text()
         let favoritesLink = try doc.select(".status-favorite strong a").attr("href")
         let reputation = try doc.select(".status-reputation strong").text()
-        
+
+        profile.insert("信用:\(reputation)", at: 0)
+
         var blockText: String = "屏蔽此账号"
         var blockLink: String = ""
         var blockUser = false

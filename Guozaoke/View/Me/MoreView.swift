@@ -28,7 +28,7 @@ struct MoreView: View {
                 }
 
                 NavigationLink(destination: PostDetailView(postId: APIService.androidUpdateTopicInfo)) {
-                    Text("Android更新说明")
+                    Text("mzlogin大大：mzlogin")
                         .font(.callout)
                         .fontWeight(.light)
                         .padding()
@@ -36,7 +36,7 @@ struct MoreView: View {
                 }
                 
                 NavigationLink(destination: PostDetailView(postId: APIService.iosUpdateTopicInfo)) {
-                    Text("iOS更新说明")
+                    Text("更新说明")
                         .font(.callout)
                         .fontWeight(.light)
                         .padding()
@@ -44,7 +44,7 @@ struct MoreView: View {
                 }
             }
         }
-        .navigationTitle("期待更多")
+        .navigationTitle("更多")
     }
 }
 

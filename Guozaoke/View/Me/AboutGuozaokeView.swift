@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import MessageUI
 
 struct AboutGuozaokeView: View {
+    let feedbackEmail =  "268144637@qq.com"
     let info = """
                    过早客「guozaoke.com」武汉互联网精神家园
                
@@ -16,8 +18,15 @@ struct AboutGuozaokeView: View {
                    感谢其提供数据，才可能有过早客App
                
                    enjoy，欢迎反馈 ━(*｀∀´*)ノ亻!~
+               
+                   在社区发帖或是邮件268144637@qq.com
                """
+    
+    @State private var showMailView = false
+    @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
+
     var body: some View {
+
         VStack {
             Image("zaoIcon")
                 .resizable()
@@ -39,7 +48,22 @@ struct AboutGuozaokeView: View {
                 .fontWeight(.thin)
                 .padding()
                 .foregroundColor(Color.primary)
-            
+                .onTapGesture {
+                    showMailView = true
+                }
+                .sheet(isPresented: $showMailView) {
+                    MailView(subject: "过早客反馈", body: "写点什么...", recipient: feedbackEmail) { result in
+                        self.mailResult = result
+                    }
+                }
+            if let mailResult = mailResult {
+                switch mailResult {
+                case .success(let result):
+                    Text("邮件发送结果: \(result.rawValue)")
+                case .failure(let error):
+                    Text("发送邮件失败: \(error.localizedDescription)")
+                }
+            }
             Spacer()
         }
         .navigationTitle("关于过早客")

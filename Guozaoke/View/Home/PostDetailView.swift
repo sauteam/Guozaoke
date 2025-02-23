@@ -13,6 +13,9 @@ struct PostDetailView: View {
     let postId: String 
     @State private var showComentView  = false
 
+    @State private var showSendView    = false
+    @State private var selectedTopic: Node? = nil
+
     var body: some View {
         ScrollView {
             LazyVStack {
@@ -42,12 +45,11 @@ struct PostDetailView: View {
         .navigationTitle("主题详情")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                
+                let userIsMe = AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "")
                 Menu {
                     Button {
                         shareContent()
                     } label: {
-                        
                         Label("分享", systemImage: .share)
                     }
                     
@@ -71,11 +73,24 @@ struct PostDetailView: View {
                             LoginStateChecker.LoginStateHandle()
                         }
                     } label: {
-                        
                         Label("评论", systemImage: .coment)
                     }
                     
-                    if !AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "") {
+                    
+                    if userIsMe {
+                        Button {
+//                            if LoginStateChecker.isLogin() {
+//                                showSendView.toggle()
+//                            } else {
+//                                LoginStateChecker.LoginStateHandle()
+//                            }
+                        } label: {
+                            Label("编辑", systemImage: .edit)
+                        }
+                        .font(.caption)
+                    }
+                    
+                    if !userIsMe {
                         Button {
                             ToastView.reportToast()
                         } label: {
@@ -86,6 +101,11 @@ struct PostDetailView: View {
                 } label: {
                     SFSymbol.more
                 }
+            }
+        }
+        .sheet(isPresented: $showSendView) {
+            SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {
+                
             }
         }
         .sheet(isPresented: $showComentView) {
@@ -109,9 +129,8 @@ struct PostDetailView: View {
     }
     
     func shareContent() {
-        postId.postDetailUrl().copyToClipboard()
-        let textToShare = detailParser.postDetail?.title ?? ""
         let link = postId.postDetailUrl()
+        let textToShare = (detailParser.postDetail?.title ?? "")
         let activityController = UIActivityViewController(activityItems: [textToShare, link], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootViewController = windowScene.windows.first?.rootViewController {
@@ -139,14 +158,16 @@ struct PostDetailContent: View, Equatable {
 
             PostRowView(post: post)
                 .padding(.horizontal)
-            let result = TextChecker.checkText(detail.contentHtml)
-            if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
-                RichTextView(content: detail.contentHtml)
-                    .padding(.horizontal)
-            } else {
-                CopyTextView(content: detail.content)
-                    .padding(.horizontal)
-            }
+            //let result = TextChecker.checkText(detail.contentHtml)
+            RichTextView(content: detail.contentHtml)
+                .padding(.horizontal)
+//            if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
+//                RichTextView(content: detail.contentHtml)
+//                    .padding(.horizontal)
+//            } else {
+//                CopyTextView(content: detail.content)
+//                    .padding(.horizontal)
+//            }
             // 帖子图片
             if !detail.images.isEmpty {
                 //PostImagesView(images: detail.images)

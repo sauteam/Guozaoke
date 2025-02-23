@@ -26,8 +26,7 @@ struct UserInfoView: View {
                 // Header Section
                 VStack(spacing: 10) {
                     KFImageView(userInfo.avatar)
-                    .frame(width: 60, height: 60)
-                    .clipShape(Circle())
+                        .avatar(size: 60)
                     let isMe = AccountState.isSelf(userName: userInfo.username)
                     HStack {
                         Text(userInfo.username)

@@ -81,8 +81,7 @@ struct MyProfileView: View {
                 HStack {
                     NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
                         KFImageView(AccountState.avatarUrl)
-                            .frame(width: 60, height: 60)
-                            .clipShape(Circle())
+                            .avatar(size: 60)
                         
                         VStack(alignment: .leading, spacing: 5) {
                             Text(AccountState.userName)
@@ -117,15 +116,6 @@ struct MyProfileView: View {
             }
         
             
-             Section {
-                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
-                         GuozaokeAppInfo.toAppStore()
-                     }
-                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
-                         GuozaokeAppInfo.toWriteReview()
-                     }
-             }
-            
             Section {
                 NavigationLink(destination: DarkModeToggleView()) {
                     ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
@@ -157,6 +147,15 @@ struct MyProfileView: View {
                     ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
                 }
             }
+            
+             Section {
+                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
+                         GuozaokeAppInfo.toAppStore()
+                     }
+                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
+                         GuozaokeAppInfo.toWriteReview()
+                     }
+             }
          .listStyle(InsetGroupedListStyle())
         }
     }

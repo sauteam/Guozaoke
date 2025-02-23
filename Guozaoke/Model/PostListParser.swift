@@ -10,7 +10,7 @@ import SwiftSoup
 import Alamofire
 
 enum PostItemEnum {
-    case homeRow, detailRow, profileRow, nodeInfo
+    case homeRow, detailRow, profileRow, nodeInfo, search
 }
 
 enum PostTypeEnum {
@@ -81,6 +81,13 @@ struct CommunityStatus: Identifiable {
     let id = UUID()
     let title: String
     let value: String
+}
+
+/// 编辑帖子信息
+struct EditPostInfo: Identifiable {
+    let id = UUID()
+    let title: String?
+    let content: String?
 }
 
 // MARK: - 数据模型
