@@ -24,7 +24,7 @@ struct NotificationsView: View {
                         .font(.callout)
                         .foregroundColor(.secondary)
                         .onTapGesture {
-                            if !LoginStateChecker.isLogin() {
+                            if !LoginStateChecker.isLogin {
                                 LoginStateChecker.LoginStateHandle()
                             }
                         }
@@ -59,7 +59,7 @@ struct NotificationsView: View {
             .sheet(item: $selectedNotification, content: { notification in
                 let reply = "@" + notification.username + " "
                 SendCommentView(
-                    detailId: notification.username,
+                    detailId: notification.topicLink,
                     replyUser: reply,
                     isPresented: $showCommentView
                 ) {

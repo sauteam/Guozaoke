@@ -40,6 +40,7 @@ struct LoginView: View {
 
                     SecureTextField(text: $password)
                         .frame(height: 40)
+                        .listRowBackground(Color.clear)
                 }
 
                 Section {
@@ -60,12 +61,15 @@ struct LoginView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
-                                .background(!enable ? Color.blue: Color.gray)
-                                .cornerRadius(5)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                            
                         }
                     }
-                    .disabled(loginService.isLoading)
+                    .disabled(loginService.isLoading || enable)
                     .frame(maxWidth: .infinity, alignment: .center)
+                    .buttonStyle(.plain)
+                    .listStyle(.plain)
                 }
                 .listRowSeparator(.hidden)
             }
@@ -79,6 +83,9 @@ struct LoginView: View {
                     SafariView(url: url)
                 }
             }
+        }
+        .onDisappear {
+            print("[login]登录提示框 needLogin2")
         }
         .onChange(of: loginService.isLoggedIn) { newValue in
             if newValue {

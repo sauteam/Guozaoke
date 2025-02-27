@@ -73,7 +73,7 @@ struct NodeInfoView: View {
                         }
                         
                         Button {
-                            if LoginStateChecker.isLogin() {
+                            if LoginStateChecker.isLogin {
                                 showAddPostView = true
                             } else {
                                 LoginStateChecker.LoginStateHandle()

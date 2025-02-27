@@ -5,6 +5,8 @@
 //  Created by scy on 2025/1/16.
 //
 
+let dotText = " • "
+
 import SwiftUI
 
 // MARK: - 子视图
@@ -54,8 +56,8 @@ struct PostRowView: View {
                             .lineLimit(1)
                             .foregroundColor(.gray)
                         if let lastReplyUser = post.lastReplyUser {
-                            Text("•")
-                            Text("\(lastReplyUser)" + " 回复")
+                            Text(dotText)
+                            Text("\(lastReplyUser)" + "回复")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .lineLimit(1)

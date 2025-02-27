@@ -5,7 +5,8 @@ struct SearchListView: View {
     @State private var searchQuery: String = ""
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isFocused: Bool
-    private let inputText = "输入关键字搜索 🔍"
+    private let inputText = "🔍 输入关键字搜索"
+    private let changeKeyText = "🔍 换个关键字试试"
     var body: some View {
         NavigationStack {
             VStack {
@@ -52,7 +53,8 @@ struct SearchListView: View {
                     }
                     .listStyle(.plain)
                 } else {
-                    Text(viewModel.errorMessage ?? inputText)
+                    let tips = viewModel.errorMessage ?? (searchQuery.count > 0 ? (viewModel.searchList.count == 0 ? changeKeyText: inputText): inputText)
+                    Text(tips)
                         .foregroundColor(.gray)
                 }
             }

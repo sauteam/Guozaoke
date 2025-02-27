@@ -27,7 +27,7 @@ let needLoginTextCanDo  = "请先登录社区再完成操作"
 
 struct NoMoreDataTitle {
     static let nodaText   = "没有数据"
-    static let nodata     = nodaText//LoginStateChecker.isLogin() ? nodaText : needLoginTextCanDo
+    static let nodata     = nodaText//LoginStateChecker.isLogin ? nodaText : needLoginTextCanDo
     static let homeList   = "已经到底啦"
     static let notiList   = "没有通知消息"
     static let commentList = "评论到底了，要不要发一条"

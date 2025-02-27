@@ -160,7 +160,7 @@ class PostListParser: ObservableObject {
     }
     
     func followNodeInfoAction(_ nodeLink: String?) async -> (Bool, String) {
-        if !LoginStateChecker.isLogin() {
+        if !LoginStateChecker.isLogin {
             LoginStateChecker.LoginStateHandle()
             return (false, "")
         }
@@ -386,8 +386,7 @@ private extension PostListParser {
             }
             onlyNodes = allNodes
         } else {
-            if !LoginStateChecker.isLogin() {
-                LoginStateChecker.LoginStateHandle()
+            if !LoginStateChecker.isLogin {
                 NotificationCenter.default.post(name: .loginViewAlertNoti, object: nil)
             }
             log("未找到节点导航部分")

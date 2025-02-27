@@ -150,7 +150,11 @@ struct AccountState {
 class LoginStateChecker: ObservableObject {
     static let shared = LoginStateChecker()
     @Published var isLogin = false
-    @Published var needLogin = false
+    @Published var needLogin = false {
+        didSet {
+            print("[login] needLogin updated to: \(needLogin)")
+        }
+    }
     @Published var error: String?
     
     static func clearUserInfo() {
@@ -164,13 +168,13 @@ class LoginStateChecker: ObservableObject {
     
     static func LoginStateHandle() {
         runInMain {
-            let success = isLogin()
+            let success = isLogin
             LoginStateChecker.shared.needLogin = !success
             LoginStateChecker.shared.isLogin   = success
         }
     }
         
-    static func isLogin() -> Bool {
+    static var isLogin: Bool {
         return AccountState.isLogin()
     }
     
@@ -196,13 +200,13 @@ class LoginStateChecker: ObservableObject {
             }
             return true
         }
-        
-        Task { @MainActor in
-            if self.needLogin == true {
-                self.needLogin = false
-                self.error = nil
-            }
-        }
+        //这里有些问题 
+//        Task { @MainActor in
+//            if self.needLogin == true {
+//                self.needLogin = false
+//                self.error = nil
+//            }
+//        }
         return false
     }
 }

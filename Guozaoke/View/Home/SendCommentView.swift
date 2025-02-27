@@ -50,11 +50,14 @@ struct SendCommentView: View {
                             .background(Color.blue)
                             .foregroundColor(.white)
                             .cornerRadius(10)
+                            .listRowBackground(Color.clear)
                     }
                 }
-                .disabled(isPosting || content.isEmpty)
+                .disabled(isPosting || !contentTextValid)
                 .pickerStyle(DefaultPickerStyle())
-                
+                .buttonStyle(.plain)
+                .listStyle(.plain)
+
             }
             .onAppear {
                 if let replyUser = replyUser, !replyUser.isEmpty {
@@ -77,6 +80,25 @@ struct SendCommentView: View {
         }
     }
     
+    private var contentTextValid: Bool {
+        var valid = false
+        let text = content.trim()
+        if !replyUser.isEmpty, content != replyUser {
+            if text.count != (replyUser?.count ?? 0)-1 {
+                valid = true
+            }
+        }
+        
+        if replyUser.isEmpty {
+            if text.count == 0 {
+                valid = false
+            } else {
+                valid = true
+            }
+        }
+        return  valid
+    }
+    
     private func closeView() {
         isPresented = false
         dismiss()
@@ -92,7 +114,7 @@ struct SendCommentView: View {
     
     
     private func sendComment() async {
-        if !LoginStateChecker.isLogin() {
+        if !LoginStateChecker.isLogin {
             LoginStateChecker.LoginStateHandle()
             closeView()
             return

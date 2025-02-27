@@ -67,7 +67,7 @@ struct PostDetailView: View {
                     }
                     
                     Button {
-                        if LoginStateChecker.isLogin() {
+                        if LoginStateChecker.isLogin {
                             showComentView = true
                         } else {
                             LoginStateChecker.LoginStateHandle()
@@ -78,16 +78,16 @@ struct PostDetailView: View {
                     
                     
                     if userIsMe {
-                        Button {
-//                            if LoginStateChecker.isLogin() {
+//                        Button {
+//                            if LoginStateChecker.isLogin {
 //                                showSendView.toggle()
 //                            } else {
 //                                LoginStateChecker.LoginStateHandle()
 //                            }
-                        } label: {
-                            Label("编辑", systemImage: .edit)
-                        }
-                        .font(.caption)
+//                        } label: {
+//                            Label("编辑", systemImage: .edit)
+//                        }
+//                        .font(.caption)
                     }
                     
                     if !userIsMe {
@@ -228,6 +228,8 @@ struct PostFooterView: View {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
                         if model?.success == 1 {
                             hapticFeedback()
+                        } else if model?.success == 0 {
+                            ToastView.toastText(model?.message ?? "")
                         }
                     }
                 }
@@ -244,6 +246,8 @@ struct PostFooterView: View {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
                             hapticFeedback()
+                        } else if model?.success == 0 {
+                            ToastView.toastText(model?.message ?? "")
                         }
                     }
                 }
@@ -253,39 +257,21 @@ struct PostFooterView: View {
             }
             .font(.caption)
             .disabled(detailParser.isZan)
-            .padding(.horizontal, 5)
+            .padding(.horizontal, 2)
             .lineLimit(1)
-
+                        
             Button {
                 
             } label: {
-                Text("\(detail.collections)")
-            }
-            .padding(.horizontal, 10)
-            .font(.caption)
-            .disabled(true)
-            .lineLimit(1)
-
-            Button {
-                
-            } label: {
-                Text(detail.zans)
+                Text(detailParser.zanColHit)
             }
             .font(.caption)
             .disabled(true)
-            .lineLimit(1)
-
-            Button {
-                
-            } label: {
-                Text(detail.hits)
-            }
-            .font(.caption)
-            .disabled(true)
+            .padding(.horizontal, 2)
             .lineLimit(1)
             
             Button {
-                if LoginStateChecker.isLogin() {
+                if LoginStateChecker.isLogin {
                     showComentView = true
                 } else {
                     LoginStateChecker.LoginStateHandle()

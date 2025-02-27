@@ -11,6 +11,11 @@ import JDStatusBarNotification
 
 class ToastView {
     static func toast(_ text: String, subtitle: String? = nil, _ includedStyle: IncludedStatusBarNotificationStyle) {
+        if text.isEmpty {
+            if subtitle.isEmpty {
+                return
+            }
+        }
         NotificationPresenter.shared.present(text, includedStyle: includedStyle, duration: toastDuration)
     }
     

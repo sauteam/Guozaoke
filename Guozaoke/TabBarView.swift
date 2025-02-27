@@ -50,9 +50,8 @@ struct TabBarView: View {
             LoginView(isPresented: $loginChecker.needLogin) {}
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginViewAlertNoti)) { _ in
-            showLoginView = true
-            print("[login]登录提示框 needLogin \(loginChecker.needLogin)")
             loginChecker.needLogin = true
+            showLoginView = true
             print("[login]登录提示框 needLogin \(loginChecker.needLogin)")
         }
         .onChange(of: notificationManager.unreadCount) { newValue in

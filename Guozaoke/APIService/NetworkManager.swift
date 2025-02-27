@@ -68,7 +68,7 @@ class NetworkManager: ObservableObject {
                     log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
                     var desc = "出现错误❌: " + "[\(response.response?.statusCode ?? 0)[403-重新登录试试]]"
-                    if !LoginStateChecker.isLogin() {
+                    if !LoginStateChecker.isLogin {
                         desc = needLoginTextCanDo
                         LoginStateChecker.LoginStateHandle()
                     }

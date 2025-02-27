@@ -64,7 +64,7 @@ struct PostListView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button(action: {
-                        if LoginStateChecker.isLogin() {
+                        if LoginStateChecker.isLogin {
                             showAddPostView.toggle()
                         } else {
                             LoginStateChecker.LoginStateHandle()
@@ -115,7 +115,7 @@ struct PostListContentView: View {
                         .font(.callout)
                         .foregroundColor(.secondary)
                         .onTapGesture {
-                            if !LoginStateChecker.isLogin() {
+                            if !LoginStateChecker.isLogin {
                                 LoginStateChecker.LoginStateHandle()
                             }
                         }

@@ -85,6 +85,7 @@ struct SendPostView: View {
                             .background(Color.blue)
                             .foregroundColor(.white)
                             .cornerRadius(10)
+                            .listRowBackground(Color.clear)
                     }
                 }
                 .disabled(isPosting || title.isEmpty || content.isEmpty)

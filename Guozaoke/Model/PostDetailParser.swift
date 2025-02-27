@@ -24,9 +24,21 @@ struct PostDetail: Identifiable {
     /// 点击数量
     let hits: String
     /// 点赞
-    let zans: String
+    var zans: Int {
+        didSet {
+            if zans < 0 {
+                zans = 0
+            }
+        }
+    }
     /// 收藏数量
-    let collections: String
+    var collections: Int {
+        didSet {
+            if collections < 0 {
+                collections = 0
+            }
+        }
+    }
     let zanLink: String
     var collectionsLink: String
     //let shareWeiboLink: String
@@ -112,6 +124,20 @@ class PostDetailParser: ObservableObject {
 
     var zanText: String {
         return isZan ? "已感谢":"感谢"
+    }
+    
+    
+    var zanColHit: String {
+        var text = postDetail?.hits ?? "0 点击"
+        let zan = postDetail?.zans ?? 0
+        text = "\(zan) 人点赞" + dotText + text
+        let col = postDetail?.collections ?? 0
+        text = "\(col) 人收藏" + dotText + text
+        return text
+    }
+    
+    var colIcon: Image {
+        return isCollection ? SFSymbol.heartSlashFill.body : SFSymbol.heartFill.body
     }
     
     func loadMore() {
@@ -255,7 +281,7 @@ class PostDetailParser: ObservableObject {
         let collections = try topicDetail.select("span.favorited").text()
         let zanLinke = try topicDetail.select("a.J_topicVote").attr(ghref)
         let collectionsLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
-        let zanString = try topicDetail.select("a.J_topicVote").text()
+        var zanString = try topicDetail.select("a.J_topicVote").text()
         let collectionString = try topicDetail.select("a.J_topicFavorite").text()
         //let shareLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
         if collectionString != "加入收藏" {
@@ -263,7 +289,11 @@ class PostDetailParser: ObservableObject {
         }
         if zanString == "感谢已表示" {
             isZan = true
+        } else {
+            zanString = "感谢"
         }
+        let zanNumber = Int(zan.split(separator: " ").first ?? "0") ?? 0
+        let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
         log("replies \(replies)")
@@ -281,8 +311,8 @@ class PostDetailParser: ObservableObject {
             links: links,
             publishTime: publishTime,
             hits: hits,
-            zans: zan,
-            collections: collections,
+            zans: zanNumber,
+            collections: colNumber,
             zanLink: zanLinke,
             collectionsLink: collectionsLink,
             replies: replies,
@@ -419,9 +449,11 @@ class PostDetailParser: ObservableObject {
                                 let unfav = "/unfavorite"
                                 let fav = "/favorite"
                                 if self.isCollection {
+                                    self.postDetail?.collections += 1
                                     self.postDetail?.collectionString = "取消收藏"
                                     url = url?.replacingOccurrences(of: fav, with: unfav)
                                 } else {
+                                    self.postDetail?.collections -= 1
                                     self.postDetail?.collectionString = "加入收藏"
                                     url = url?.replacingOccurrences(of: unfav, with: fav)
                                 }
@@ -430,6 +462,7 @@ class PostDetailParser: ObservableObject {
                                 self.isZan.toggle()
                                 log("isZan \(self.isZan)")
                                 if self.isZan {
+                                    self.postDetail?.zans += 1
                                     self.postDetail?.zanString = "感谢已表示"
                                 } else {
                                     self.postDetail?.zanString = "感谢"
