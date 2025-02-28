@@ -14,6 +14,7 @@ struct PostDetailView: View {
     @State private var showComentView  = false
 
     @State private var showSendView    = false
+    @State private var showRelateTopic = false
     @State private var selectedTopic: Node? = nil
 
     var body: some View {
@@ -47,6 +48,13 @@ struct PostDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 let userIsMe = AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "")
                 Menu {
+                    Button {
+                        showRelateTopic.toggle()
+                    } label: {
+                        Label("相关主题", systemImage: .topics)
+                    }
+                    
+                    
                     Button {
                         shareContent()
                     } label: {
@@ -102,6 +110,10 @@ struct PostDetailView: View {
                     SFSymbol.more
                 }
             }
+        }
+        .sheet(isPresented: $showRelateTopic) {
+            RelatedTopicView(isPresented: $showRelateTopic, viewModel: detailParser)
+                //.presentationDetents([.height(430)])
         }
         .sheet(isPresented: $showSendView) {
             SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {

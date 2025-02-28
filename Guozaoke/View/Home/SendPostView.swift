@@ -56,7 +56,8 @@ struct SendPostView: View {
 //                }
                 
                 Picker("主题", selection: $selectedTopic) {
-                    ForEach(viewModel.onlyHotNodes, id: \.self) { node in
+                    let bindNodes = viewModel.updateSendNode(selectedTopic ?? defaultNode)
+                    ForEach(bindNodes, id: \.self) { node in
                         Text(node.title)
                             .tag(Optional(node))
                     }
@@ -105,7 +106,6 @@ struct SendPostView: View {
                     content = postDetail.content
                     print("[edit] post\(postDetail)")
                 } else {
-                    
                     if let postInfo = EditPost.getEditPost() {
                         if postInfo.topicLink == selectedTopic?.link {
                             title   = postInfo.title ?? ""
@@ -114,6 +114,7 @@ struct SendPostView: View {
                         }
                     }
                 }
+                
                 if selectedTopic == nil, let firstTopic = viewModel.onlyHotNodes.randomElement() {
                     selectedTopic = firstTopic
                 }
@@ -140,6 +141,7 @@ struct SendPostView: View {
             }
         }
     }
+    
     
     private func sendPost() async {
         isPosting = true

@@ -392,8 +392,7 @@ extension String {
         
         return APIService.baseUrlString + "/" + uid
     }
-    
-    
+        
     /// /node/IT => /t/create/IT
     func createPostUrl() -> String {
         var url = self

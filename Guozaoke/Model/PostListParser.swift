@@ -116,13 +116,30 @@ class PostListParser: ObservableObject {
     private var urlHeader: String?
     private var url: String?
     private var rowEnum: PostItemEnum = .homeRow
+        
     var justNodes: [Node] {
         let allNodes: [Node] = nodes.flatMap { $0.nodes }
         return allNodes
     }
     
     var hadNodeItemData: Bool {
-        return self.hotNodes.count > 0 && self.justNodes.count > 0
+        return self.hotNodes.count > 0 || self.justNodes.count > 0
+    }
+    
+    /// 绑定数据
+    func updateSendNode(_ selectedTopic: Node) -> [Node] {
+        if onlyHotNodes.count > 0 {
+            let isExist = onlyHotNodes.contains(selectedTopic)
+            if !isExist {
+                onlyHotNodes = justNodes
+            }
+        } else {
+            if justNodes.count > 0 {
+                onlyHotNodes = justNodes
+            }
+        }
+        
+        return onlyHotNodes
     }
             
     // MARK: - 加载我的数据
@@ -366,10 +383,15 @@ private extension PostListParser {
                nodes.append(node)
            }
           hotNodes.append(NodeItem(category: category, nodes: nodes))
-        self.onlyHotNodes = nodes
+          self.onlyHotNodes = nodes
           self.hotNodes = hotNodes
+          if nodes.count == 0 {
+              self.onlyHotNodes = justNodes
+          }
+         
+         print("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
         
-        if let nodesCloud = try doc.select("div.nodes-cloud").first() {
+          if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")
             for item in listItems {
                 var nodes: [Node] = []

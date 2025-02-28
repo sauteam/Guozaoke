@@ -99,6 +99,24 @@ struct Reply: Identifiable, Equatable {
     let likeLink: String
 }
 
+/// 相关主题
+struct RelatedTopics: Identifiable {
+    let id = UUID()
+    let username: String
+    let avatar: String
+    let userLink: String
+    let topicTitle: String
+    let topicLink: String
+    
+    var tid: String? {
+        var link = topicLink
+        let firstItem = topicLink.split(separator: "#").first ?? ""
+        link = String(firstItem)
+        //link = String(firstItem.replacing("/t/", with: ""))
+        return link
+    }
+}
+
 enum ParseError: Error {
     case noContent
     case invalidData
@@ -109,6 +127,8 @@ enum ParseError: Error {
 class PostDetailParser: ObservableObject {
     @Published var postDetail: PostDetail?
     @Published var replies: [Reply] = []
+    /// 相关主题
+    @Published var relatedTopics: [RelatedTopics] = []
     @Published var isLoading = false
     @Published var error: String?
     @Published var needLogin = false
@@ -136,9 +156,9 @@ class PostDetailParser: ObservableObject {
         return text
     }
     
-    var colIcon: Image {
-        return isCollection ? SFSymbol.heartSlashFill.body : SFSymbol.heartFill.body
-    }
+//    var colIcon: Image {
+//        return isCollection ? SFSymbol.heartSlashFill.body : SFSymbol.heartFill.body
+//    }
     
     func loadMore() {
         if !self.hasMore {
@@ -197,7 +217,8 @@ class PostDetailParser: ObservableObject {
                     if self.currentPage == 1 || !self.hasMore {
                         self.postDetail = nil
                         self.replies.removeAll()
-                   }
+                    }
+                    self.relatedTopics.removeAll()
                     // 检查登录状态
                     let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
                     
@@ -250,6 +271,7 @@ class PostDetailParser: ObservableObject {
 //            topicContent = content
 //        }
         log("[content] \(topicContent)")
+        
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
             let src = try img.attr("src")
@@ -274,6 +296,18 @@ class PostDetailParser: ObservableObject {
                 isExternal: href.hasPrefix("http")
             )
         } ?? []
+        
+        
+        let cells = try doc.select("div.cell")
+        for cell in cells {
+            let username = try cell.select("td:nth-child(1) a").text()
+            let avatarUrl  = try cell.select("img.avatar").attr("src")
+            let userLink = try cell.select("td:nth-child(1) a").attr("href")
+            let topicLink  = try cell.select("span.hot_topic_title a").attr("href")
+            let topicTitle = try cell.select("span.hot_topic_title a").text()
+            let relatedTopic = RelatedTopics(username: username, avatar: avatarUrl, userLink: userLink, topicTitle: topicTitle, topicLink: topicLink)
+            relatedTopics.append(relatedTopic)
+        }
         
         // 8. 解析统计信息
         let hits = try topicDetail.select("span.hits").text()

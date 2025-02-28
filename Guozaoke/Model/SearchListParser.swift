@@ -33,7 +33,7 @@ class SearchListParser: ObservableObject {
         }
         currentPage = 0
         currentQuery = text
-        saveSearchKeyword(text) // Save the search keyword
+        //saveSearchKeyword(text) // Save the search keyword
         search(page: currentPage)
     }
 
