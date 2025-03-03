@@ -44,6 +44,7 @@ struct MoreView: View {
                 }
             }
         }
+        .toolbar(.hidden, for: .tabBar)
         .navigationTitle("更多")
     }
 }

@@ -71,10 +71,12 @@ struct MeView: View {
 }
 
 struct MyProfileView: View {
+
     @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
     @State private var currentMode: ModeTypeEnum = .system
     //let parser: UserInfoParser
     //@EnvironmentObject var themeManager: ThemeManager
+
     var body: some View {
         List {
             Section {
@@ -82,7 +84,6 @@ struct MyProfileView: View {
                     NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
                         KFImageView(AccountState.avatarUrl)
                             .avatar(size: 60)
-                        
                         VStack(alignment: .leading, spacing: 5) {
                             Text(AccountState.userName)
                                 .font(.title2)
@@ -103,15 +104,34 @@ struct MyProfileView: View {
                 let replyUrl = "/u/\(username)/replies"
                 
                 NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
-                    ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "收藏")
+                    ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "我的收藏")
                 }
                 
                 NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
-                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "主题")
+                    ProfileRow(icon: SFSymbol.pencilCircleFill.rawValue, title: "我的主题")
                 }
                 
                 NavigationLink(destination: MyReplyListView(linkUrl: replyUrl, linkText: "我的回复"))  {
                     ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复")
+                }
+            }
+            
+            Section {
+                
+                NavigationLink(destination: IntroductationView())  {
+                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "评论发帖")
+                }
+                
+                NavigationLink(destination: FaqView()) {
+                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "faq")
+                }
+                
+                NavigationLink(destination: AboutGuozaokeView())  {
+                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
+                }
+                
+                NavigationLink(destination: MoreView())  {
+                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
                 }
             }
         
@@ -149,12 +169,18 @@ struct MyProfileView: View {
             }
             
              Section {
-                 ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看") {
-                         GuozaokeAppInfo.toAppStore()
-                     }
-                 ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励") {
-                         GuozaokeAppInfo.toWriteReview()
-                     }
+                 
+                 Button {
+                     GuozaokeAppInfo.toAppStore()
+                 } label: {
+                     ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
+                 }
+                 
+                 Button {
+                     GuozaokeAppInfo.toWriteReview()
+                 } label: {
+                     ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
+                 }
              }
          .listStyle(InsetGroupedListStyle())
         }
@@ -174,7 +200,10 @@ struct MyProfileView: View {
             window.overrideUserInterfaceStyle = .unspecified
         }
     }
+    
 }
+
+
 
 struct ProfileRow: View {
     let icon: String
@@ -182,21 +211,21 @@ struct ProfileRow: View {
     var action: (() -> Void)?
     
     var body: some View {
-        Button(action: {
-            action?()
-        }) {
-            HStack {
-                Image(systemName: icon)
-                    .frame(width: 25, height: 25)
-                    .foregroundColor(.primary)
-                Text(title)
-                    .foregroundColor(.primary)
-                Spacer()
-                //SFSymbol.rightIcon
-                //    .foregroundColor(.primary)
-            }
-            .padding(.vertical, 8)
+        HStack {
+            Image(systemName: icon)
+                .frame(width: 25, height: 25)
+                .foregroundColor(.primary)
+            Text(title)
+                .foregroundColor(.primary)
+            Spacer()
+            //SFSymbol.rightIcon
+                //.foregroundColor(.secondary)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(.vertical, 8)
+//        Button(action: {
+//            action?()
+//        }) {
+//        }
+//        .buttonStyle(PlainButtonStyle())
     }
 }

@@ -18,8 +18,8 @@ class NotificationManager: ObservableObject {
 
 func scheduleDailyNotification() {
     let content = UNMutableNotificationContent()
-    content.title = FestivalDate.todayEvents() ?? "过早客"
-    content.body  = "今天在聊啥！"
+    content.title = "过早客"
+    content.body  = FestivalDate.todayEvents() ?? "看看今天在聊啥"
     content.sound = .defaultCritical
     content.badge = 1
 

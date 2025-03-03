@@ -48,11 +48,11 @@ struct AboutGuozaokeView: View {
                 .fontWeight(.thin)
                 .padding()
                 .foregroundColor(Color.primary)
-                .onTapGesture {
+                .onLongPressGesture {
                     showMailView = true
                 }
                 .sheet(isPresented: $showMailView) {
-                    MailView(subject: "过早客反馈", body: "写点什么...", recipient: feedbackEmail) { result in
+                    MailView(subject: "过早客反馈", body: "", recipient: feedbackEmail) { result in
                         self.mailResult = result
                     }
                 }
@@ -67,6 +67,7 @@ struct AboutGuozaokeView: View {
             }
             Spacer()
         }
+        .toolbar(.hidden, for: .tabBar)
         .navigationTitle("关于过早客")
     }
 }

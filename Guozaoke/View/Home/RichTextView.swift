@@ -48,13 +48,7 @@ struct RichTextView: View {
 //                    .onOpenURL { url in
 //                        handleLink(url)
 //                    }
-                    .navigationDestination(isPresented: $showUserInfo) {
-                        UserInfoView(userId: linkUserId)
-                    }
                 
-                    .navigationDestination(isPresented: $showTopicInfo) {
-                        PostDetailView(postId: topicId)
-                    }
                     .onAppear {
                         processContent(content)
                     }
@@ -65,6 +59,13 @@ struct RichTextView: View {
                     }
             }
         }
+        .navigationDestination(isPresented: $showUserInfo, destination: {
+            UserInfoView(userId: linkUserId)
+        })
+    
+        .navigationDestination(isPresented: $showTopicInfo, destination: {
+            PostDetailView(postId: topicId)
+        })
         .sheet(
             isPresented: Binding(
                 get: { safariState != nil },

@@ -20,19 +20,11 @@ struct SendCommentView: View {
     @State private var errorMessage: String? = nil
     @FocusState private var isFocused: Bool
     //var onDismiss: () -> Void
+    
     var body: some View {
-        NavigationView {
-            Form {
-                TextEditor(text: $content)
-                    .frame(minHeight: 180)
-                    .padding(.top)
-                    .focused($isFocused)
-                                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .listRowSeparator(.hidden)
-                }
+        VStack {
+            HStack {
+                Spacer()
                 Button(action: {
                     if content.trim().isEmpty {
                         ToastView.toastText("输入内容")
@@ -42,41 +34,41 @@ struct SendCommentView: View {
                         await sendComment()
                     }
                 }) {
-                     if isPosting {
+                    if isPosting {
                         ProgressView()
                     } else {
-                        Text("创建新的回复")
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                        Text("回复")
+                            .frame(maxWidth: 60, minHeight: 30)
+                            .foregroundColor(Color.white)
                             .background(Color.blue)
-                            .foregroundColor(.white)
                             .cornerRadius(10)
-                            .listRowBackground(Color.clear)
                     }
                 }
                 .disabled(isPosting || !contentTextValid)
-                .pickerStyle(DefaultPickerStyle())
-                .buttonStyle(.plain)
-                .listStyle(.plain)
+                .padding(.trailing, 20)
+                .padding(.top, 5)
+            }
 
+            
+            TextEditor(text: $content)
+                .frame(minHeight: 150)
+                .focused($isFocused)
+                .padding(.top, -8)
+
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
             }
-            .onAppear {
-                if let replyUser = replyUser, !replyUser.isEmpty {
-                    content = replyUser
-                }
-                self.isFocused = true
+        }
+        
+        .onAppear {
+            if let replyUser = replyUser, !replyUser.isEmpty {
+                content = replyUser
             }
-            .onDisappear() {
-                self.isFocused = false
-            }
-            .listRowBackground(Color.clear)
-            .navigationTitle("创建新的回复")
-            .navigationBarItems(trailing: Button("关闭") {
-                self.isFocused = false
-                closeView()
-                /// isPresented 是 Sheet，检查 @Binding 是否正确传递
-                ///  如果 isPresented 是 NavigationStack，用 dismiss()
-                ///onDismiss()
-            })
+            self.isFocused = true
+        }
+        .onDisappear() {
+            self.isFocused = false
         }
     }
     
@@ -139,3 +131,9 @@ struct SendCommentView: View {
     }
 
 }
+
+//#Preview {
+//    SendCommentView(detailId: "", replyUser: "", isPresented: true, sendSuccess: {
+//        
+//    }
+//}

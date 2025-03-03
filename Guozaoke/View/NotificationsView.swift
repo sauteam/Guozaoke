@@ -66,6 +66,7 @@ struct NotificationsView: View {
                     showCommentView = false
                     selectedNotification = nil
                 }
+                .presentationDetents([.height(230)])
             })
             .navigationTitle("通知")
             .navigationBarTitleDisplayMode(.inline)

@@ -123,6 +123,7 @@ private extension GuozaokeApp {
         
     func addNoti() {
         NotificationCenter.default.addObserver(forName: .refreshTokenNoti, object: nil, queue: .main) { _ in
+            //APIService.clearCookie()
             //handleTokenExpiration()
         }
     }

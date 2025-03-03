@@ -60,6 +60,7 @@ enum SFSymbol: String {
     case rightIcon = "chevron.right"
     case helper = "questionmark.circle"
     case pencilCircle = "pencil.circle"
+    case pencilCircleFill = "pencil.circle.fill"
     case exit = "iphone.and.arrow.forward.outward"
     case remove = "iphone.slash"
     case notice = "list.bullet.clipboard"
@@ -72,6 +73,10 @@ enum SFSymbol: String {
 
 extension SFSymbol: View {
     var body: Image {
+        Image(systemName: rawValue)
+    }
+    
+    var image: Image {
         Image(systemName: rawValue)
     }
     

@@ -385,11 +385,7 @@ private extension PostListParser {
           hotNodes.append(NodeItem(category: category, nodes: nodes))
           self.onlyHotNodes = nodes
           self.hotNodes = hotNodes
-          if nodes.count == 0 {
-              self.onlyHotNodes = justNodes
-          }
-         
-         print("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
+         //print("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
         
           if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")

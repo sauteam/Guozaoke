@@ -170,6 +170,11 @@ struct APIService {
         let doc = try SwiftSoup.parse(html)
         if let tokenInput = try doc.select("input[name=_xsrf]").first() {
             tokenText = try tokenInput.attr("value")
+            if tokenText.count > 0 {
+                var account = AccountState.getAccount()
+                account?.xsrfToken = tokenText
+                AccountState.update(account)
+            }
             success   =  true
         }
         return (success, tokenText)

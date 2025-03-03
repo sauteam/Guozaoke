@@ -74,12 +74,12 @@ struct MemberItemView: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showUserInfoView, destination: {
-                if let member = selectedNode {
-                    UserInfoView(userId: member.username)
-                }
-            })
         }
+        .navigationDestination(isPresented: $showUserInfoView, destination: {
+            if let member = selectedNode {
+                UserInfoView(userId: member.username)
+            }
+        })
     }
 }
 
