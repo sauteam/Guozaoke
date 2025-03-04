@@ -153,7 +153,7 @@ struct SendPostView: View {
             content = ""
             title   = ""
             ToastView.toast("发送成功", subtitle: "", .success)
-            hapticFeedback()
+            NotificationManager.shared.hapticFeedback()
             sendSuccess()
             EditPost.removeEditPost()
         } catch {

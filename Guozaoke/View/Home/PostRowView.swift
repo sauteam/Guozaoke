@@ -52,17 +52,13 @@ struct PostRowView: View {
                                     isUserNameInfoViewActive = true
                                 }
                             }
-                        Text(post.time)
-                            .lineLimit(1)
-                            .foregroundColor(.gray)
+                        
                         if let lastReplyUser = post.lastReplyUser {
-                            Text(dotText)
-                            Text("\(lastReplyUser)" + "回复")
+                            Text("\(post.time)" + dotText + "\(lastReplyUser)" + "回复")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .lineLimit(1)
                                 .onTapGesture {
-                                    log("点击 \(lastReplyUser)")
                                     isLastReplyUserInfoViewActive = true
                                     if profile == true, post.author == post.lastReplyUser ?? "" {
                                         isLastReplyUserInfoViewActive = false
@@ -86,7 +82,6 @@ struct PostRowView: View {
                         Text(post.node)
                             .foregroundColor(.blue)
                             .font(.footnote)
-                            .cornerRadius(8)
                             .clipShape(Rectangle())
                             .onTapGesture {
                                 log("点击 \(post.node) \(post.nodeUrl)")

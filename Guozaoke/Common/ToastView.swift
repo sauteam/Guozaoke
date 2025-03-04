@@ -27,7 +27,7 @@ class ToastView {
         
         runInMain(delay: 1) {
             toast("谢谢反馈，我们已收到", subtitle: "", .success)
-            hapticFeedback()
+            NotificationManager.shared.hapticFeedback()
         }
     }
 }

@@ -39,6 +39,8 @@ protocol KeyboardReadable {
     var keyboardPublisher: AnyPublisher<Bool, Never> { get }
 }
 
+
+
 extension KeyboardReadable {
     var keyboardPublisher: AnyPublisher<Bool, Never> {
         Publishers.Merge(
@@ -64,11 +66,6 @@ func runInMain(delay: Int = 0, execute work: @escaping @convention(block) () -> 
     DispatchQueue.main.asyncAfter(deadline: .now() + .microseconds(delay), execute: work)
 }
 
-func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
-    let impactHeavy = UIImpactFeedbackGenerator(style: style)
-    impactHeavy.prepare()
-    impactHeavy.impactOccurred()
-}
 
 func parseQueryParam(from url: String, param: String) -> String? {
     var tmpUrl: String = url

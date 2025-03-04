@@ -9,56 +9,69 @@ import SwiftUI
 
 // MARK: - 帖子列表视图
 struct PostListView: View {
-    @State private var selectedTab: PostListType = .latest
+    @State private var selectedTab: PostListType
     @State private var posts: [PostItem] = []
     @State private var isLoading = false
     @State private var showMembersView = false
     @State private var showAddPostView = false
     @State private var showSearchView  = false
     @State private var selectedTopic: Node? = nil
-//    @Environment(\.themeColor) private var themeColor: Color
-    
+    @StateObject private var viewModel = PostListViewModel()
+
+    init() {
+      if let lastSelectedType = UserDefaults.standard.string(forKey: "LastSelectedPostListType"),
+         let type = PostListType(rawValue: lastSelectedType) {
+          _selectedTab = State(initialValue: type)
+      } else {
+          _selectedTab = State(initialValue: .latest)
+      }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
                 ScrollViewReader { proxy in
-                    HStack(spacing: 8) {
-                        ForEach(PostListType.allCases, id: \.self) { type in
+                    HStack(spacing: 10) {
+                        ForEach(viewModel.visibleItems, id: \.type) { item in
                             Button(action: {
                                 withAnimation {
-                                    selectedTab = type
+                                    selectedTab = item.type
+                                    viewModel.saveLastSelectedType(item.type)
                                 }
-                                proxy.scrollTo(type, anchor: .center)
+                                proxy.scrollTo(item.type, anchor: .center)
                             }) {
                                 VStack(spacing: 5) {
-                                    Text(type.rawValue)
-                                        .foregroundColor(selectedTab == type ? .blue : .gray)
-                                        .font(.system(size: 16, weight: .medium))
+                                    Text(item.type.rawValue)
+                                        .foregroundColor(selectedTab == item.type ? .blue : .gray)
+                                        .font(.system(size: 16, weight: .regular))
                                     
                                     Rectangle()
-                                        .fill(selectedTab == type ? Color.blue : Color.clear)
-                                        .frame(height: 2)
+                                        .fill(selectedTab == item.type ? Color.blue : Color.clear)
+                                        .frame(height: 1.5)
                                 }
                             }
-                            .id(type)
+                            .id(item.type)
                         }
                     }
                     .padding(.horizontal)
+                    .onChange(of: selectedTab) { newValue in
+                        withAnimation {
+                            proxy.scrollTo(newValue, anchor: .center)
+                            viewModel.saveLastSelectedType(newValue)
+                        }
+                    }
                 }
             }
             
             Divider()
             
             TabView(selection: $selectedTab) {
-                ForEach(PostListType.allCases, id: \.self) { type in
-                    PostListContentView(type: type)
-                        .tag(type)
+                ForEach(viewModel.visibleItems, id: \.type) { item in
+                    PostListContentView(type: item.type)
+                        .tag(item.type)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .onChange(of: selectedTab) { newValue in
-                
-            }
             .animation(.easeInOut, value: selectedTab)
             
             .toolbar {
@@ -95,7 +108,6 @@ struct PostListView: View {
         }
     }
 }
-
 //
 
 // MARK: - 帖子列表内容视图

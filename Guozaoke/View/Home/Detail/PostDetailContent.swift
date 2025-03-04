@@ -20,6 +20,7 @@ struct PostDetailContent: View, Equatable {
     }
     
     var body: some View {
+
         VStack(alignment: .leading, spacing: 16) {
             let replay = detail.replies.last
             let post = PostItem(title: detail.title, link: postId, author: detail.author.name, avatar: detail.author.avatar, node: detail.author.node, nodeUrl: detail.nodeUrl, time: detail.author.joinDate ?? "", replyCount: detail.replies.count, lastReplyUser: replay?.author.name, rowEnum: .detailRow)
@@ -95,7 +96,7 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
                         if model?.success == 1 {
-                            hapticFeedback()
+                            NotificationManager.shared.hapticFeedback()
                         } else if model?.success == 0 {
                             ToastView.toastText(model?.message ?? "")
                         }
@@ -113,7 +114,7 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
-                            hapticFeedback()
+                            NotificationManager.shared.hapticFeedback()
                         } else if model?.success == 0 {
                             ToastView.toastText(model?.message ?? "")
                         }
@@ -248,7 +249,7 @@ struct ReplyItemView: View {
                                         reply.isLiked = true
                                         reply.like += 1
                                     }
-                                    hapticFeedback()
+                                    NotificationManager.shared.hapticFeedback()
                                 } else {
                                     if model?.message?.contains("already_voted") == true {
                                         reply.isLiked = true

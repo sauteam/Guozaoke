@@ -92,6 +92,7 @@ struct MyProfileView: View {
                             Text("我的主页")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
+                                .fontWeight(.thin)
                         }
                     }
                 }
@@ -137,6 +138,11 @@ struct MyProfileView: View {
         
             
             Section {
+                
+                NavigationLink(destination: SettingNodeListView()) {
+                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "节点顺序")
+                }
+                
                 NavigationLink(destination: DarkModeToggleView()) {
                     ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
                 }
@@ -215,8 +221,10 @@ struct ProfileRow: View {
             Image(systemName: icon)
                 .frame(width: 25, height: 25)
                 .foregroundColor(.primary)
+            
             Text(title)
                 .foregroundColor(.primary)
+                .fontWeight(.thin)
             Spacer()
             //SFSymbol.rightIcon
                 //.foregroundColor(.secondary)

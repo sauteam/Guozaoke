@@ -7,16 +7,47 @@
 
 import SwiftUI
 
+struct UserDefaultsKeys {
+    static let pushNotificationsEnabled = "pushNotificationsEnabled"
+    static let hapticFeedbackEnabled    = "hapticFeedbackEnabled"
+}
+
+
 class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
     
     @Published var unreadCount: Int = 0
     
     private init() {}
+    
+    var hapticFeedbackEnabled: Bool {
+        UserDefaults.standard.bool(forKey: UserDefaultsKeys.hapticFeedbackEnabled)
+    }
+    
+    func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        guard hapticFeedbackEnabled else { return }
+
+        DispatchQueue.main.async {
+            let impactGenerator = UIImpactFeedbackGenerator(style: style)
+            impactGenerator.prepare()
+            impactGenerator.impactOccurred()
+        }
+    }
 }
 
+func shouldSendPushNotification() -> Bool {
+    return UserDefaults.standard.bool(forKey: UserDefaultsKeys.pushNotificationsEnabled)
+}
+
+func cancelDailyNotification() {
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["dailyReminder"])
+    print("[noti]Daily notification canceled.")
+}
 
 func scheduleDailyNotification() {
+    if shouldSendPushNotification() == false {
+        log("[noti]关闭推送通知了")
+    }
     let content = UNMutableNotificationContent()
     content.title = "过早客"
     content.body  = FestivalDate.todayEvents() ?? "看看今天在聊啥"

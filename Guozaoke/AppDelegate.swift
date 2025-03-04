@@ -23,8 +23,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         requestNotificationPermission()
         scheduleDailyNotification()
         UNUserNotificationCenter.current().delegate = self
-
         updateAppBadge(0)
+        if #available(iOS 18.0, *) {
+            AppReviewRequest.devReview()
+            AppReviewRequest.clearReviewData()
+            AppReviewRequest.requestReviewIfAppropriate()
+        }
         return true
     }
     

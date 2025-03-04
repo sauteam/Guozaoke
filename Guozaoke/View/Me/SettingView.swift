@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SettingView: View {
     
     enum ActiveSheet: Identifiable {
@@ -20,6 +19,10 @@ struct SettingView: View {
     @EnvironmentObject var themeManager: ThemeManager  
     @Environment(\.dismiss) var dismiss
 
+    @AppStorage(UserDefaultsKeys.pushNotificationsEnabled) private var pushNotificationsEnabled: Bool = true
+    @AppStorage(UserDefaultsKeys.hapticFeedbackEnabled) private var hapticFeedbackEnabled: Bool = true
+
+    
     var body: some View {
         Form {
 //            Section {
@@ -61,6 +64,23 @@ struct SettingView: View {
 //            } header: {
 //                Text("主题色")
 //            }
+            Section {
+                Toggle(isOn: $pushNotificationsEnabled) {
+                    Text(pushNotificationsEnabled ? "接收推送消息" : "关闭推送消息")
+                        .fontWeight(.thin)
+                }.onChange(of: pushNotificationsEnabled) { newValue in
+                    handlePushNotificationToggle(newValue: newValue)
+                }
+                .toggleStyle(SwitchToggleStyle(tint: .blue))
+                
+                Toggle(isOn: $hapticFeedbackEnabled) {
+                    Text("触觉反馈")
+                        .fontWeight(.thin)
+                }
+                .toggleStyle(SwitchToggleStyle(tint: .blue))
+            } header: {
+                Text("设置")
+            }
                         
             Section {
                 Button {
@@ -90,6 +110,16 @@ struct SettingView: View {
             }
         }
         .navigationTitle("设置")
+    }
+    
+    private func handlePushNotificationToggle(newValue: Bool) {
+        if newValue {
+            print("[noti]用户已开启推送消息")
+            scheduleDailyNotification()
+        } else {
+            print("[noti]用户已关闭推送消息")
+            cancelDailyNotification()
+        }
     }
     
     private func tapTextEvent(_ urlString: String) {

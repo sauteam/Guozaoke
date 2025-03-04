@@ -33,45 +33,6 @@ struct NoMoreDataTitle {
     static let commentList = "评论到底了，要不要发一条"
 }
 
-/// 首页tab 
-enum PostListType: String, CaseIterable {
-    case hot      = "默认"
-    case latest   = "最新"
-    //case today    = "今日"
-    case elite    = "精华"
-    case interest = "兴趣"
-    case follows  = "关注"
-    case it       = "IT"
-    case finance  = "金融"
-    case creator  = "创客"
-    case dating   = "相亲"
-
-    var url: String {
-        switch self {
-        case .hot:
-            return ""
-        case .latest:
-            return "/?tab=latest"
-//        case .today:
-//            return ""
-        case .elite:
-            return "/?tab=elite"
-        case .interest:
-            return "/?tab=interest"
-        case .follows:
-            return "/?tab=follows"
-        case .it:
-            return "/node/IT"
-        case .finance:
-            return "/node/finance"
-        case .creator:
-            return "/node/startup"
-        case .dating:
-            return "/node/date"
-        }
-    }
-}
-
 enum MyTopicEnum: String {
     case collections = "favorites"
     case topics = "topics"

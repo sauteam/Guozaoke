@@ -90,7 +90,7 @@ extension String {
         guard self.count > 0 else {
             return
         }
-        hapticFeedback()
+        NotificationManager.shared.hapticFeedback()
         UIPasteboard.general.string = self
         ToastView.toast("拷贝成功", subtitle:"",  .success)
     }
