@@ -9,12 +9,6 @@
 
 import SwiftUI
 
-let screenBounds = UIScreen.main.bounds
-let screenSize   = screenBounds.size
-let screenWidth  = screenSize.width
-let screenHeight = screenSize.height
-
-
 @main
 struct GuozaokeApp: App {
     @AppStorage("appearanceMode") private var darkMode: String = "system"

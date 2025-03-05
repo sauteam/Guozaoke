@@ -30,8 +30,8 @@ struct KFImageView: View {
             .fade(duration: 0.25)
             .resizable()
             .cacheOriginalImage() // 确保缓存原始图片
-            .diskCacheExpiration(.days(7)) // 设置磁盘缓存有效期
-            .memoryCacheExpiration(.days(1)) // 设置内存缓存有效期
+            .diskCacheExpiration(.days(30)) // 设置磁盘缓存有效期
+            .memoryCacheExpiration(.days(7)) // 设置内存缓存有效期
     }
 }
 

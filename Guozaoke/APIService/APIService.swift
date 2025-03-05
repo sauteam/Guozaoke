@@ -52,6 +52,7 @@ enum MyTopicEnum: String {
 
 /// App 版本信息
 struct GuozaokeAppInfo {
+    static let AppBeiAnText = "粤ICP备2025374276号-2A"
     static let AppId = "6740704728"
     static let AppStoreUrl = "https://apps.apple.com/app/id\(AppId)"
     static let AppStoreReviewUrl = "itms-apps://itunes.apple.com/app/id\(AppId)?action=write-review"

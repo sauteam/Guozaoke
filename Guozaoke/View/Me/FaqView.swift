@@ -12,19 +12,34 @@ struct FaqView: View {
 
     var body: some View {
         VStack {
-            RichTextView(content: viewModel.faqContent)
-                .padding(.horizontal)
+            List {
+                Text(faqText)
+                    .fontWeight(.thin)
+            }
+            .listStyle(.plain)
+            .listRowSeparator(.hidden)
         }
-        .onAppear() {
-            if viewModel.faqContentValid() == false {
-                Task { await viewModel.faqInfo() }
+        .contextMenu {
+            Button {
+                faqText.copyToClipboard()
+            } label: {
+                Label("拷贝", systemImage: .copy)
             }
         }
+//        VStack {
+//            RichTextView(content: viewModel.faqContent)
+//                .padding(.horizontal)
+//        }
+//        .onAppear() {
+//            if viewModel.faqContentValid() == false {
+//                Task { await viewModel.faqInfo() }
+//            }
+//        }
         .toolbar(.hidden, for: .tabBar)
         .navigationTitle("faq")
     }
 }
 
-#Preview {
-    FaqView()
-}
+//#Preview {
+//    FaqView()
+//}

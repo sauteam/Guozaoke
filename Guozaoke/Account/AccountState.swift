@@ -9,41 +9,6 @@ import Foundation
 import SwiftSoup
 import JDStatusBarNotification
 
-struct EditPost: Codable {
-    static let editPostInfoKey = "editPostInfo"
-    let title: String?
-    let content: String?
-    let topicId: String?
-    let topicLink: String?
-
-    static func saveEditPost(_ post: EditPost) {
-        do {
-            let jsonData = try JSONEncoder().encode(post)
-            Persist.save(value: jsonData, forkey: editPostInfoKey)
-            log("account: \(post) saved")
-        } catch {
-            log("Save post failed")
-        }
-    }
-    
-    static func removeEditPost() {
-        Persist.remove(key: editPostInfoKey)
-    }
-    
-    static func getEditPost() -> EditPost? {
-        do {
-            let data = Persist.read(key: editPostInfoKey)
-            guard let data = data else { return nil }
-            let info = try JSONDecoder()
-                .decode(EditPost.self, from: data)
-            return info
-        } catch {
-            log("readAccount failed")
-        }
-        return nil
-    }
-}
-
 // MARK: - 账户信息
 struct AccountInfo: Codable {
     var username: String
@@ -163,6 +128,7 @@ class LoginStateChecker: ObservableObject {
             LoginStateChecker.shared.isLogin = false
             AccountState.deleteAccount()
             APIService.clearCookie()
+            //SendCommentInfo.clearAllSendCommentInfo()
         }
     }
     

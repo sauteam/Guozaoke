@@ -8,7 +8,7 @@
 import SwiftUI
 import MessageUI
 
-struct AboutGuozaokeView: View {
+struct AboutView: View {
     let feedbackEmail =  "isau@qq.com"
     let info = """
                    过早客「guozaoke.com」武汉互联网精神家园
@@ -52,19 +52,20 @@ struct AboutGuozaokeView: View {
                     showMailView = true
                 }
                 .sheet(isPresented: $showMailView) {
-                    MailView(subject: "过早客反馈", body: "", recipient: feedbackEmail) { result in
-                        self.mailResult = result
+                    if !isSimulator() {
+                        MailView(subject: "过早客反馈", body: "", recipient: feedbackEmail) { result in
+                            self.mailResult = result
+                        }
                     }
                 }
-            if let mailResult = mailResult {
-                switch mailResult {
-                case .success(let result):
-                    let isSend = result.rawValue == 2
-                    Text("邮件\(isSend ? "已发送": "去发送")")
-                case .failure(let error):
-                    Text("发送失败: \(error.localizedDescription)")
-                }
-            }
+//            if let mailResult = mailResult {
+//                switch mailResult {
+//                case .success(let result):
+//                    let isSend = result.rawValue == 2
+//                case .failure(let error):
+//                    log("发送失败: \(error.localizedDescription)")
+//                }
+//            }
             Spacer()
         }
         .toolbar(.hidden, for: .tabBar)
@@ -73,5 +74,5 @@ struct AboutGuozaokeView: View {
 }
 
 #Preview {
-    AboutGuozaokeView()
+    AboutView()
 }

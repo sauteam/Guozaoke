@@ -469,19 +469,21 @@ class PostDetailParser: ObservableObject {
                 do {
                     let model = try JSONDecoder().decode(BaseResponse.self, from: jsonData)
                     log("jsonData \(jsonData) \(model)")
-                    if model.message == "user_not_login" {
+                    let message = model.message
+                    if message == "user_not_login" {
                         runInMain {
                             LoginStateChecker.clearUserInfo()
                         }
                     }
                     runInMain {
+                        var url = self.postDetail?.collectionsLink
+                        let unfav = "/unfavorite"
+                        let fav = "/favorite"
+                        
                         if model.success == 1 {
                             if link.contains("favorite") {
                                 self.isCollection.toggle()
                                 log("isCollection \(self.isCollection)")
-                                var url = self.postDetail?.collectionsLink
-                                let unfav = "/unfavorite"
-                                let fav = "/favorite"
                                 if self.isCollection {
                                     self.postDetail?.collections += 1
                                     self.postDetail?.collectionString = "取消收藏"
@@ -505,8 +507,16 @@ class PostDetailParser: ObservableObject {
                                 
                             }
                         } else {
-                            if model.message?.contains("already_voted") == true {
-                                
+                            if message == "already_voted" {
+                                self.postDetail?.zanString = "感谢已表示"
+                            } else if message == "already_favorited" {
+                                self.postDetail?.collectionString = "取消收藏"
+                                url = url?.replacingOccurrences(of: fav, with: unfav)
+                                self.postDetail?.collectionsLink = url ?? ""
+                            } else if message == "not_been_favorited" {
+                                self.postDetail?.collectionString = "加入收藏"
+                                url = url?.replacingOccurrences(of: unfav, with: fav)
+                                self.postDetail?.collectionsLink = url ?? ""
                             }
                         }
                     }

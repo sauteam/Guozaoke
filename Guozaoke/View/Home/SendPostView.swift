@@ -142,6 +142,10 @@ struct SendPostView: View {
         }
     }
     
+    func clear() {
+        content = ""
+        title   = ""
+    }
     
     private func sendPost() async {
         isPosting = true
@@ -155,7 +159,7 @@ struct SendPostView: View {
             ToastView.toast("发送成功", subtitle: "", .success)
             NotificationManager.shared.hapticFeedback()
             sendSuccess()
-            EditPost.removeEditPost()
+            clear()
         } catch {
             isPosting = false
             errorMessage = "发布失败: \(error.localizedDescription)"

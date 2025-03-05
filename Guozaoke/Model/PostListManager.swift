@@ -85,7 +85,7 @@ class PostListViewModel: ObservableObject {
     
     var visibleItems: [PostListItem] {
         let visible = postListItems.filter { $0.isVisible }
-        if visible.count < 6 {
+        if visible.count < 2 {
             return Array(postListItems.prefix(6))
         }
         return visible

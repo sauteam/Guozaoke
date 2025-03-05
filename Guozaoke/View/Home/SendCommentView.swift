@@ -9,6 +9,7 @@ import SwiftUI
 struct SendCommentView: View {
     let detailId: String
     let replyUser: String?
+    let username: String?
     @Binding var isPresented: Bool
     let sendSuccess: () -> Void
     @StateObject private var viewModel = PostListParser()
@@ -51,7 +52,7 @@ struct SendCommentView: View {
 
             
             TextEditor(text: $content)
-                .frame(minHeight: 150)
+                .frame(minHeight: 120)
                 .focused($isFocused)
                 .padding(.top, -8)
 
@@ -62,14 +63,30 @@ struct SendCommentView: View {
         }
         
         .onAppear {
-            if let replyUser = replyUser, !replyUser.isEmpty {
-                content = replyUser
+            if let comment = SendCommentInfo.getCommentInfo(username ?? ""), comment.detailId == getDetailId() {
+                content = comment.content ?? ""
+            } else {
+                if let replyUser = replyUser, !replyUser.isEmpty {
+                    content = replyUser
+                }
             }
             self.isFocused = true
         }
         .onDisappear() {
             self.isFocused = false
+            if contentTextValid, !getDetailId().isEmpty, !isPosting {
+                let comment = SendCommentInfo(content: content, detailId: getDetailId(), username: username)
+                SendCommentInfo.saveComment(comment)
+            } else {
+                if let comment = SendCommentInfo.getCommentInfo(username ?? ""), comment.detailId == getDetailId() {
+                    SendCommentInfo.removeComment(username ?? "")
+                }
+            }
         }
+    }
+    
+    func clear() {
+        content = ""
     }
     
     private var contentTextValid: Bool {
@@ -95,6 +112,7 @@ struct SendCommentView: View {
         isPresented = false
         dismiss()
     }
+    
     
     private func getDetailId() -> String {
         var topicUrl   = detailId
@@ -123,6 +141,7 @@ struct SendCommentView: View {
             sendSuccess()
             ToastView.toastText("评论成功")
             closeView()
+            clear()
         } catch {
             isPosting = false
             errorMessage = "发送失败: \(error.localizedDescription)"
@@ -131,9 +150,3 @@ struct SendCommentView: View {
     }
 
 }
-
-//#Preview {
-//    SendCommentView(detailId: "", replyUser: "", isPresented: true, sendSuccess: {
-//        
-//    }
-//}

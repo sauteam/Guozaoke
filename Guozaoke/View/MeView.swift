@@ -127,7 +127,7 @@ struct MyProfileView: View {
                     ProfileRow(icon: SFSymbol.nosign.rawValue, title: "faq")
                 }
                 
-                NavigationLink(destination: AboutGuozaokeView())  {
+                NavigationLink(destination: AboutView())  {
                     ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
                 }
                 
@@ -188,7 +188,14 @@ struct MyProfileView: View {
                      ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
                  }
              }
-         .listStyle(InsetGroupedListStyle())
+            
+            HStack {
+                Spacer()
+                Text(GuozaokeAppInfo.AppBeiAnText)
+                    .fontWeight(.thin)
+                Spacer()
+            }
+            .listRowSeparator(.hidden)
         }
     }
     

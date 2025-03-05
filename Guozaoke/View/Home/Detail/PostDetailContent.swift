@@ -98,7 +98,11 @@ struct PostFooterView: View {
                         if model?.success == 1 {
                             NotificationManager.shared.hapticFeedback()
                         } else if model?.success == 0 {
-                            ToastView.toastText(model?.message ?? "")
+                            if model?.message == "can_not_favorite_your_topic" {
+                                ToastView.toastText("不能收藏自己的主题")
+                            } else {
+                                ToastView.toastText(model?.message ?? "")
+                            }
                         }
                     }
                 }
@@ -116,7 +120,11 @@ struct PostFooterView: View {
                         if model?.success == 1 {
                             NotificationManager.shared.hapticFeedback()
                         } else if model?.success == 0 {
-                            ToastView.toastText(model?.message ?? "")
+                            if model?.message == "can_not_vote_your_topic" {
+                                ToastView.toastText("不能感谢自己的主题")
+                            } else {
+                                ToastView.toastText(model?.message ?? "")
+                            }
                         }
                     }
                 }
@@ -153,10 +161,10 @@ struct PostFooterView: View {
         .sheet(isPresented: $showComentView) {
             
             let detailId = detailParser.postDetail?.detailId ?? ""
-            SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
+            SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
                 
             }
-            .presentationDetents([.height(230)])
+            .presentationDetents([.height(130)])
         }
     }
 }
@@ -177,10 +185,19 @@ struct ReplyListView: View {
                     }
                 }
         }
+        if !detailParser.hasMore {
+            HStack {
+                Spacer()
+                Text(NoMoreDataTitle.homeList)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+        }
     }
 }
 
-// MARK: - 回复项视图
+// MARK: - 回复
 struct ReplyItemView: View {
     @ObservedObject var detailParser: PostDetailParser
     @Binding var reply: Reply
@@ -189,8 +206,7 @@ struct ReplyItemView: View {
     @State private var isAvatarInfoViewActive = false
 
     var body: some View {
-        LazyVStack(alignment: .leading, spacing: 16) {
-            // 回复头部
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 KFImageView(reply.author.avatar)
                     .avatar()
@@ -225,10 +241,10 @@ struct ReplyItemView: View {
                 }
                 .font(.caption)
                 .sheet(isPresented: $showActions) {
-                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", isPresented: $showActions) {
+                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", username: reply.author.name, isPresented: $showActions) {
                         
                     }
-                    .presentationDetents([.height(230)])
+                    .presentationDetents([.height(160)])
                 }
                 let number  = reply.like
                 let zanText = "赞 \(number)"

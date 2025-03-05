@@ -162,12 +162,13 @@ class UserInfoParser: ObservableObject {
 
             let containerText = try document.select("div.container.mt15").html()
             let footerText = try document.select("div.footer.mt15").html()
-            //let combinedText = "<div>\(containerText)</div><div>\(footerText)</div>"
             runInMain {
                 self.faqContent = containerText 
                 self.faqContentBottom = footerText
             }
             
+            print("Footer content \(containerText) \n \(footerText)")
+
             if self.faqContentValid() {
                 success = true
             }
@@ -182,15 +183,15 @@ class UserInfoParser: ObservableObject {
 //                print("No div with class 'container mt15' found.")
 //            }
                 
-            if let footerDiv = try document.select("div.footer.mt15").first() {
-                let footerText = try footerDiv.text()
-                runInMain {
-                    self.faqContentBottom = footerText
-                }
-                print("Footer content: \(footerText)")
-            } else {
-                print("No div with class 'footer mt15' found.")
-            }
+//            if let footerDiv = try document.select("div.footer.mt15").first() {
+//                let footerText = try footerDiv.text()
+//                runInMain {
+//                    self.faqContentBottom = footerText
+//                }
+//                print("Footer content: \(footerText)")
+//            } else {
+//                print("No div with class 'footer mt15' found.")
+//            }
             return (success, html)
         } catch {
             log("请求失败: \(error.localizedDescription)")

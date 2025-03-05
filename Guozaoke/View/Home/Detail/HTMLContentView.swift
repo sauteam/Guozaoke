@@ -48,6 +48,7 @@ struct HTMLContentView: View {
                             PostDetailView(postId: topicId)
                         }
                 }
+                
                 .sheet(
                     isPresented: Binding(
                         get: { safariState != nil },

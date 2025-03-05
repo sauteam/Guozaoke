@@ -113,7 +113,6 @@ struct PostDetailView: View {
         }
         .sheet(isPresented: $showRelateTopic) {
             RelatedTopicView(isPresented: $showRelateTopic, viewModel: detailParser)
-                //.presentationDetents([.height(430)])
         }
         .sheet(isPresented: $showSendView) {
             SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {
@@ -123,10 +122,10 @@ struct PostDetailView: View {
         .sheet(isPresented: $showComentView) {
             
             let detailId = detailParser.postDetail?.detailId ?? ""
-            SendCommentView(detailId: detailId, replyUser: "", isPresented: $showComentView) {
+            SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
                 
             }
-            .presentationDetents([.height(230)])
+            .presentationDetents([.height(160)])
         }
         .onAppear() {
             guard detailParser.postDetail == nil else { return }

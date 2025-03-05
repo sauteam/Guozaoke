@@ -60,13 +60,13 @@ struct NotificationsView: View {
                 let reply = "@" + notification.username + " "
                 SendCommentView(
                     detailId: notification.topicLink,
-                    replyUser: reply,
+                    replyUser: reply, username: notification.username,
                     isPresented: $showCommentView
                 ) {
                     showCommentView = false
                     selectedNotification = nil
                 }
-                .presentationDetents([.height(230)])
+                .presentationDetents([.height(160)])
             })
             .navigationTitle("通知")
             .navigationBarTitleDisplayMode(.inline)
