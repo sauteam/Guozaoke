@@ -84,8 +84,6 @@ class UserInfoParser: ObservableObject {
     @Published var faqContent = ""
     @Published var faqContentBottom = ""
     
-    
-
     func loadOtherTopic(topicUrl: String, reset: Bool) async {
         await fetchUserInfoAndData(topicUrl, reset: false)
     }
@@ -119,14 +117,22 @@ class UserInfoParser: ObservableObject {
         return self.faqContent.count > 0
     }
     
+    func loadMyBlockList() async {
+        await memberList(url: APIService.blockedUser)
+    }
+    
     func fetchMemberList() async {
+        await memberList(url: APIService.members)
+    }
+
+    func memberList(url: String) async {
         do {
             guard !isLoading  else { return }
             await MainActor.run {
                 self.isLoading = true
                 errorMessage = nil
             }
-            let html = try await NetworkManager.shared.get(APIService.members)
+            let html = try await NetworkManager.shared.get(url)
             let document = try SwiftSoup.parse(html)
             let memberLists = try document.select(".member-lists")
             
@@ -145,10 +151,14 @@ class UserInfoParser: ObservableObject {
                 memberInfo.append(MemberInfo(title: title, member: memberModel))
             }
             runInMain {
+                self.isLoading  = false
                 self.memberInfo = memberInfo
             }
             
         } catch {
+            runInMain {
+                self.isLoading  = false
+            }
             log("请求失败: \(error.localizedDescription)")
         }
     }

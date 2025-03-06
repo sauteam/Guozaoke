@@ -72,16 +72,15 @@ struct UserInfoView: View {
                 }
                 .padding()
                 
-                // Tab Selection
                 Picker("选择列表", selection: $selectedTab) {
                     Text("资料").tag(0)
                     Text("主题").tag(1)
                     Text("回复").tag(2)
                 }
                 .pickerStyle(SegmentedPickerStyle())
-                .padding()
-                
-                // List Section
+                .padding(.leading, 16)
+                .padding(.trailing, 16)
+
                 if selectedTab == 0 {
                     List {
                         ForEach(parser.userInfo?.profileInfo ?? [], id: \.self) { userInfo in
@@ -124,7 +123,7 @@ struct UserInfoView: View {
                                 Spacer()
                             }
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 2)
                         } else if !parser.topics.isEmpty, !parser.noMoreTopics {
                             HStack {
                                 if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty, parser.topics.count > 5  {
@@ -144,7 +143,7 @@ struct UserInfoView: View {
                             }
                             .frame(height: 20)
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 2)
                         }
                     }
                     .buttonStyle(.plain)
@@ -180,7 +179,7 @@ struct UserInfoView: View {
                                 Spacer()
                             }
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 2)
                         } else if !parser.replies.isEmpty, !parser.noMoreReplies {
                             HStack {
                                 if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty, parser.replies.count > 5  {
@@ -199,7 +198,7 @@ struct UserInfoView: View {
                             }
                             .frame(height: 20)
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 2)
                         }
                     }
                     .buttonStyle(.plain)

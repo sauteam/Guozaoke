@@ -39,10 +39,10 @@ struct SendCommentView: View {
                         ProgressView()
                     } else {
                         Text("回复")
-                            .frame(maxWidth: 60, minHeight: 30)
+                            .frame(maxWidth: 60, minHeight: 25)
                             .foregroundColor(Color.white)
                             .background(Color.blue)
-                            .cornerRadius(10)
+                            .cornerRadius(12)
                     }
                 }
                 .disabled(isPosting || !contentTextValid)
@@ -52,7 +52,7 @@ struct SendCommentView: View {
 
             
             TextEditor(text: $content)
-                .frame(minHeight: 120)
+                .frame(minHeight: 100)
                 .focused($isFocused)
                 .padding(.top, -8)
 

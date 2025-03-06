@@ -87,7 +87,7 @@ struct MyProfileView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(AccountState.userName)
                                 .font(.title2)
-                                .fontWeight(.bold)
+                                .fontWeight(.thin)
                             
                             Text("我的主页")
                                 .font(.subheadline)
@@ -114,6 +114,10 @@ struct MyProfileView: View {
                 
                 NavigationLink(destination: MyReplyListView(linkUrl: replyUrl, linkText: "我的回复"))  {
                     ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复")
+                }
+                
+                NavigationLink(destination: BlockListView())  {
+                    ProfileRow(icon: SFSymbol.block.rawValue, title: "屏蔽列表")
                 }
             }
             

@@ -63,7 +63,7 @@ struct PostListItem: Codable, Identifiable {
 class PostListViewModel: ObservableObject {
     @Published var postListItems: [PostListItem]
     private let saveFilePath: URL
-    private let lastSelectedTypeKey = "LastSelectedPostListType"
+    static let lastSelectedTypeKey = "LastSelectedPostListType"
     
     init() {
         self.saveFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("PostListItems.json")
@@ -82,7 +82,7 @@ class PostListViewModel: ObservableObject {
             save()
         }
     }
-    
+        
     var visibleItems: [PostListItem] {
         let visible = postListItems.filter { $0.isVisible }
         if visible.count < 2 {
@@ -92,13 +92,15 @@ class PostListViewModel: ObservableObject {
     }
     
     func saveLastSelectedType(_ type: PostListType) {
-        UserDefaults.standard.set(type.rawValue, forKey: lastSelectedTypeKey)
+        UserDefaults.standard.set(type.rawValue, forKey: PostListViewModel.lastSelectedTypeKey)
     }
     
     func loadLastSelectedType() -> PostListType? {
-        if let rawValue = UserDefaults.standard.string(forKey: lastSelectedTypeKey),
+        if let rawValue = UserDefaults.standard.string(forKey: PostListViewModel.lastSelectedTypeKey),
            let type = PostListType(rawValue: rawValue) {
-            return type
+            if postListItems.first(where: { $0.type == type && $0.isVisible }) != nil {
+                return type
+            }
         }
         return visibleItems.first?.type
     }

@@ -88,6 +88,8 @@ struct TabContentView: View {
     @Binding var tab: TabBarView.Tab
     @ObservedObject var notificationManager = NotificationManager.shared
     @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = PostListViewModel()
+    
     var body: some View {
         tabViewContent
     }
@@ -96,7 +98,7 @@ struct TabContentView: View {
         TabView(selection: $tab) {
             Group {
                 NavigationStack {
-                    PostListView()
+                    PostListView(viewModel: viewModel)
                 }
             }
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }

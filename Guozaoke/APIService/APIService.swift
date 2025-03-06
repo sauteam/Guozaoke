@@ -109,6 +109,7 @@ struct APIService {
     static let androidUpdateTopicInfo = "/t/75634"
     static let faq = "/faq"
     static let members = "/members"
+    static let blockedUser = "/setting/blockedUser"
 
     private init() {}
     

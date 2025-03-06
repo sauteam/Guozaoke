@@ -103,9 +103,19 @@ struct RichTextView: View {
         case "mailto":
             let email = url.absoluteString.replacingOccurrences(of: "mailto:", with: "")
             onEmailTap?(email)
+            let phone = "mailto://"
+            let phoneNumberFormatted = phone + email
+            if let url = URL(string: phoneNumberFormatted) {
+                UIApplication.shared.open(url)
+            }
         case "tel":
-            let phone = url.absoluteString.replacingOccurrences(of: "tel:", with: "")
-            onPhoneTap?(phone)
+            let number = url.absoluteString.replacingOccurrences(of: "tel:", with: "")
+            onPhoneTap?(number)
+            let phone = "tel://"
+            let phoneNumberFormatted = phone + number
+            if let url = URL(string: phoneNumberFormatted) {
+                UIApplication.shared.open(url)
+            }
         case "user":
             let userId = url.absoluteString.replacingOccurrences(of: "user://", with: "")
             if !userId.isEmpty {

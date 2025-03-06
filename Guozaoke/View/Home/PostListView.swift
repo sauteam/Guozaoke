@@ -16,11 +16,12 @@ struct PostListView: View {
     @State private var showAddPostView = false
     @State private var showSearchView  = false
     @State private var selectedTopic: Node? = nil
-    @StateObject private var viewModel = PostListViewModel()
+    @ObservedObject var viewModel: PostListViewModel
 
-    init() {
-      if let lastSelectedType = UserDefaults.standard.string(forKey: "LastSelectedPostListType"),
-         let type = PostListType(rawValue: lastSelectedType) {
+    init(viewModel: PostListViewModel) {
+        self.viewModel = viewModel
+        if let lastSelectedType = UserDefaults.standard.string(forKey: PostListViewModel.lastSelectedTypeKey),
+           let type = PostListType(rawValue: lastSelectedType), viewModel.postListItems.contains(where: { $0.type == type && $0.isVisible }) {
           _selectedTab = State(initialValue: type)
       } else {
           _selectedTab = State(initialValue: .latest)
@@ -179,10 +180,15 @@ struct PostListContentView: View {
                 }
             })
             .onAppear() {
-                if viewModel.posts.isEmpty {
-                    viewModel.refreshPostList(type: type)
+                if type == .latest {
+                    if UserDefaultsKeys.homeListRefresh || viewModel.posts.isEmpty {
+                        viewModel.refreshPostList(type: type)
+                    }
+                } else {
+                    if viewModel.posts.isEmpty {
+                        viewModel.refreshPostList(type: type)
+                    }
                 }
-                print("1 type \(type)")
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
                 viewModel.refreshPostList(type: type)

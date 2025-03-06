@@ -252,9 +252,23 @@ struct HTMLContentView: View {
         case "tag":
             onTagTap?(url.host ?? "")
         case "mailto":
-            onEmailTap?(url.absoluteString.replacingOccurrences(of: "mailto:", with: ""))
+            if let urlString = url.absoluteString.removingPercentEncoding {
+                let email = urlString.replacingOccurrences(of: "mailto:", with: "")
+                onEmailTap?(email)
+                let phone = "mailto://"
+                let phoneNumberFormatted = phone + email
+                if let url = URL(string: phoneNumberFormatted) {
+                    UIApplication.shared.open(url)
+                }
+            }
         case "tel":
-            onPhoneTap?(url.absoluteString.replacingOccurrences(of: "tel:", with: ""))
+            let number = url.absoluteString.replacingOccurrences(of: "tel:", with: "")
+            onPhoneTap?(number)
+            let phone = "tel://"
+            let phoneNumberFormatted = phone + number
+            if let url = URL(string: phoneNumberFormatted) {
+                UIApplication.shared.open(url)
+            }
         default:
             onLinkTap?(url)
             let urlString = url.absoluteString

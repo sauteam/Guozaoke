@@ -7,11 +7,24 @@
 
 import SwiftUI
 
+// MARK: - UserDefaultsKeys
+
 struct UserDefaultsKeys {
     static let pushNotificationsEnabled = "pushNotificationsEnabled"
     static let hapticFeedbackEnabled    = "hapticFeedbackEnabled"
+    static let homeListRefreshEnabled   = "homeListRefreshEnabled"
+    
+    static var shouldSendPushNotification: Bool {
+        return UserDefaults.standard.bool(forKey: UserDefaultsKeys.pushNotificationsEnabled)
+    }
+    
+    static var homeListRefresh: Bool {
+        return UserDefaults.standard.bool(forKey: UserDefaultsKeys.homeListRefreshEnabled)
+    }
 }
 
+
+// MARK: - NotificationManager
 
 class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
@@ -35,17 +48,13 @@ class NotificationManager: ObservableObject {
     }
 }
 
-func shouldSendPushNotification() -> Bool {
-    return UserDefaults.standard.bool(forKey: UserDefaultsKeys.pushNotificationsEnabled)
-}
-
 func cancelDailyNotification() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["dailyReminder"])
     print("[noti]Daily notification canceled.")
 }
 
 func scheduleDailyNotification() {
-    if shouldSendPushNotification() == false {
+    if UserDefaultsKeys.shouldSendPushNotification == false {
         log("[noti]关闭推送通知了")
     }
     let content = UNMutableNotificationContent()

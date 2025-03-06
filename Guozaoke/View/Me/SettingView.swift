@@ -21,35 +21,11 @@ struct SettingView: View {
 
     @AppStorage(UserDefaultsKeys.pushNotificationsEnabled) private var pushNotificationsEnabled: Bool = true
     @AppStorage(UserDefaultsKeys.hapticFeedbackEnabled) private var hapticFeedbackEnabled: Bool = true
+    @AppStorage(UserDefaultsKeys.homeListRefreshEnabled) private var homeListRefreshEnabled: Bool = false
 
     
     var body: some View {
         Form {
-//            Section {
-//                NavigationLink(destination: IntroductationView())  {
-//                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "评论发帖")
-//                }
-//                
-//                NavigationLink(destination: FaqView()) {
-//                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "faq")
-//                }
-//                
-//                NavigationLink(destination: AboutGuozaokeView())  {
-//                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
-//                }
-//                
-//                NavigationLink(destination: MoreView())  {
-//                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
-//                }
-//            } header: {
-//                Text("帮助")
-//            }
-            
-//            Section {
-//                NavigationLink(destination: AppIconListView())  {
-//                    ProfileRow(icon: SFSymbol.appFill.rawValue, title: "App Icon") 
-//                }
-//            }
 //            Section {
 //                HStack {
 //                    ProfileRow(icon: SFSymbol.exit.rawValue, title: "主题色")
@@ -75,6 +51,12 @@ struct SettingView: View {
                 
                 Toggle(isOn: $hapticFeedbackEnabled) {
                     Text("触觉反馈")
+                        .fontWeight(.thin)
+                }
+                .toggleStyle(SwitchToggleStyle(tint: .blue))
+                
+                Toggle(isOn: $homeListRefreshEnabled) {
+                    Text("首页刷新")
                         .fontWeight(.thin)
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
