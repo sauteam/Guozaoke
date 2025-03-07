@@ -27,7 +27,7 @@ struct RelatedTopicView: View {
                                 KFImageView(item.avatar)
                                     .avatar()
                                 Text(item.topicTitle)
-                                    .lineLimit(2)
+                                    .titleFontStyle()
                                     .greedyWidth(.leading)
                             }
                         }

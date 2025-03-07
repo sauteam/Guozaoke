@@ -30,8 +30,7 @@ struct UserInfoView: View {
                     let isMe = AccountState.isSelf(userName: userInfo.username)
                     HStack {
                         Text(userInfo.username)
-                            .font(.title2)
-                            .fontWeight(.bold)
+                            .subTitleFontStyle()
 //                        Button {
 //                            Task {
 //                                let response = await parser.blockUserAction(parser.userInfo?.blockLink)
@@ -73,9 +72,15 @@ struct UserInfoView: View {
                 .padding()
                 
                 Picker("选择列表", selection: $selectedTab) {
-                    Text("资料").tag(0)
-                    Text("主题").tag(1)
-                    Text("回复").tag(2)
+                    Text("资料")
+                        .tag(0)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                    Text("主题")
+                        .tag(1)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                    Text("回复")
+                        .tag(2)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding(.leading, 16)
@@ -209,7 +214,7 @@ struct UserInfoView: View {
                 }
             }
         }
-        .navigationTitle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
+        .navigationTitleStyle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
@@ -310,7 +315,7 @@ struct MyUserInfoView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(userInfo)
-                    .font(.callout)
+                    .titleFontStyle()
                     .onLongPressGesture {
                         userInfo.copyToClipboard()
                     }
@@ -328,7 +333,7 @@ struct MyReplyRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("\(myReply.title)")
-                    .font(.footnote)
+                    .subTitleFontStyle(weight: .black)
                     .lineLimit(2)
                     .foregroundColor(.gray)
                     .onTapGesture {
@@ -341,7 +346,7 @@ struct MyReplyRowView: View {
             }
             
             Text(myReply.content)
-                .font(.callout)
+                .titleFontStyle()
                 .lineLimit(2)
 //                .onTapGesture {
 //                    if myReply.userLink.isEmpty == false {

@@ -58,7 +58,7 @@ struct SearchListView: View {
                         .foregroundColor(.gray)
                 }
             }
-            .navigationTitle("搜索")
+            .navigationTitleStyle("搜索")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
             .refreshable {

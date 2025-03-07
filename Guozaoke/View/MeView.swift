@@ -33,7 +33,7 @@ struct MeView: View {
             MyProfileView()
         }
         .navigationBarBackButtonHidden(true)
-        .navigationTitle("我的")
+        .navigationTitleStyle("我的")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !AccountState.isLogin() {
@@ -86,13 +86,10 @@ struct MyProfileView: View {
                             .avatar(size: 60)
                         VStack(alignment: .leading, spacing: 5) {
                             Text(AccountState.userName)
-                                .font(.title2)
-                                .fontWeight(.thin)
-                            
+                                .titleFontStyle()
+
                             Text("我的主页")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .fontWeight(.thin)
+                                .titleFontStyle()
                         }
                     }
                 }
@@ -128,7 +125,7 @@ struct MyProfileView: View {
                 }
                 
                 NavigationLink(destination: FaqView()) {
-                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "faq")
+                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "Faq")
                 }
                 
                 NavigationLink(destination: AboutView())  {
@@ -149,6 +146,10 @@ struct MyProfileView: View {
                 
                 NavigationLink(destination: DarkModeToggleView()) {
                     ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
+                }
+                
+                NavigationLink(destination: FontSizePreviewView()) {
+                    ProfileRow(icon: SFSymbol.textformatSize.rawValue, title: "字体大小")
                 }
 //                HStack {
 //                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
@@ -196,7 +197,7 @@ struct MyProfileView: View {
             HStack {
                 Spacer()
                 Text(GuozaokeAppInfo.AppBeiAnText)
-                    .fontWeight(.thin)
+                    .subTitleFontStyle()
                 Spacer()
             }
             .listRowSeparator(.hidden)
@@ -235,7 +236,7 @@ struct ProfileRow: View {
             
             Text(title)
                 .foregroundColor(.primary)
-                .fontWeight(.thin)
+                .titleFontStyle()
             Spacer()
             //SFSymbol.rightIcon
                 //.foregroundColor(.secondary)

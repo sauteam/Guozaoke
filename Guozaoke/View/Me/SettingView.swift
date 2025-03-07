@@ -43,7 +43,7 @@ struct SettingView: View {
             Section {
                 Toggle(isOn: $pushNotificationsEnabled) {
                     Text(pushNotificationsEnabled ? "接收推送消息" : "关闭推送消息")
-                        .fontWeight(.thin)
+                        .titleFontStyle()
                 }.onChange(of: pushNotificationsEnabled) { newValue in
                     handlePushNotificationToggle(newValue: newValue)
                 }
@@ -51,13 +51,13 @@ struct SettingView: View {
                 
                 Toggle(isOn: $hapticFeedbackEnabled) {
                     Text("触觉反馈")
-                        .fontWeight(.thin)
+                        .titleFontStyle()
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                 
                 Toggle(isOn: $homeListRefreshEnabled) {
                     Text("首页刷新")
-                        .fontWeight(.thin)
+                        .titleFontStyle()
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
             } header: {
@@ -91,7 +91,7 @@ struct SettingView: View {
                 }
             }
         }
-        .navigationTitle("设置")
+        .navigationTitleStyle("设置")
     }
     
     private func handlePushNotificationToggle(newValue: Bool) {
@@ -127,7 +127,7 @@ struct LogoutConfirmationSheet: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("退出后将不能评论和发帖等操作，您确定退出登录吗？")
-                .font(.body)
+                .titleFontStyle()
                 .padding(.horizontal)
                 .foregroundColor(.black)
             
@@ -135,6 +135,7 @@ struct LogoutConfirmationSheet: View {
                 logoutUser()
             } label: {
                 Text("确定退出")
+                    .titleFontStyle()
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.red)
@@ -146,6 +147,7 @@ struct LogoutConfirmationSheet: View {
                 presentedSheet = nil
             } label: {
                 Text("取消退出")
+                    .titleFontStyle()
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.gray)

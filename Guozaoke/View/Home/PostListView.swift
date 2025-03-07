@@ -44,8 +44,7 @@ struct PostListView: View {
                                 VStack(spacing: 5) {
                                     Text(item.type.rawValue)
                                         .foregroundColor(selectedTab == item.type ? .blue : .gray)
-                                        .font(.system(size: 16, weight: .regular))
-                                    
+                                        .subTitleFontStyle()                                    
                                     Rectangle()
                                         .fill(selectedTab == item.type ? Color.blue : Color.clear)
                                         .frame(height: 1.5)
@@ -96,7 +95,7 @@ struct PostListView: View {
                     }
                 }
             }
-            .navigationTitle("过早客")
+            .navigationTitleStyle("过早客")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .navigationDestination(isPresented: $showSearchView, destination: {

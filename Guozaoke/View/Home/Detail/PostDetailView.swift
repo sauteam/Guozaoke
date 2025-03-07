@@ -43,7 +43,7 @@ struct PostDetailView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("主题详情")
+        .navigationTitleStyle("主题详情")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 let userIsMe = AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "")

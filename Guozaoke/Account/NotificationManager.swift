@@ -7,23 +7,6 @@
 
 import SwiftUI
 
-// MARK: - UserDefaultsKeys
-
-struct UserDefaultsKeys {
-    static let pushNotificationsEnabled = "pushNotificationsEnabled"
-    static let hapticFeedbackEnabled    = "hapticFeedbackEnabled"
-    static let homeListRefreshEnabled   = "homeListRefreshEnabled"
-    
-    static var shouldSendPushNotification: Bool {
-        return UserDefaults.standard.bool(forKey: UserDefaultsKeys.pushNotificationsEnabled)
-    }
-    
-    static var homeListRefresh: Bool {
-        return UserDefaults.standard.bool(forKey: UserDefaultsKeys.homeListRefreshEnabled)
-    }
-}
-
-
 // MARK: - NotificationManager
 
 class NotificationManager: ObservableObject {

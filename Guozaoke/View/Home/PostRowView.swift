@@ -39,12 +39,13 @@ struct PostRowView: View {
                     HStack {
                         //let content = post.title + (post.postType == .elite ? Text(Image(systemName: SFSymbol.bookmark.rawValue)) : Text(""))
                         Text(post.title)
-                            .font(.body)
+                            .titleFontStyle()
                             .padding(.horizontal, 2)
                             .lineLimit(2)
                     }
                     HStack {
                         Text(post.author)
+                            .usernameFontStyle()
                             .lineLimit(1)
                             .onTapGesture {
                                 log("点击 \(post.author) \(post.nodeUrl)")

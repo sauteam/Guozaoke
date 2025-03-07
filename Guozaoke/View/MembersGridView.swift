@@ -32,7 +32,7 @@ struct MembersGridView: View {
         .listStyle(.plain)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("成员")
+        .navigationTitleStyle("成员")
     }
 }
 

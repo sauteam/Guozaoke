@@ -218,7 +218,7 @@ struct ReplyItemView: View {
                     }
                 VStack {
                     Text(reply.author.name)
-                        .font(.body)
+                        .usernameFontStyle()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .onTapGesture {
                             isUserNameInfoViewActive = true
@@ -281,7 +281,7 @@ struct ReplyItemView: View {
                     .foregroundColor(.secondary)
             }
             
-            HTMLContentView(content: reply.content, fontSize: 15)
+            HTMLContentView(content: reply.content, fontSize: titleFontSize)
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }

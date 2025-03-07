@@ -14,7 +14,7 @@ struct FaqView: View {
         VStack {
             List {
                 Text(faqText)
-                    .fontWeight(.thin)
+                    .subTitleFontStyle(weight: .thin)
             }
             .listStyle(.plain)
             .listRowSeparator(.hidden)
@@ -36,7 +36,8 @@ struct FaqView: View {
 //            }
 //        }
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("faq")
+        .navigationTitleStyle("Faq")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

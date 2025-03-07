@@ -103,12 +103,10 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
             .tag(TabBarView.Tab.home)
-            .navigationTitle("过早客")
 
             Group {
                 NavigationStack {
                     NodeListView()
-                        .navigationTitle(TabBarView.Tab.home.rawValue)
                 }
             }
             .tabItem { Label(TabBarView.Tab.node.rawValue, systemImage: TabBarView.Tab.node.icon) }
@@ -117,7 +115,6 @@ struct TabContentView: View {
             Group {
                 NavigationStack {
                     NotificationsView()
-                        .navigationTitle(TabBarView.Tab.noti.rawValue)
                 }
             }
             .tabItem { Label(TabBarView.Tab.noti.rawValue, systemImage: TabBarView.Tab.noti.icon) }
@@ -126,7 +123,6 @@ struct TabContentView: View {
             Group {
                 NavigationStack {
                     MeView()
-                        .navigationTitle(TabBarView.Tab.mine.rawValue)
                 }
             }
             .tabItem { Label(TabBarView.Tab.mine.rawValue, systemImage: TabBarView.Tab.mine.icon) }

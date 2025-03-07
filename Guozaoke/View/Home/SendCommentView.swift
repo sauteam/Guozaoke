@@ -43,6 +43,7 @@ struct SendCommentView: View {
                             .foregroundColor(Color.white)
                             .background(Color.blue)
                             .cornerRadius(12)
+                            .subTitleFontStyle()
                     }
                 }
                 .disabled(isPosting || !contentTextValid)
@@ -55,6 +56,7 @@ struct SendCommentView: View {
                 .frame(minHeight: 100)
                 .focused($isFocused)
                 .padding(.top, -8)
+                .subTitleFontStyle()
 
             if viewModel.isLoading {
                 ProgressView()

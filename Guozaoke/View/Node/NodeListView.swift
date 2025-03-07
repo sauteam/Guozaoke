@@ -27,6 +27,8 @@ struct NodeListView: View {
                         Text(item.title)
                             .lineLimit(2)
                             .greedyWidth(.leading)
+                            .titleFontStyle()
+
                     }
                     .to { PostDetailView(postId: item.link) }
                 }
@@ -43,12 +45,14 @@ struct NodeListView: View {
                 SectionTitleView("运行状态")
                 ForEach(viewModel.communityStatusList) { status in
                     Text("\(status.title)  \(status.value)")
+                        .subTitleFontStyle()
+
                 }
             }
         }
         .buttonStyle(.plain)
         .listStyle(.plain)
-        .navigationTitle("节点")
+        .navigationTitleStyle("节点")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -93,7 +97,7 @@ struct NodeNavItemView: View {
                 SectionTitleView(data.category, style: .small)
                 FlowStack(data: data.nodes) { node in
                     Text(node.title)
-                        .font(.footnote)
+                        .subTitleFontStyle()
                         .foregroundColor(.primary)
                         .lineLimit(1)
                         .padding(.horizontal, 14)
@@ -117,36 +121,5 @@ struct NodeNavItemView: View {
         }
     }
 }
-
-
-
-//    var body: some View {
-//        VStack {
-//            if viewModel.isLoading {
-//                ProgressView()
-//                    .frame(maxWidth: .infinity)
-//                    .listRowSeparator(.hidden)
-//            }
-//
-//            List (viewModel.nodes) { category in
-//                Section(header: Text(category.category).font(.headline)) {
-//                    ForEach(category.nodes, id: \.self) { node in
-//                        NavigationLink(destination: NodeInfoView(node: node.title, nodeUrl: node.link)) {
-//                            Text(node.title)
-//                                .padding(.vertical, 4)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        .navigationTitle("节点导航")
-//        .navigationBarTitleDisplayMode(.inline)
-//        .navigationBarBackButtonHidden(true)
-//        .onAppear {
-//            if !viewModel.hadNodeItemData   {
-//                viewModel.refreshPostList(type: .hot)
-//            }
-//        }
-//    }
 
 

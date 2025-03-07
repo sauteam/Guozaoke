@@ -33,10 +33,12 @@ struct SendPostView: View {
                     .padding(.vertical)
                     .frame(height: 30)
                     .focused($isFocused)
+                    .subTitleFontStyle()
 
                 TextEditor(text: $content)
                     .frame(minHeight: 300)
                     .padding(.top)
+                    .subTitleFontStyle()
                                 
 //                HStack {
 //                    if let selectedImage = selectedImage {
@@ -60,6 +62,7 @@ struct SendPostView: View {
                     ForEach(bindNodes, id: \.self) { node in
                         Text(node.title)
                             .tag(Optional(node))
+                            .subTitleFontStyle()
                     }
                 }
                 
@@ -87,6 +90,7 @@ struct SendPostView: View {
                             .foregroundColor(.white)
                             .cornerRadius(10)
                             .listRowBackground(Color.clear)
+                            .subTitleFontStyle()
                     }
                 }
                 .disabled(isPosting || title.isEmpty || content.isEmpty)
@@ -132,7 +136,7 @@ struct SendPostView: View {
                     selectedTopic = firstTopic
                }
             }
-            .navigationTitle("创建新主题")
+            .navigationTitleStyle("创建新主题")
             .navigationBarItems(trailing: Button("关闭") {
                 isPresented = false
             })

@@ -74,7 +74,7 @@ struct LoginView: View {
                 .listRowSeparator(.hidden)
             }
             .listStyle(.plain)
-            .navigationTitle("登录过早客")
+            .navigationTitleStyle("登录过早客")
             .navigationBarItems(trailing: Button("关闭") {
                 closeView()
             })

@@ -57,7 +57,7 @@ struct NodeInfoView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle(viewModel.nodeInfo?.description ?? node)
+        .navigationTitleStyle(viewModel.nodeInfo?.description ?? node)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {

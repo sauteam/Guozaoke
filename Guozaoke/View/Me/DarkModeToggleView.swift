@@ -21,7 +21,7 @@ struct DarkModeToggleView: View {
             .buttonStyle(.borderless)
             .listStyle(.plain)
         }
-        .navigationTitle("当前模式")
+        .navigationTitleStyle("当前模式")
         .toolbar(.hidden, for: .tabBar)
         .padding()
         .onAppear {
@@ -36,7 +36,7 @@ struct DarkModeToggleView: View {
         }) {
             HStack {
                 Text(title)
-                    //.foregroundColor(.gray)
+                    .titleFontStyle()
                 Spacer()
                 if appearanceMode == mode {
                     Image(systemName: "checkmark")

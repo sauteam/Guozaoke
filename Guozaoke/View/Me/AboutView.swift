@@ -35,8 +35,7 @@ struct AboutView: View {
                 .padding()
 
             Text("\(GuozaokeAppInfo.appName) V \(GuozaokeAppInfo.appVersion) Build \(GuozaokeAppInfo.buildNumber)")
-                .font(.body)
-                .fontWeight(.thin)
+                .titleFontStyle(weight: .thin)
                 .padding()
                 .foregroundColor(Color.primary)
                 .onTapGesture {
@@ -44,8 +43,7 @@ struct AboutView: View {
                 }
 
             Text(info)
-                .font(.body)
-                .fontWeight(.thin)
+                .titleFontStyle(weight: .thin)
                 .padding()
                 .foregroundColor(Color.primary)
                 .onLongPressGesture {
@@ -69,7 +67,7 @@ struct AboutView: View {
             Spacer()
         }
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("关于过早客")
+        .navigationTitleStyle("关于过早客")
     }
 }
 

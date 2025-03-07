@@ -195,7 +195,7 @@ class AppIconViewModel: ObservableObject {
 ////            }
 ////            .padding()
 //        }
-//        .navigationTitle("更换图标")
+//        .navigationTitleStyle("更换图标")
 //        .navigationBarTitleDisplayMode(.inline)
 //        .onAppear {
 //            //viewModel.checkCurrentIcon()

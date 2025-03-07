@@ -13,39 +13,35 @@ struct MoreView: View {
             List {
                 NavigationLink(destination: UserInfoView(userId: "isau")) {
                     Text("过早客iOS开发者：isau")
-                        .font(.callout)
-                        .fontWeight(.light)
+                        .subTitleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
                 
                 NavigationLink(destination: UserInfoView(userId: "Mario")) {
                     Text("网站管理大大：Mario")
-                        .font(.callout)
-                        .fontWeight(.light)
+                        .subTitleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
 
                 NavigationLink(destination: PostDetailView(postId: APIService.androidUpdateTopicInfo)) {
                     Text("mzlogin大大：mzlogin")
-                        .font(.callout)
-                        .fontWeight(.light)
+                        .subTitleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
                 
                 NavigationLink(destination: PostDetailView(postId: APIService.iosUpdateTopicInfo)) {
                     Text("更新说明")
-                        .font(.callout)
-                        .fontWeight(.light)
+                        .subTitleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
             }
         }
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("更多")
+        .navigationTitleStyle("更多")
     }
 }
 

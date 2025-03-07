@@ -4,6 +4,7 @@ import RichText
 
 struct RichTextView: View {
     let content: String
+    //let fontSize: CGFloat = UserDefaultsKeys.fontSize16
     var onLinkTap: ((URL) -> Void)?
     var onUserTap: ((String) -> Void)?
     var onTagTap: ((String) -> Void)?
@@ -33,11 +34,18 @@ struct RichTextView: View {
                     .lineHeight(170)
                     .colorScheme(.auto)
                     .imageRadius(0)
-                    .fontType(.system)
+                    .fontType(.customName(titleFontName))
                     .foregroundColor(light: Color.primary, dark: Color.white)
                     .linkColor(light: Color.blue, dark: Color.blue)
                     .colorPreference(forceColor: .onlyLinks)
-                    .customCSS("")
+                    .customCSS(
+                    """
+                        body, p, span {
+                           font-family: \(titleFontName); 
+                           font-size: \(titleFontSize); 
+                        }
+                    """
+                    )
                     .linkOpenType(.custom({ url in
                         handleLink(url)
                     }))

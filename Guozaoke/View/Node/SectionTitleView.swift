@@ -22,8 +22,8 @@ struct SectionTitleView: View {
     
     var body: some View {
         Text(title)
-            .font(style == .normal ? .headline : .subheadline)
-            .fontWeight(.heavy)
+            //.font(style == .normal ? .headline : .subheadline)
+            .titleFontStyle(weight: .bold)
             .padding(.vertical, 8)
             .padding(.horizontal, style == .normal ? 2 : 8)
             .background {

@@ -35,7 +35,7 @@ struct HTMLContentView: View {
             if let attributedString = attributedContent {
                 ScrollView {
                     Text(attributedString)
-                        .font(.system(size: fontSize))
+                        .font(.custom(titleFontName, size: fontSize))
                         .foregroundColor(Color.primary)
                         .textSelection(.enabled)
                         .environment(\.openURL, OpenURLAction { url in
@@ -62,7 +62,7 @@ struct HTMLContentView: View {
             } else {
                 Text(content)
                     .textSelection(.enabled)
-                    .font(.system(size: fontSize))
+                    .font(.custom(titleFontName, size: fontSize))
                     .foregroundColor(Color.primary)
             }
         }
@@ -137,13 +137,14 @@ struct HTMLContentView: View {
             options: .regularExpression
         )
         
+        //font-family: -apple-system;
         let styledHTML = """
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
         body {
-            font-family: -apple-system;
+            font-family: \(titleFontName);
             font-size: \(fontSize)px;
             line-height: 1.5;
             color: \(textColor);

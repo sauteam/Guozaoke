@@ -66,6 +66,7 @@ enum SFSymbol: String {
     case notice = "list.bullet.clipboard"
     case app = "app"
     case appFill = "app.fill"
+    case textformatSize = "textformat.size"
 
     /// 􀊸
     case heartCircle = "heart.circle"

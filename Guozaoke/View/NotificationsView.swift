@@ -45,6 +45,10 @@ struct NotificationsView: View {
                                 SFSymbol.reply
                             }
                         }
+//                        .onAppear {
+//                            if notification == viewModel.notifications.last {
+//                            }
+//                        }
 
                 }
             }
@@ -68,7 +72,7 @@ struct NotificationsView: View {
                 }
                 .presentationDetents([.height(isiPad ? screenHeight: 160)])
             })
-            .navigationTitle("通知")
+            .navigationTitleStyle("通知")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .onAppear {
@@ -127,10 +131,11 @@ struct NotificationRowView: View {
             VStack(alignment: .leading) {
                 let text = "\(notification.username) 回复了你的主题 \(notification.topicTitle)"
                 Text(text)
-                    .font(.callout)
+                    .subTitleFontStyle()
+                
                 Text("\(notification.content)")
-                    .font(.callout)
                     .foregroundColor(.gray)
+                    .subTitleFontStyle()
                     
             }
             Spacer()
@@ -156,12 +161,6 @@ struct NotificationRowView: View {
             } label: {
                 Label("网页查看主页", systemImage: .safari)
             }
-                        
-//            Button {
-//                
-//            } label: {
-//                Label("举报帖子", systemImage: .report)
-//            }
         }
     }
 }

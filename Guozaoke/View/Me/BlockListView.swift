@@ -13,17 +13,15 @@ struct BlockListView: View {
     var body: some View {
         VStack {
             List {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .listRowSeparator(.hidden)
-                }
                 
                 ForEach(viewModel.memberInfo) {
                     MemberItemView(data: $0)
                 }
-                
-                if viewModel.memberInfo.isEmpty {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .listRowSeparator(.hidden)
+                } else if viewModel.memberInfo.isEmpty {
                     HStack {
                         Spacer()
                         Text(NoMoreDataTitle.nodata)
@@ -52,7 +50,7 @@ struct BlockListView: View {
         .listStyle(.plain)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("屏蔽列表")
+        .navigationTitleStyle("屏蔽列表")
     }
 }
 
