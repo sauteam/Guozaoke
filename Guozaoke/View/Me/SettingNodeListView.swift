@@ -8,8 +8,8 @@ struct SettingNodeListView: View {
             ForEach(viewModel.postListItems) { item in
                 HStack {
                     Text(item.type.rawValue)
-                        .font(.system(size: 16, weight: .regular))
-                    
+                        .titleFontStyle()
+
                     Spacer()
                     
                     Toggle(isOn: Binding(
@@ -19,7 +19,7 @@ struct SettingNodeListView: View {
                         }
                     )) {
                         Text(item.isVisible ? "「显示」": "「不显示」")
-                            .font(.system(size: 16, weight: .thin))
+                            .subTitleFontStyle(weight: .thin)
                     }
                     .toggleStyle(SwitchToggleStyle(tint: .blue))
                 }

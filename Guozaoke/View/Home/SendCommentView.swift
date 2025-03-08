@@ -43,7 +43,7 @@ struct SendCommentView: View {
                             .foregroundColor(Color.white)
                             .background(Color.blue)
                             .cornerRadius(12)
-                            .subTitleFontStyle()
+                            .fontStyle(fontName: titleFontName, fontSize: 16)
                     }
                 }
                 .disabled(isPosting || !contentTextValid)

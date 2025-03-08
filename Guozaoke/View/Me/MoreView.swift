@@ -13,28 +13,28 @@ struct MoreView: View {
             List {
                 NavigationLink(destination: UserInfoView(userId: "isau")) {
                     Text("过早客iOS开发者：isau")
-                        .subTitleFontStyle(weight: .thin)
+                        .titleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
                 
                 NavigationLink(destination: UserInfoView(userId: "Mario")) {
                     Text("网站管理大大：Mario")
-                        .subTitleFontStyle(weight: .thin)
+                        .titleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
 
                 NavigationLink(destination: PostDetailView(postId: APIService.androidUpdateTopicInfo)) {
                     Text("mzlogin大大：mzlogin")
-                        .subTitleFontStyle(weight: .thin)
+                        .titleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
                 
                 NavigationLink(destination: PostDetailView(postId: APIService.iosUpdateTopicInfo)) {
                     Text("更新说明")
-                        .subTitleFontStyle(weight: .thin)
+                        .titleFontStyle(weight: .thin)
                         .padding()
                         .foregroundColor(Color.primary)
                 }
