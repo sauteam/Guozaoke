@@ -28,11 +28,9 @@ struct SecureTextField: View {
     }
 }
 
-struct SecureTextField_Previews: PreviewProvider {
-    @State static var password: String = ""
-
-    static var previews: some View {
-        SecureTextField(text: $password)
-    }
-}
-
+//struct SecureTextField_Previews: PreviewProvider {
+//    @State static var password: String = ""
+//    static var previews: some View {
+//        SecureTextField(text: $password)
+//    }
+//}

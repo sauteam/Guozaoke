@@ -34,12 +34,12 @@ struct AboutView: View {
                 .frame(maxWidth: 80, maxHeight: 80)
                 .padding()
 
-            Text("\(GuozaokeAppInfo.appName) V \(GuozaokeAppInfo.appVersion) Build \(GuozaokeAppInfo.buildNumber)")
+            Text("\(AppInfo.appName) V \(AppInfo.appVersion) Build \(AppInfo.buildNumber)")
                 .titleFontStyle(weight: .thin)
                 .padding()
                 .foregroundColor(Color.primary)
                 .onTapGesture {
-                    GuozaokeAppInfo.toAppStore()
+                    AppInfo.toAppStore()
                 }
 
             Text(info)

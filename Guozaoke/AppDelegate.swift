@@ -20,14 +20,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         print("App 启动完成")
-        requestNotificationPermission()
-        scheduleDailyNotification()
+        NotificationManager.shared.requestNotificationPermission()
+        NotificationManager.shared.scheduleDailyNotification()
         UNUserNotificationCenter.current().delegate = self
         updateAppBadge(0)
         if #available(iOS 18.0, *) {
-            AppReviewRequest.devReview()
+#if DEBUG
             AppReviewRequest.clearReviewData()
+            AppReviewRequest.devReview()
+#else
             AppReviewRequest.requestReviewIfAppropriate()
+#endif
+            
         }
         return true
     }

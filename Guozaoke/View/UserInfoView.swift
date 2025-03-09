@@ -14,6 +14,7 @@ struct UserInfoView: View {
     @State private var selectedTab  = 1
     @State private var followText   = "+关注"
     @State private var showCollectionView = false
+    @State private var showMyReplyView = false
 
     var body: some View {
         VStack() {
@@ -43,6 +44,7 @@ struct UserInfoView: View {
                     if isMe == false {
                         HStack {
                             Button(action: {
+                                hapticFeedback()
                                 print("关注按钮点击")
                                 Task {
                                     do {
@@ -132,16 +134,16 @@ struct UserInfoView: View {
                         } else if !parser.topics.isEmpty, !parser.noMoreTopics {
                             HStack {
                                 if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty, parser.topics.count > 5  {
-                                        NavigationLink(
-                                            destination: MyCollectionView(
-                                                linkUrl: linkUrl,
-                                                linkText: (parser.userInfo?.username ?? "") + "的更多主题"
-                                            )
-                                        ) {
-                                            Text("更多主题")
-                                                .font(.footnote)
-                                                .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("更多主题")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                        .onTapGesture {
+                                            hapticFeedback()
+                                            showCollectionView.toggle()
                                         }
+                                    Spacer()
+                                    
                                     } else {
                                         EmptyView()
                                     }
@@ -188,22 +190,22 @@ struct UserInfoView: View {
                         } else if !parser.replies.isEmpty, !parser.noMoreReplies {
                             HStack {
                                 if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty, parser.replies.count > 5  {
-                                    NavigationLink(
-                                        destination: MyReplyListView(
-                                            linkUrl: linkUrl,
-                                            linkText: (parser.userInfo?.username ?? "") + "的更多回复")) {
-                                                Text("更多回复")
-                                                    .font(.footnote)
-                                                    .foregroundColor(.secondary)
-                                                    .frame(height: 20)
-                                    }
+                                    Spacer()
+                                    Text("更多回复")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                        .frame(height: 20)
+                                        .onTapGesture {
+                                            hapticFeedback()
+                                            showMyReplyView.toggle()
+                                        }
+                                    Spacer()
                                 } else {
                                     EmptyView()
                                 }
                             }
                             .frame(height: 20)
                             .listRowSeparator(.hidden)
-                            .padding(.vertical, 2)
                         }
                     }
                     .buttonStyle(.plain)
@@ -214,12 +216,26 @@ struct UserInfoView: View {
                 }
             }
         }
+        .navigationDestination(isPresented: $showCollectionView, destination: {
+            if let linkUrl = parser.userInfo?.topicLink, !linkUrl.isEmpty {
+                MyCollectionView(
+                    linkUrl: linkUrl,
+                    linkText: (parser.userInfo?.username ?? "") + "的更多主题"
+                )
+            }
+        })
+        .navigationDestination(isPresented: $showMyReplyView, destination: {
+            if let linkUrl = parser.userInfo?.replyLink, !linkUrl.isEmpty {
+                MyReplyListView(
+                    linkUrl: linkUrl,
+                    linkText: (parser.userInfo?.username ?? "") + "的更多回复")
+            }
+        })
         .navigationTitleStyle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                
                 Menu {
                     Button {
                         profileUrl(userId).copyToClipboard()
@@ -311,52 +327,54 @@ struct UserInfoView: View {
 
 struct MyUserInfoView: View {
     let userInfo: String
+    @State private var showSafari = false
+    @State private var showSystemCopy = false
+    @State private var text = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(userInfo)
                     .titleFontStyle()
-                    .onLongPressGesture {
-                        userInfo.copyToClipboard()
-                    }
+                    .dynamicContextMenu(userInfo: userInfo, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
             }
+        }
+        .onAppear {
+            text = userInfo
+        }
+        .sheet(isPresented: $showSafari) {
+            if let url = userInfo.extractURLs.first {
+                SafariView(url: url)
+            }
+        }
+        .sheet(isPresented: $showSystemCopy) {
+            CopyableTextSheet(isPresented: $showSystemCopy, text: $text)
+            .presentationDetents([.height(200), .medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 }
 
 struct MyReplyRowView: View {
     @State private var isPostDetailViewActive = false
-    @State private var isUserInfoViewActive = false
     let myReply: MyReply
     let userId: String
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("\(myReply.title)")
+                Text(myReply.title)
                     .subTitleFontStyle(weight: .black)
-                    .lineLimit(2)
+                    //.lineLimit(2)
                     .foregroundColor(.gray)
-                    .onTapGesture {
-                        isPostDetailViewActive = true
-                        log("titleLink \(myReply.titleLink)")
-                    }
-                    .navigationDestination(isPresented: $isPostDetailViewActive, destination: {
-                        PostDetailView(postId: myReply.titleLink)
-                    })
             }
-            
-            Text(myReply.content)
+            HTMLContentView(content: myReply.content, fontSize: subTitleFontSize)
                 .titleFontStyle()
-                .lineLimit(2)
-//                .onTapGesture {
-//                    if myReply.userLink.isEmpty == false {
-//                        isUserInfoViewActive = true
-//                    }
-//                    log("mentionedUser \(myReply.userLink ?? "")")
-//                }
-//                .navigationDestination(isPresented: $isUserInfoViewActive, destination: {
-//                    UserInfoView(userId: myReply.userLink ?? "")
-//                })
+        }
+        .navigationDestination(isPresented: $isPostDetailViewActive, destination: {
+            PostDetailView(postId: myReply.titleLink)
+        })
+        .onTapGesture {
+            isPostDetailViewActive = true
+            log("titleLink \(myReply.titleLink)")
         }
         .contextMenu {
             

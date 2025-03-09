@@ -109,7 +109,7 @@ class UserInfoParser: ObservableObject {
     
     private func showToast() {
         runInMain {
-            ToastView.toastText(needLoginTextCanDo)
+            ToastView.warningToast(needLoginTextCanDo)
         }
     }
     
@@ -137,8 +137,7 @@ class UserInfoParser: ObservableObject {
             let memberLists = try document.select(".member-lists")
             
             var memberInfo: [MemberInfo] = []
-            for (index, memberList) in memberLists.enumerated() {
-                print("列表 \(index + 1):")
+            for (_, memberList) in memberLists.enumerated() {
                 var memberModel: [Member] = []
                 let members = try memberList.select(".member")
                 let title   = try memberList.select("span.title").text()
@@ -150,6 +149,7 @@ class UserInfoParser: ObservableObject {
                 }
                 memberInfo.append(MemberInfo(title: title, member: memberModel))
             }
+            print("[member] \(memberInfo)")
             runInMain {
                 self.isLoading  = false
                 self.memberInfo = memberInfo
@@ -233,7 +233,7 @@ class UserInfoParser: ObservableObject {
                     self.userInfo?.blockText = "取消屏蔽"
                     self.userInfo?.blockLink = self.userInfo?.blockLink?.replacingOccurrences(of: "unblock", with: "block")
                 }
-                ToastView.toastText(isBlocked == true ? "屏蔽成功": "取消屏蔽成功")
+                ToastView.successToast(isBlocked == true ? "屏蔽成功": "取消屏蔽成功")
             }
             return html
         } catch {

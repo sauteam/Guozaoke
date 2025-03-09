@@ -158,7 +158,7 @@ class LoginStateChecker: ObservableObject {
             }
             LoginStateChecker.clearUserInfo()
             runInMain {
-                ToastView.toastText(needLoginTextCanDo)
+                ToastView.warningToast(needLoginTextCanDo)
                     
                 if !self.needLogin {
                     self.needLogin = true

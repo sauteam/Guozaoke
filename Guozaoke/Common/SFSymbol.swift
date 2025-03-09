@@ -8,6 +8,8 @@
 import SwiftUI
 
 enum SFSymbol: String {
+    case trashSlash = "trash.slash"
+    case envelope = "envelope"
     /// 􀻷
     case person3 = "person.3.sequence"
     ///􀻸

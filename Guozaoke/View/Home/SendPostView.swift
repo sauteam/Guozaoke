@@ -72,8 +72,9 @@ struct SendPostView: View {
                         .listRowSeparator(.hidden)
                 }
                 Button(action: {
+                    hapticFeedback()
                     if title.trim().isEmpty || content.trim().isEmpty {
-                        ToastView.toastText("输入内容")
+                        ToastView.warningToast("输入内容")
                         return
                     }
                     
@@ -91,6 +92,7 @@ struct SendPostView: View {
                             .cornerRadius(10)
                             .listRowBackground(Color.clear)
                             .subTitleFontStyle()
+                            .hapticOnTap()
                     }
                 }
                 .disabled(isPosting || title.isEmpty || content.isEmpty)
@@ -160,13 +162,14 @@ struct SendPostView: View {
             isPresented = false
             content = ""
             title   = ""
-            ToastView.toast("发送成功", subtitle: "", .success)
-            NotificationManager.shared.hapticFeedback()
+            ToastView.successToast("发送成功")
+            hapticFeedback()
             sendSuccess()
             clear()
         } catch {
             isPosting = false
             errorMessage = "发布失败: \(error.localizedDescription)"
+            ToastView.errorToast("发送失败: \(error.localizedDescription)")
         }
     }
 }

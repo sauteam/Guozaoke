@@ -68,6 +68,7 @@ struct MemberItemView: View {
                                 .lineLimit(1)
                         }
                         .onTapGesture {
+                            hapticFeedback()
                             showUserInfoView.toggle()
                             selectedNode     = member
                         }

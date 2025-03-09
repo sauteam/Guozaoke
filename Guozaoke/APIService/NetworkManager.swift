@@ -21,7 +21,6 @@ class NetworkManager: ObservableObject {
     static let shared = NetworkManager()
     private init() {}
     
-    // 基础请求方法
     func request(
         _ url: String,
         method: HTTPMethod = .get,
@@ -47,7 +46,6 @@ class NetworkManager: ObservableObject {
                 "Cookie": APIService.getStoredCookies()
             ]
 
-            // 如果有传入 headers，则合并
             if let headers = headers {
                 headers.forEach { defaultHeaders.add($0) }
             }
@@ -76,12 +74,11 @@ class NetworkManager: ObservableObject {
                         log("[403]重新登录处理  refreshTokenNoti \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
-                    ToastView.toast(desc, subtitle: "", .warning)
+                    ToastView.warningToast(desc)
                 }
             }
         }
     }    
-    // POST请求
     func post(
         _ url: String,
         parameters: Parameters? = nil,
@@ -90,7 +87,6 @@ class NetworkManager: ObservableObject {
         try await request(url, method: .post, parameters: parameters, headers: headers)
     }
     
-    // GET请求
     func get(
         _ url: String,
         parameters: Parameters? = nil,

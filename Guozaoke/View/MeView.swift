@@ -182,13 +182,13 @@ struct MyProfileView: View {
              Section {
                  
                  Button {
-                     GuozaokeAppInfo.toAppStore()
+                     AppInfo.toAppStore()
                  } label: {
                      ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
                  }
                  
                  Button {
-                     GuozaokeAppInfo.toWriteReview()
+                     AppInfo.toWriteReview()
                  } label: {
                      ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
                  }
@@ -196,7 +196,7 @@ struct MyProfileView: View {
             
             HStack {
                 Spacer()
-                Text(GuozaokeAppInfo.AppBeiAnText)
+                Text(AppInfo.AppBeiAnText)
                     .subTitleFontStyle()
                 Spacer()
             }

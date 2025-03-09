@@ -96,13 +96,9 @@ struct PostFooterView: View {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
                         if model?.success == 1 {
-                            NotificationManager.shared.hapticFeedback()
+                            
                         } else if model?.success == 0 {
-                            if model?.message == "can_not_favorite_your_topic" {
-                                ToastView.toastText("不能收藏自己的主题")
-                            } else {
-                                ToastView.toastText(model?.message ?? "")
-                            }
+                            
                         }
                     }
                 }
@@ -114,17 +110,12 @@ struct PostFooterView: View {
             .lineLimit(1)
 
             Button {
+                hapticFeedback()
                 Task {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
                         if model?.success == 1 {
-                            NotificationManager.shared.hapticFeedback()
                         } else if model?.success == 0 {
-                            if model?.message == "can_not_vote_your_topic" {
-                                ToastView.toastText("不能感谢自己的主题")
-                            } else {
-                                ToastView.toastText(model?.message ?? "")
-                            }
                         }
                     }
                 }
@@ -165,6 +156,7 @@ struct PostFooterView: View {
                 
             }
             .presentationDetents([.height(isiPad ? screenHeight: 130)])
+            .presentationDragIndicator(.visible)
         }
     }
 }
@@ -204,6 +196,10 @@ struct ReplyItemView: View {
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
     @State private var isAvatarInfoViewActive = false
+    @State private var showSafari = false
+    @State private var showSystemCopy = false
+    @State private var urlToOpen: URL?
+    @State private var text = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -244,7 +240,8 @@ struct ReplyItemView: View {
                     SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", username: reply.author.name, isPresented: $showActions) {
                         
                     }
-                    .presentationDetents([.height(isiPad ? screenHeight: 130)])
+                    .presentationDetents([.height(130)])
+                    .presentationDragIndicator(.visible)
                 }
                 let number  = reply.like
                 let zanText = "赞 \(number)"
@@ -254,6 +251,7 @@ struct ReplyItemView: View {
                     .disabled(reply.isLiked)
                     .tag(reply.likeLink)
                     .onTapGesture {
+                        hapticFeedback()
                         if reply.isLiked {
                             return
                         }
@@ -265,11 +263,10 @@ struct ReplyItemView: View {
                                         reply.isLiked = true
                                         reply.like += 1
                                     }
-                                    NotificationManager.shared.hapticFeedback()
                                 } else {
                                     if model?.message?.contains("already_voted") == true {
                                         reply.isLiked = true
-                                        ToastView.toast("已点赞", .success)
+                                        ToastView.successToast("已点赞")
                                     }
                                 }
                             }
@@ -288,20 +285,23 @@ struct ReplyItemView: View {
             Divider()
                 .frame(maxWidth: .infinity)
         }
-        .contextMenu {
-            Button {
-                reply.content.copyToClipboard()
-            } label: {
-                Label("拷贝内容", systemImage: .copy)
+        .dynamicContextMenu(userInfo: reply.content, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
+        .sheet(isPresented: $showSafari) {
+            if let url = urlToOpen {
+                SafariView(url: url)
             }
-            Button {
-                ToastView.reportToast()
-            } label: {
-                Label("举报", systemImage: .report)
-            }
-           
         }
-
+        .sheet(isPresented: $showSystemCopy) {
+            CopyableTextSheet(isPresented: $showSystemCopy, text: $text)
+                .presentationDetents([.height(200), .medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .onChange(of: showSafari) { newValue in
+            urlToOpen = reply.content.extractURLs.first
+        }
+        .onAppear() {
+            text = reply.content
+        }
     }
 }
 

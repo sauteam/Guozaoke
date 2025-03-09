@@ -29,7 +29,7 @@ struct KFImageView: View {
             }
             .fade(duration: 0.25)
             .resizable()
-            .cacheOriginalImage() // 确保缓存原始图片
+            .cacheOriginalImage()
             .diskCacheExpiration(.days(30)) // 设置磁盘缓存有效期
             .memoryCacheExpiration(.days(7)) // 设置内存缓存有效期
     }
@@ -37,20 +37,17 @@ struct KFImageView: View {
 
 // MARK: - 扩展
 extension KFImageView {
-    // 头像样式
     func avatar(size: CGFloat = 40) -> some View {
         self.frame(width: size, height: size)
             //.clipShape(Circle())
             .cornerRadius(8)
     }
     
-    // 缩略图样式
     func thumbnail(width: CGFloat, height: CGFloat) -> some View {
         self.frame(width: width, height: height)
             .cornerRadius(8)
     }
     
-    // 自适应宽度，固定高度
     func adaptiveHeight(_ height: CGFloat) -> some View {
         self.frame(maxWidth: .infinity)
             .frame(height: height)
@@ -74,11 +71,9 @@ struct OptimizedImageView: View {
     
     // 检查是否为表情图片
     private func checkIsEmoji(_ urlString: String) -> Bool {
-        // 检查 URL 中的关键词
         let emojiKeywords = ["emoji", "face", "sticker", "表情", "face/", "emot", "gif"]
         let lowercasedUrl = urlString.lowercased()
         
-        // 检查是否为 GIF
         if lowercasedUrl.hasSuffix(".gif") {
             isAnimated = true
         }
@@ -110,7 +105,6 @@ struct OptimizedImageView: View {
             
             Group {
                 if isAnimated {
-                    // 使用 AnimatedImage 处理 GIF
                     KFAnimatedImage(URL(string: urlString))
                         .configure { view in
                             view.framePreloadCount = 3 // 预加载帧数
@@ -124,7 +118,6 @@ struct OptimizedImageView: View {
                         .forceRefresh(true)
                         .scaleFactor(UIScreen.main.scale)
                 } else {
-                    // 使用普通 KFImage 处理静态图片
                     KFImage.url(URL(string: urlString))
                         .onSuccess { result in
                             // 通过图片尺寸判断是否为表情
@@ -181,9 +174,7 @@ struct ImagePreviewView: View {
     let urlString: String
     @Environment(\.dismiss) private var dismiss
     @State private var isAnimated: Bool = false
-    
-    // ... 其他代码保持不变 ...
-    
+        
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -209,7 +200,6 @@ struct ImagePreviewView: View {
                 }
                 .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
                 .aspectRatio(contentMode: .fit)
-                // ... 其他手势和控制代码保持不变 ...
             }
         }
         .onAppear {
@@ -377,16 +367,13 @@ class ImageCacheManager {
     }
     
     private func setupCache() {
-        // 配置内存缓存
         ImageCache.default.memoryStorage.config.totalCostLimit = 300 * 1024 * 1024 // 300MB
-        ImageCache.default.memoryStorage.config.countLimit = 100 // 最多缓存100张图片
+        ImageCache.default.memoryStorage.config.countLimit = 100
         ImageCache.default.memoryStorage.config.expiration = .days(1)
         
-        // 配置磁盘缓存
         ImageCache.default.diskStorage.config.sizeLimit = 1000 * 1024 * 1024 // 1GB
         ImageCache.default.diskStorage.config.expiration = .days(7)
         
-        // 清理过期缓存
         ImageCache.default.clearMemoryCache()
         ImageCache.default.clearDiskCache()
     }

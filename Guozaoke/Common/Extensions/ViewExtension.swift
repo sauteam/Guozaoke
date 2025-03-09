@@ -1,11 +1,3 @@
-//
-//  View.swift
-//  V2er
-//
-//  Created by Seth on 2020/6/25.
-//  Copyright © 2020 lessmore.io. All rights reserved.
-//
-
 import SwiftUI
 import Combine
 
@@ -261,8 +253,7 @@ extension View {
 
     func hapticOnTap(style: UIImpactFeedbackGenerator.FeedbackStyle = .light) -> some View {
         self.onTapGesture {
-            let impact = UIImpactFeedbackGenerator(style: style)
-            impact.impactOccurred()
+            hapticFeedback(style)
         }
     }
 }

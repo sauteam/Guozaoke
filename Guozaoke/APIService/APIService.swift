@@ -51,7 +51,7 @@ enum MyTopicEnum: String {
 }
 
 /// App 版本信息
-struct GuozaokeAppInfo {
+struct AppInfo {
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
     static let AppBeiAnText = "粤ICP备2025374276号-2A"
     static let AppId = "6740704728"
@@ -73,12 +73,12 @@ struct GuozaokeAppInfo {
     
     /// 去AppStore
     static func toAppStore() {
-        print("url \(GuozaokeAppInfo.AppStoreUrl)")
-        GuozaokeAppInfo.AppStoreUrl.openURL()
+        print("url \(AppInfo.AppStoreUrl)")
+        AppInfo.AppStoreUrl.openURL()
     }
     /// 去评论
     static func toWriteReview() {
-        GuozaokeAppInfo.AppStoreReviewUrl.openURL()
+        AppInfo.AppStoreReviewUrl.openURL()
     }
 }
 

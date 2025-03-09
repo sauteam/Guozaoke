@@ -43,7 +43,7 @@ extension Notification.Name {
 
 private func showToast() {
     runInMain {
-        ToastView.toast("登录成功", subtitle: "", .success)
+        ToastView.successToast("登录成功")
     }
 }
 
@@ -59,7 +59,7 @@ class LoginService: ObservableObject {
     
     func login(email: String, password: String) async throws -> Bool {
         if email.isEmpty || password.isEmpty {
-            ToastView.toast("填写账号和密码", subtitle: "", .warning)
+            ToastView.warningToast("填写账号和密码")
             return (false)
         }
         var loginSuccess = false

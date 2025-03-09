@@ -28,7 +28,7 @@ struct SendCommentView: View {
                 Spacer()
                 Button(action: {
                     if content.trim().isEmpty {
-                        ToastView.toastText("输入内容")
+                        ToastView.warningToast("输入内容")
                         return
                     }
                     Task {
@@ -141,13 +141,13 @@ struct SendCommentView: View {
             print("Response: \(response)")
             postSuccess = true
             sendSuccess()
-            ToastView.toastText("评论成功")
+            ToastView.successToast("评论成功")
             closeView()
             clear()
         } catch {
             isPosting = false
             errorMessage = "发送失败: \(error.localizedDescription)"
-            ToastView.toastText("发送失败")
+            ToastView.errorToast("发送失败")
         }
     }
 

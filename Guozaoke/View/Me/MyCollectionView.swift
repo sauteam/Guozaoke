@@ -44,11 +44,21 @@ struct MyCollectionView: View {
                     }
                     .listRowSeparator(.hidden)
                     .padding(.vertical, 12)
+                } else if viewModel.replies.isEmpty {
+                    HStack {
+                        Spacer()
+                        Text(NoMoreDataTitle.nodata)
+                            .font(.callout)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                    .padding(.vertical, 12)
                 }
             }
             .buttonStyle(.plain)
             .listStyle(.plain)
-            .navigationTitleStyle(linkText)
+            .navigationTitleStyle(titleText)
             .toolbar(.hidden, for: .tabBar)
             .refreshable {
                 Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
@@ -59,5 +69,13 @@ struct MyCollectionView: View {
                 }
             }
         }
+    }
+    
+    private var titleText: String {
+        var title = linkText
+        if title.contains(AccountState.userName) {
+            title = title.replacingOccurrences(of: AccountState.userName, with: "我")
+        }
+        return title
     }
 }

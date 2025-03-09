@@ -126,6 +126,7 @@ struct PostDetailView: View {
                 
             }
             .presentationDetents([.height(isiPad ? screenHeight: 130)])
+            .presentationDragIndicator(.visible)
         }
         .onAppear() {
             guard detailParser.postDetail == nil else { return }

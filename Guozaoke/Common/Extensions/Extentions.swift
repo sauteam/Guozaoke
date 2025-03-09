@@ -10,7 +10,6 @@ import SwiftUI
 import CryptoKit
 import JDStatusBarNotification
 
-
 extension String {
     
     static let `default`: String = ""
@@ -90,15 +89,36 @@ extension String {
         guard self.count > 0 else {
             return
         }
-        NotificationManager.shared.hapticFeedback()
+        hapticFeedback()
         UIPasteboard.general.string = self
-        ToastView.toast("拷贝成功", subtitle:"",  .success)
+        ToastView.successToast("拷贝成功")
     }
     
     var md5: String {
         let computed = Insecure.MD5.hash(data: self.data(using: .utf8)!)
         return computed.map { String(format: "%02hhx", $0) }
             .joined()
+    }
+    
+    func toDetectedAttributedString() -> AttributedString {
+        var attributedString = AttributedString(self)
+        
+        let types = NSTextCheckingResult.CheckingType.link.rawValue
+        guard let detector = try? NSDataDetector(types: types) else {
+            return attributedString
+        }
+        
+        let matches = detector.matches(in: self, options: [], range: NSRange(location: 0, length: count))
+        
+        for match in matches {
+            if match.resultType == .link, let url = match.url {
+                let range = match.range
+                let startIndex = attributedString.index(attributedString.startIndex, offsetByCharacters: range.lowerBound)
+                let endIndex = attributedString.index(startIndex, offsetByCharacters: range.length)
+                attributedString[startIndex..<endIndex].link = url
+            }
+        }
+        return attributedString
     }
 }
 
@@ -259,7 +279,6 @@ extension Bundle {
         if let filepath = Bundle.main.path(forResource: name, ofType: type) {
             do {
                 result = try String(contentsOfFile: filepath)
-                log("----------> local resource: \(result ?? "") <------------")
             } catch {
                 // contents could not be loaded
             }
@@ -305,7 +324,7 @@ struct DeviceUtils {
     /// 判断是否为刘海屏
     static func isNotchScreen() -> Bool {
         let safeAreaInsets = getSafeAreaInsets()
-        return safeAreaInsets.top > 20 // 通常非刘海屏顶部 inset 为 20
+        return safeAreaInsets.top > 20 
     }
 }
 

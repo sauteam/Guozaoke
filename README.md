@@ -10,7 +10,7 @@
 
 ### 介绍
 
-[guozaoke官网](guozaoke.com)
+[guozaoke.com](guozaoke.com)
 
 [接口参考](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
 
@@ -26,17 +26,21 @@
 
 Guozaoke 采用SwiftUI编写
 
-使用[Alamofire](https://github.com/Alamofire/Alamofire)封装请求
+使用 [Alamofire](https://github.com/Alamofire/Alamofire) 封装请求
 
-使用[RichText](https://github.com/NuPlay/RichText) 解析主题内容
+使用 [SwiftSoup](https://github.com/scinfu/SwiftSoup) 解析HTML标签
 
-使用[Kingfisher](https://github.com/onevcat/Kingfisher)加载图片
+使用 [RichText](https://github.com/NuPlay/RichText) 解析主题内容
 
-使用[JDStatusBarNotification](https://github.com/calimarkus/JDStatusBarNotification) toast 提示
+使用 [Kingfisher](https://github.com/onevcat/Kingfisher) 加载图片
+
+使用 [JDStatusBarNotification](https://github.com/calimarkus/JDStatusBarNotification) toast 提示
 
 解析所有节点标签布局参考[@graycreate](https://github.com/v2er-app/iOS)部分实现
 
 App ICON由[@caipod](https://github.com/caipod) 设计，还有ICON，待支持更换ICON。
+
+感谢各位！
 
 https://mastergo.com/goto/HNxgmh1Q?page_id=5:00&file=153231050152995
 
@@ -44,7 +48,7 @@ https://mastergo.com/goto/HNxgmh1Q?page_id=5:00&file=153231050152995
 
 请不要将此工程再次打包上传到App Store，仅供参考学习，其实也没啥。
 
-感谢所有，欢迎PR，反馈。
+欢迎PR，反馈。
 
 ### 愿景
 

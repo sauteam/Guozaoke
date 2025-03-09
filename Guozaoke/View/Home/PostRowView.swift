@@ -85,6 +85,7 @@ struct PostRowView: View {
                             .font(.footnote)
                             .clipShape(Rectangle())
                             .onTapGesture {
+                                hapticFeedback()
                                 log("点击 \(post.node) \(post.nodeUrl)")
                                 if !nodeInfo {
                                     isNodeInfoViewActive = true
@@ -99,28 +100,15 @@ struct PostRowView: View {
             }
         }
         .padding(.vertical, 4)
-        .contextMenu {
-            Button {
+        .customContextMenu(menuItems: [.copy, .safari], onAction: { item in
+            if item == .copy {
                 post.link.postDetailUrl().copyToClipboard()
-            } label: {
-                Label("拷贝链接", systemImage: .copy)
-            }
-            
-            Button {
+            } else if item == .safari {
                 let url = post.link.postDetailUrl()
                 url.copyToClipboard()
                 url.openURL()
-            } label: {
-                Label("网页查看帖子", systemImage: .safari)
             }
-                        
-            Button {
-                let url = post.author.userProfileUrl()
-                url.openURL()
-            } label: {
-                Label("网页查看主页", systemImage: .safari)
-            }
-        }
+        })
     }
 }
 

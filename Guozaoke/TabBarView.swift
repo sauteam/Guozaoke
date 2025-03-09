@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 let isiPad   = UIDevice.current.userInterfaceIdiom == .pad
 let isiPhone = UIDevice.current.userInterfaceIdiom == .phone
@@ -89,9 +90,16 @@ struct TabContentView: View {
     @ObservedObject var notificationManager = NotificationManager.shared
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = PostListViewModel()
-    
+
+    @State private var lastSelectedTab: TabBarView.Tab?
+    @State private var lastTapTime: Date?
+    @State private var lastRefreshTime: Date?
+        
     var body: some View {
         tabViewContent
+            .onTabChange(of: $tab) { newValue in
+                handleTabChange(newTab: newValue)
+            }
     }
     
     private var tabViewContent: some View {
@@ -103,6 +111,11 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
             .tag(TabBarView.Tab.home)
+            // 在NavigationStack 不响应onTapGesture 事件
+//            .onTapGesture(count: 2) {
+//                log("[tab]\(TabBarView.Tab.home.rawValue) tap 2")
+//            }
+
 
             Group {
                 NavigationStack {
@@ -131,6 +144,84 @@ struct TabContentView: View {
     }
 }
 
+private extension TabContentView {
+    
+    private func handleTabChange(newTab: TabBarView.Tab) {
+        let now = Date()
+        //log("[tab] \(newTab.rawValue) double tap")
+        if let lastTab = lastSelectedTab, let lastTime = lastTapTime, lastTab == newTab {
+            if now.timeIntervalSince(lastTime) < 0.5 {
+                handleDoubleTap(for: newTab)
+            }
+        }
+        lastSelectedTab = newTab
+        lastTapTime = now
+    }
+    
+    private func handleDoubleTap(for tab: TabBarView.Tab) {
+        let now = Date()
+        if let lastRefreshTime = lastRefreshTime {
+            if now.timeIntervalSince(lastRefreshTime) >= 10 {
+                refreshTab(tab)
+                self.lastRefreshTime = now
+            } else {
+                print("[tab] \(tab.rawValue) double tap ignored (wait 60 seconds)")
+            }
+        } else {
+            refreshTab(tab)
+            self.lastRefreshTime = now
+        }
+    }
+    
+    private func refreshTab(_ tab: TabBarView.Tab) {
+        //print("[tab] \(tab.rawValue) double tap - refreshing...")
+        switch tab {
+        case .home:
+            
+            break
+        case .node:
+            break
+        case .noti:
+            break
+        case .mine:
+            break
+        }
+    }
+}
+
+// MARK: - Tab Change Handler
+extension View {
+    func onTabChange(of tab: Binding<TabBarView.Tab>, perform action: @escaping (TabBarView.Tab) -> Void) -> some View {
+        Group {
+            if #available(iOS 17.0, *) {
+                self.onChange(of: tab.wrappedValue) { oldValue, newValue in
+                    log("[tab][onTabChange] \(oldValue.rawValue) -> \(newValue.rawValue)")
+                    action(newValue)
+                }
+            } else {
+                self.onReceive(Just(tab.wrappedValue), perform: action)
+            }
+        }
+        .background(
+            TabTapView(tab: tab, action: action)
+                .allowsHitTesting(true)
+        )
+    }
+}
+
+struct TabTapView: View {
+    @Binding var tab: TabBarView.Tab
+    let action: (TabBarView.Tab) -> Void
+    
+    var body: some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                //log("[tab][TabTapView] \(tab.rawValue) tapped")
+                action(tab)
+            }
+    }
+}
 
 // 侧边栏 (iPad)
 //struct SidebarView: View {

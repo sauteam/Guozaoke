@@ -97,10 +97,10 @@ struct SettingView: View {
     private func handlePushNotificationToggle(newValue: Bool) {
         if newValue {
             print("[noti]用户已开启推送消息")
-            scheduleDailyNotification()
+            NotificationManager.shared.scheduleDailyNotification()
         } else {
             print("[noti]用户已关闭推送消息")
-            cancelDailyNotification()
+            NotificationManager.shared.cancelDailyNotification()
         }
     }
     

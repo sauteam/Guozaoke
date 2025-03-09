@@ -58,6 +58,7 @@ struct NodeListView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button(action: {
+                    hapticFeedback()
                     showSearchView.toggle()
                 }) {
                     SFSymbol.search
@@ -66,6 +67,7 @@ struct NodeListView: View {
             
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Button(action: {
+                    hapticFeedback()
                     showMembersView.toggle()
                 }) {
                     SFSymbol.person3

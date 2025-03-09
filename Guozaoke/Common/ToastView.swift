@@ -8,7 +8,6 @@
 import Foundation
 import JDStatusBarNotification
 
-
 class ToastView {
     static func toast(_ text: String, subtitle: String? = nil, _ includedStyle: IncludedStatusBarNotificationStyle) {
         if text.isEmpty {
@@ -23,11 +22,22 @@ class ToastView {
         toast(text, subtitle: subtitle, text == needLoginTextCanDo ? .warning: .dark)
     }
     
+    static func warningToast(_ text: String, subtitle: String? = nil) {
+        toast(text, subtitle: subtitle, .warning)
+    }
+    
+    static func errorToast(_ text: String, subtitle: String? = nil) {
+        toast(text, subtitle: subtitle, .error)
+    }
+    
+    static func successToast(_ text: String, subtitle: String? = nil) {
+        toast(text, subtitle: subtitle, .success)
+    }
+    
     static func reportToast() {
-        
         runInMain(delay: 1) {
-            toast("谢谢反馈，我们已收到", subtitle: "", .success)
-            NotificationManager.shared.hapticFeedback()
+            successToast("谢谢反馈，我们已收到", subtitle: "")
+            hapticFeedback()
         }
     }
 }

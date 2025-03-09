@@ -70,7 +70,8 @@ struct NotificationsView: View {
                     showCommentView = false
                     selectedNotification = nil
                 }
-                .presentationDetents([.height(isiPad ? screenHeight: 160)])
+                .presentationDetents([.height(isiPad ? screenHeight: 150)])
+                .presentationDragIndicator(.visible)
             })
             .navigationTitleStyle("通知")
             .navigationBarTitleDisplayMode(.inline)
@@ -129,13 +130,21 @@ struct NotificationRowView: View {
             }
             
             VStack(alignment: .leading) {
-                let text = "\(notification.username) 回复了你的主题 \(notification.topicTitle)"
-                Text(text)
-                    .subTitleFontStyle()
-                
-                Text("\(notification.content)")
+                Text(notification.username)
+                    .font(.custom(titleFontName, size: subTitleFontSize))
+                    .foregroundColor(.black)
+                +
+                Text(" 回复了你的主题 ")
+                    .font(.custom(titleFontName, size: subTitleFontSize))
                     .foregroundColor(.gray)
-                    .subTitleFontStyle()
+                +
+                Text(notification.topicTitle)
+                    .font(.custom(titleFontName, size: subTitleFontSize))
+                    .foregroundColor(.black)
+
+                
+                HTMLContentView(content: notification.content, fontSize: subTitleFontSize)
+                    .foregroundColor(.gray)
                     
             }
             Spacer()

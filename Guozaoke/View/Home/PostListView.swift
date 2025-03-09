@@ -77,6 +77,7 @@ struct PostListView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button(action: {
+                        hapticFeedback()
                         if LoginStateChecker.isLogin {
                             showAddPostView.toggle()
                         } else {
@@ -89,6 +90,7 @@ struct PostListView: View {
                 
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
+                        hapticFeedback()
                         showSearchView.toggle()
                     }) {
                         SFSymbol.search
@@ -179,14 +181,8 @@ struct PostListContentView: View {
                 }
             })
             .onAppear() {
-                if type == .latest {
-                    if UserDefaultsKeys.homeListRefresh || viewModel.posts.isEmpty {
-                        viewModel.refreshPostList(type: type)
-                    }
-                } else {
-                    if viewModel.posts.isEmpty {
-                        viewModel.refreshPostList(type: type)
-                    }
+                if viewModel.posts.isEmpty {
+                    viewModel.refreshPostList(type: type)
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
@@ -206,4 +202,9 @@ struct PostListContentView: View {
         }
     }
     
+    func loadNewData() {
+        if UserDefaultsKeys.homeListRefresh {
+            viewModel.refreshPostList(type: type)
+        }
+    }
 }

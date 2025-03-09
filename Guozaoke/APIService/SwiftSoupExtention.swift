@@ -26,7 +26,6 @@ public extension Element {
         } else {
             result = try? e.attr(attr.value)
         }
-        // TODO use reg
         return result.isEmpty ? `default` : result!
     }
 

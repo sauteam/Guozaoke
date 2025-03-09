@@ -195,7 +195,7 @@ class PostListParser: ObservableObject {
                 } else {
                     self.nodeInfo?.title = "关注主题"
                 }
-                ToastView.toastText(self.isFollowedNodeInfo ? "主题关注成功": "取消关注主题成功")
+                ToastView.successToast(self.isFollowedNodeInfo ? "主题关注成功": "取消关注主题成功")
             }
             return (true, html)
         } catch {
@@ -289,11 +289,11 @@ class PostListParser: ObservableObject {
                    
                    try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
-                   log("hotTodayTopic \(self.hotTodayTopic)")
+                   //log("hotTodayTopic \(self.hotTodayTopic)")
                    self.currentPage += 1
                    self.posts.append(contentsOf: newPosts)
                    self.hasMore = self.currentPage <= self.totalPages
-                   log("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
+                   //log("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
                } catch {
                    self.error = error.localizedDescription
                }
@@ -386,7 +386,6 @@ private extension PostListParser {
           self.onlyHotNodes = nodes
           self.hotNodes = hotNodes
          //print("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
-        
           if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")
             for item in listItems {
@@ -407,7 +406,7 @@ private extension PostListParser {
             if !LoginStateChecker.isLogin {
                 NotificationCenter.default.post(name: .loginViewAlertNoti, object: nil)
             }
-            log("未找到节点导航部分")
+            //log("未找到节点导航部分")
         }
         return nodeItems
     }
@@ -429,10 +428,10 @@ private extension PostListParser {
             // 解析板块简介
             let description = try doc.select("span.f14").text()
             self.nodeInfo = NodeInfo(title: boardName, link: urlHeader ?? "", followText: followText, followLink: followLink, description: description, creatLink: createTopicLink)
-            print("创建主题按钮: \(createTopicText) (\(createTopicLink))")
-            print("板块名称: \(boardName) \(urlHeader ?? "")")
-            print("关注链接: \(followText) (\(followLink))")
-            print("板块简介: \(description)")
+            //print("创建主题按钮: \(createTopicText) (\(createTopicLink))")
+            //print("板块名称: \(boardName) \(urlHeader ?? "")")
+            //print("关注链接: \(followText) (\(followLink))")
+            //print("板块简介: \(description)")
         }
         
         return try topics.map { element in

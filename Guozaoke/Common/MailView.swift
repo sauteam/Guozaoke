@@ -32,29 +32,23 @@ struct MailView: UIViewControllerRepresentable {
     var body: String
     var recipient: String
     
-    // 用于处理关闭邮件界面的回调
     var didFinish: (Result<MFMailComposeResult, Error>) -> Void
     
-    // 创建和更新UIViewController
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let mailComposer = MFMailComposeViewController()
-        mailComposer.mailComposeDelegate = context.coordinator // 设置代理
-        
-        mailComposer.setSubject(subject) // 设置邮件主题
-        mailComposer.setMessageBody(body, isHTML: false) // 设置邮件内容
-        mailComposer.setToRecipients([recipient]) // 设置收件人
-        
+        mailComposer.mailComposeDelegate = context.coordinator
+        mailComposer.setSubject(subject) 
+        mailComposer.setMessageBody(body, isHTML: false)
+        mailComposer.setToRecipients([recipient])
         return mailComposer
     }
     
     func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
     
-    // 创建一个协调器来管理邮件发送结果
     func makeCoordinator() -> Coordinator {
         return Coordinator(didFinish: didFinish)
     }
     
-    // 协调器类，用于处理邮件发送结果
     class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
         var didFinish: (Result<MFMailComposeResult, Error>) -> Void
         

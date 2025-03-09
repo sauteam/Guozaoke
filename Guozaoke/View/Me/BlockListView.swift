@@ -15,13 +15,15 @@ struct BlockListView: View {
             List {
                 
                 ForEach(viewModel.memberInfo) {
-                    MemberItemView(data: $0)
+                    if $0.member.count > 0 {
+                        MemberItemView(data: $0)
+                    }
                 }
                 if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
-                } else if viewModel.memberInfo.isEmpty {
+                } else if viewModel.memberInfo.first?.member.isEmpty == true {
                     HStack {
                         Spacer()
                         Text(NoMoreDataTitle.nodata)

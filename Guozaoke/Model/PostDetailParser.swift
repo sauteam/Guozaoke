@@ -506,17 +506,27 @@ class PostDetailParser: ObservableObject {
                             } else if link.contains("replyVote") {
                                 
                             }
+                            
+                            
                         } else {
                             if message == "already_voted" {
                                 self.postDetail?.zanString = "感谢已表示"
+                            } else if message == "can_not_vote_your_topic" {
+                                ToastView.warningToast("不能感谢自己啊啊啊，o(╯□╰)o")
                             } else if message == "already_favorited" {
+                                ToastView.warningToast("已经收藏啦！")
                                 self.postDetail?.collectionString = "取消收藏"
                                 url = url?.replacingOccurrences(of: fav, with: unfav)
                                 self.postDetail?.collectionsLink = url ?? ""
                             } else if message == "not_been_favorited" {
+                                ToastView.warningToast("没有收藏唉！")
                                 self.postDetail?.collectionString = "加入收藏"
                                 url = url?.replacingOccurrences(of: unfav, with: fav)
                                 self.postDetail?.collectionsLink = url ?? ""
+                            } else if message == "can_not_favorite_your_topic" {
+                                ToastView.warningToast("不能收藏自己的主题，我也不知道为何")
+                            } else {
+                                ToastView.warningToast(message ?? "")
                             }
                         }
                     }

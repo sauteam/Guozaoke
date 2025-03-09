@@ -103,28 +103,25 @@ struct HTMLContentView: View {
         }
         
         if !content.contains("<a") {
-            let urlPattern = "(https?://[\\w\\d./-]+)"
             processedContent = processedContent.replacingOccurrences(
-                of: urlPattern,
+                of: "(https?://[\\w\\d./-]+)",
                 with: "<a href=\"$1\">$1</a>",
                 options: .regularExpression
             )
             
-            let emailPattern = "([\\w\\.-]+@[\\w\\.-]+\\.[\\w-]{2,})"
             processedContent = processedContent.replacingOccurrences(
-                of: emailPattern,
+                of: "([\\w\\.-]+@[\\w\\.-]+\\.[\\w-]{2,})",
                 with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
                 options: .regularExpression
             )
             
-            let phonePattern = "(1[3-9]\\d{9})"
             processedContent = processedContent.replacingOccurrences(
-                of: phonePattern,
+                of: "(1[3-9]\\d{9})",
                 with: "<a href=\"tel:$1\" class=\"phone\">$1</a>",
                 options: .regularExpression
             )
         }
-        
+                
         processedContent = processedContent.replacingOccurrences(
             of: "@([\\w\\-]+)",
             with: "<a href=\"user://$1\" class=\"user\">@$1</a>",
