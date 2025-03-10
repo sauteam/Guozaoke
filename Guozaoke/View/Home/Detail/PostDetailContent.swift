@@ -27,16 +27,9 @@ struct PostDetailContent: View, Equatable {
 
             PostRowView(post: post)
                 .padding(.horizontal)
-            //let result = TextChecker.checkText(detail.contentHtml)
+            
             RichTextView(content: detail.contentHtml)
                 .padding(.horizontal)
-//            if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
-//                RichTextView(content: detail.contentHtml)
-//                    .padding(.horizontal)
-//            } else {
-//                CopyTextView(content: detail.content)
-//                    .padding(.horizontal)
-//            }
             // 帖子图片
             if !detail.images.isEmpty {
                 //PostImagesView(images: detail.images)
@@ -90,8 +83,8 @@ struct PostFooterView: View {
     var body: some View {
                 
         HStack {
-
             Button {
+                hapticFeedback()
                 Task {
                     do {
                         let model = await detailParser.fetchCollectionAction(link: detailParser.postDetail?.collectionsLink)
@@ -139,6 +132,7 @@ struct PostFooterView: View {
             .lineLimit(1)
             
             Button {
+                hapticFeedback()
                 if LoginStateChecker.isLogin {
                     showComentView = true
                 } else {
@@ -168,7 +162,7 @@ struct ReplyListView: View {
     
     var body: some View {
         Text("全部回复 (\(replies.count))")
-            .font(.headline)
+            .titleFontStyle()
         ForEach($replies) { $reply in
             ReplyItemView(detailParser: detailParser, reply: $reply)
                 .onAppear {
@@ -277,15 +271,16 @@ struct ReplyItemView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
-            HTMLContentView(content: reply.content, fontSize: titleFontSize)
+            let content = "\(reply.content)"
+            HTMLContentView(content: content, fontSize: subTitleFontSize)
+                .dynamicContextMenu(userInfo: reply.content, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }
+            
             Divider()
                 .frame(maxWidth: .infinity)
         }
-        .dynamicContextMenu(userInfo: reply.content, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
         .sheet(isPresented: $showSafari) {
             if let url = urlToOpen {
                 SafariView(url: url)

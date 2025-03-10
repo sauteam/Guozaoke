@@ -92,7 +92,7 @@ struct HTMLContentView: View {
         
         var processedContent = content
             
-        let userPattern = "uid=(\\d+)"
+        let userPattern = PatternEnum.uid
         if let regex = try? NSRegularExpression(pattern: userPattern) {
             let range = NSRange(processedContent.startIndex..., in: processedContent)
             processedContent = regex.stringByReplacingMatches(
@@ -104,32 +104,32 @@ struct HTMLContentView: View {
         
         if !content.contains("<a") {
             processedContent = processedContent.replacingOccurrences(
-                of: "(https?://[\\w\\d./-]+)",
+                of: PatternEnum.link,
                 with: "<a href=\"$1\">$1</a>",
                 options: .regularExpression
             )
             
             processedContent = processedContent.replacingOccurrences(
-                of: "([\\w\\.-]+@[\\w\\.-]+\\.[\\w-]{2,})",
+                of: PatternEnum.email,
                 with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
                 options: .regularExpression
             )
             
             processedContent = processedContent.replacingOccurrences(
-                of: "(1[3-9]\\d{9})",
+                of: PatternEnum.phone,
                 with: "<a href=\"tel:$1\" class=\"phone\">$1</a>",
                 options: .regularExpression
             )
         }
                 
         processedContent = processedContent.replacingOccurrences(
-            of: "@([\\w\\-]+)",
+            of: PatternEnum.atUser,
             with: "<a href=\"user://$1\" class=\"user\">@$1</a>",
             options: .regularExpression
         )
         
         processedContent = processedContent.replacingOccurrences(
-            of: "#([^#]+)#",
+            of: PatternEnum.tagText,
             with: "<a href=\"tag://$1\" class=\"tag\">#$1#</a>",
             options: .regularExpression
         )

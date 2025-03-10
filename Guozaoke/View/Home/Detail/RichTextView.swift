@@ -199,19 +199,19 @@ struct CopyTextView: View {
         var processedContent = content
         // 转换 @用户
         processedContent = processedContent.replacingOccurrences(
-            of: "@(\\w+)",
+            of: PatternEnum.atUser,
             with: "<a href=\"user://$1\">@$1</a>",
             options: .regularExpression
         )
         
-        let emailPattern = "([\\w\\.-]+@[\\w\\.-]+\\.[\\w-]{2,})"
+        let emailPattern = PatternEnum.email
         processedContent = processedContent.replacingOccurrences(
             of: emailPattern,
             with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
             options: .regularExpression
         )
         
-        let phonePattern = "(1[3-9]\\d{9})"
+        let phonePattern = PatternEnum.phone
         processedContent = processedContent.replacingOccurrences(
             of: phonePattern,
             with: "<a href=\"tel:$1\" class=\"phone\">$1</a>",
@@ -220,7 +220,7 @@ struct CopyTextView: View {
 
         // 转换 #标签#
         processedContent = processedContent.replacingOccurrences(
-            of: "#([^#]+)#",
+            of: PatternEnum.tagText,
             with: "<a href=\"tag://$1\">#$1#</a>",
             options: .regularExpression
         )

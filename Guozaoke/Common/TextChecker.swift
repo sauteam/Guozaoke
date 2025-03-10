@@ -1,7 +1,53 @@
 import SwiftUI
 import Foundation
 
+struct PatternEnum {
+    static let  link  = "(https?://[\\w\\d./-]+)"
+    static let email  = "(\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b)"
+    static let atUser = "@([\\w\\-]+)"
+    static let tagText = "#([^#]+)#"
+    static let phone   = "(1[3-9]\\d{9})"
+    static let number  = ""
+    static let uid     = "uid=(\\d+)"
+    static let base64Pattern = "([A-Za-z0-9+/=]{4,})"
+}
+
+
 extension String {
+    
+    var base64Encoded: String? {
+        return self.data(using: .utf8)?.base64EncodedString()
+    }
+    
+    var base64Decoded: String? {
+        guard let data = Data(base64Encoded: self) else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+        
+    var base64TextList: [String] {
+        var decodedStrings = [String]()
+        do {
+            let regex = try NSRegularExpression(pattern: PatternEnum.base64Pattern, options: [])
+            let nsString = self as NSString
+            let results = regex.matches(in: self, options: [], range: NSRange(location: 0, length: nsString.length))
+            
+            for match in results {
+                if let range = Range(match.range, in: self) {
+                    let base64String = String(self[range])
+                    if let decodedString = base64String.base64Decoded {
+                        decodedStrings.append(decodedString)
+                    }
+                }
+            }
+        } catch let error {
+            print("[base64]无效的正则表达式: \(error.localizedDescription)")
+        }
+        return decodedStrings
+    }
+    
+    
     
     var extractURLs: [URL] {
         var urls: [URL] = []

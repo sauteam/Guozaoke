@@ -143,9 +143,8 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
         showSystemCopy.wrappedValue.toggle()
     } label: {
         Text("选择文本")
-        SFSymbol.copy
+        SFSymbol.handPointLeft
     }
-
 
     Button(action: {
         userInfo.copyToClipboard()
@@ -154,23 +153,13 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
         SFSymbol.copy
     }
     
-    if let userTags = userInfo.extractUserTags.first, userTags.count > 0, !userTags.contains(".")  {
-        Button(action: {
-            userInfo.userTagString.copyToClipboard()
-        }) {
-            Text("拷贝@用户")
-            SFSymbol.copy
-        }
-    }
-    
-    
     if let url = userInfo.extractURLs.first, url.absoluteString.isEmpty == false {
         if url.absoluteString != userInfo {
             Button(action: {
                 url.absoluteString.copyToClipboard()
             }) {
                 Text("拷贝链接")
-                SFSymbol.copy
+                SFSymbol.link
             }
         }
         
@@ -181,7 +170,7 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
             SFSymbol.safari
         }
     }
-    
+        
     if let email = userInfo.extractEmails.first, email.contains("@") {
         if email != userInfo {
             Button(action: {
@@ -204,6 +193,24 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
         }) {
             Text("发送邮件")
             SFSymbol.envelope
+        }
+    } else {
+        if let userTags = userInfo.extractUserTags.first, userTags.count > 0  {
+            Button(action: {
+                userInfo.userTagString.copyToClipboard()
+            }) {
+                Text("拷贝@用户")
+                SFSymbol.copy
+            }
+        }
+    }
+    
+    if let userTags = userInfo.base64TextList.first, userTags.count > 0  {
+        Button(action: {
+            userTags.copyToClipboard()
+        }) {
+            Text("拷贝Base64解码")
+            SFSymbol.documentViewfinderFill
         }
     }
 }

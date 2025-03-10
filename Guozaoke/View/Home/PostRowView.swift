@@ -100,15 +100,15 @@ struct PostRowView: View {
             }
         }
         .padding(.vertical, 4)
-        .customContextMenu(menuItems: [.copy, .safari], onAction: { item in
-            if item == .copy {
-                post.link.postDetailUrl().copyToClipboard()
-            } else if item == .safari {
-                let url = post.link.postDetailUrl()
-                url.copyToClipboard()
-                url.openURL()
-            }
-        })
+//        .customContextMenu(menuItems: [.copy, .safari], onAction: { item in
+//            if item == .copy {
+//                post.link.postDetailUrl().copyToClipboard()
+//            } else if item == .safari {
+//                let url = post.link.postDetailUrl()
+//                url.copyToClipboard()
+//                url.openURL()
+//            }
+//        })
     }
 }
 

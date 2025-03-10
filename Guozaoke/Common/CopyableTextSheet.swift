@@ -21,6 +21,7 @@ struct CopyableTextEditor: UIViewRepresentable {
         textView.backgroundColor = .clear
         //textView.isScrollEnabled = false
         textView.font = UIFont.systemFont(ofSize: titleFontSize)
+        textView.textColor = UIColor.black.withAlphaComponent(0.7)
         return textView
     }
 

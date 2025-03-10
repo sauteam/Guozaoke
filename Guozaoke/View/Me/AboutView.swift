@@ -9,7 +9,7 @@ import SwiftUI
 import MessageUI
 
 struct AboutView: View {
-    let feedbackEmail =  "isau@qq.com"
+    let feedbackEmail =  "268144637@qq.com"
     let info = """
                    过早客「guozaoke.com」武汉互联网精神家园
                
@@ -50,7 +50,7 @@ struct AboutView: View {
                     showMailView = true
                 }
                 .sheet(isPresented: $showMailView) {
-                    if !isSimulator() {
+                    if !isSimulator(), isiPhone {
                         MailView(subject: "过早客反馈", body: "", recipient: feedbackEmail) { result in
                             self.mailResult = result
                         }
