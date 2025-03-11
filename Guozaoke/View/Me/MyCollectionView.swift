@@ -59,7 +59,7 @@ struct MyCollectionView: View {
             .buttonStyle(.plain)
             .listStyle(.plain)
             .navigationTitleStyle(titleText)
-            .toolbar(.hidden, for: .tabBar)
+            .tabbarToolBar()
             .refreshable {
                 Task { await viewModel.loadMyTopic(linkUrl: linkUrl, reset: true) }
             }

@@ -41,7 +41,7 @@ struct PostDetailView: View {
         .refreshable {
             detailParser.loadNews(postId: postId)
         }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitleStyle("主题详情")
         .toolbar {

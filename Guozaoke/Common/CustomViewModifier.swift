@@ -76,6 +76,7 @@ struct CustomToolbarTitle: ViewModifier {
                         .fontWeight(weight)
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -90,6 +91,14 @@ struct CustomFontSettings: ViewModifier {
 }
 
 extension View {
+    func dynamicTabBarToolbar(isHidden: Bool) -> some View {
+        self.toolbar(isHidden ? .hidden : .visible, for: .tabBar)
+    }
+    
+    func tabbarToolBar() -> some View {
+        self.toolbar(UserDefaultsKeys.tabViewHidden ? .hidden : .visible, for: .tabBar)
+    }
+
     func navigationTitleStyle(_ title: String, weight: Font.Weight? = .light)-> some View {
         customToolbarTitle(title, fontName: titleFontName, fontSize: titleFontSize, weight: weight)
     }

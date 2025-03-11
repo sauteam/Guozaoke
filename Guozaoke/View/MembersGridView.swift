@@ -31,7 +31,7 @@ struct MembersGridView: View {
         .buttonStyle(.plain)
         .listStyle(.plain)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationTitleStyle("成员")
     }
 }

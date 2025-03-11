@@ -109,7 +109,7 @@ struct SearchListView: View {
             }
             .navigationTitleStyle("搜索")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
+            .tabbarToolBar()
             .refreshable {
                 if selectedTab == .topicList {
                     viewModel.loadNews()

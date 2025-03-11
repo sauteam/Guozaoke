@@ -67,7 +67,7 @@ struct IntroductationView: View {
                 }
             }
             .navigationTitleStyle("评论发帖")
-            .toolbar(.hidden, for: .tabBar)
+            .tabbarToolBar()
         }
     }
 }

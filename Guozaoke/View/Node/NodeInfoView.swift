@@ -55,7 +55,7 @@ struct NodeInfoView: View {
                 viewModel.loadNodeInfoLastst(nodeUrl)
             }
         }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitleStyle(viewModel.nodeInfo?.description ?? node)
         .toolbar {

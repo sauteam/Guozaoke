@@ -66,7 +66,7 @@ struct AboutView: View {
 //            }
             Spacer()
         }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationTitleStyle("关于过早客")
     }
 }

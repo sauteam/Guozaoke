@@ -22,6 +22,7 @@ struct SettingView: View {
     @AppStorage(UserDefaultsKeys.pushNotificationsEnabled) private var pushNotificationsEnabled: Bool = true
     @AppStorage(UserDefaultsKeys.hapticFeedbackEnabled) private var hapticFeedbackEnabled: Bool = true
     @AppStorage(UserDefaultsKeys.homeListRefreshEnabled) private var homeListRefreshEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.hiddenTabView) private var hiddenTabView: Bool = false
 
     
     var body: some View {
@@ -60,6 +61,13 @@ struct SettingView: View {
                         .titleFontStyle()
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
+                
+                Toggle(isOn: $hiddenTabView) {
+                    Text(hiddenTabView ? "隐藏TabView": "一直显示TabView")
+                        .titleFontStyle()
+                }
+                .toggleStyle(SwitchToggleStyle(tint: .blue))
+
             } header: {
                 Text("设置")
             }
@@ -79,7 +87,7 @@ struct SettingView: View {
             }
         }
         .listStyle(InsetGroupedListStyle())
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .sheet(item: $presentedSheet) { sheetType in
             switch sheetType {
             case .logout:

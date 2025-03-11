@@ -102,7 +102,7 @@ struct FontSizePreviewView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .padding()
         .onAppear {
             //selectedFontName = UserDefaultsKeys.settingFontName

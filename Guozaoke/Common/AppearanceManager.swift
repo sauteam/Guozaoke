@@ -24,6 +24,7 @@ struct UserDefaultsKeys {
     static let pushNotificationsEnabled = "pushNotificationsEnabled"
     static let hapticFeedbackEnabled    = "hapticFeedbackEnabled"
     static let homeListRefreshEnabled   = "homeListRefreshEnabled"
+    static let hiddenTabView   = "hiddenTabView"
     static let fontSizeKey = "fontSizeKey"
     static let fontNameKey = "fontNameKey"
     /// 18
@@ -44,6 +45,10 @@ struct UserDefaultsKeys {
     
     static var homeListRefresh: Bool {
         return UserDefaults.standard.bool(forKey: UserDefaultsKeys.homeListRefreshEnabled)
+    }
+    
+    static var tabViewHidden: Bool {
+        return UserDefaults.standard.bool(forKey: UserDefaultsKeys.hiddenTabView)
     }
     
     static var settingFontSize: CGFloat {

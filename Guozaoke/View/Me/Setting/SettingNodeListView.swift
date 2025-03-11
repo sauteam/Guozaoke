@@ -27,7 +27,7 @@ struct SettingNodeListView: View {
             }
             .onMove(perform: viewModel.movePostListItem)
         }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationTitleStyle("首页节点顺序")
         .navigationBarItems(trailing: EditButton())
     }

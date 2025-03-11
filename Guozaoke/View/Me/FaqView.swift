@@ -63,7 +63,7 @@ struct FaqView: View {
 //                Task { await viewModel.faqInfo() }
 //            }
 //        }
-        .toolbar(.hidden, for: .tabBar)
+        .tabbarToolBar()
         .navigationTitleStyle("Faq")
         .navigationBarTitleDisplayMode(.inline)
     }
