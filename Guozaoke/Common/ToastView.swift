@@ -18,6 +18,10 @@ class ToastView {
         NotificationPresenter.shared.present(text, includedStyle: includedStyle, duration: toastDuration)
     }
     
+    static func purchaseText(_ text: String, subtitle: String? = nil) {
+        toast(text, subtitle: subtitle, .matrix)
+    }
+
     static func toastText(_ text: String, subtitle: String? = nil) {
         toast(text, subtitle: subtitle, text == needLoginTextCanDo ? .warning: .dark)
     }

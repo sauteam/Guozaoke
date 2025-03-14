@@ -51,7 +51,7 @@ struct SettingView: View {
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                 
                 Toggle(isOn: $hapticFeedbackEnabled) {
-                    Text("触觉反馈")
+                    Text("触感反馈")
                         .titleFontStyle()
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))

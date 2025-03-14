@@ -18,7 +18,9 @@ struct GuozaokeApp: App {
     public static var window: UIWindow?
     public static var tabbarView = TabBarView()
     @State private var isActive = false
+    
     @StateObject var themeManager = ThemeManager(theme: Theme(primaryColor: .systemBlue, secondaryColor: .red))
+    @StateObject private var purchaseAppState = PurchaseAppState()
 
     init() {
         //UINavigationBar.appearance().tintColor = UIColor.brown
@@ -35,7 +37,8 @@ struct GuozaokeApp: App {
                         applyAppearance()
                         addNoti()
                     }
-                    .environmentObject(themeManager)
+                    //.environmentObject(themeManager)
+                    .environmentObject(purchaseAppState)
             } else {
                 LaunchScreenView()
                     .onAppear {
@@ -120,7 +123,11 @@ private extension GuozaokeApp {
             //APIService.clearCookie()
             //handleTokenExpiration()
         }
+        NotificationCenter.default.addObserver(forName: .purchaseSuccessNoti, object: nil, queue: .main) { _ in
+            purchaseAppState.savePurchaseStatus(isPurchased: true)
+        }
     }
+    
     
     func handleTokenExpiration() {
         Task {

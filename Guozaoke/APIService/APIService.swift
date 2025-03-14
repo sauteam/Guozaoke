@@ -50,6 +50,12 @@ enum MyTopicEnum: String {
     }
 }
 
+struct DeveloperInfo {
+    static let username =  "isau"
+    static let email =  "268144637@qq.com"
+    
+}
+
 /// App 版本信息
 struct AppInfo {
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
@@ -59,15 +65,15 @@ struct AppInfo {
     static let AppStoreReviewUrl = "itms-apps://itunes.apple.com/app/id\(AppId)?action=write-review"
 
     static var appName: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Guozaoke"
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "过早客"
     }
     
     static var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 
     static var buildNumber: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "100"
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "100"
     }
     
     

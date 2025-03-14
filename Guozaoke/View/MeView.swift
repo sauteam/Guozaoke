@@ -27,14 +27,28 @@ enum ModeTypeEnum: String, CaseIterable {
 struct MeView: View {
     @StateObject private var parser = UserInfoParser()
     @EnvironmentObject var themeManager: ThemeManager
-
+    @EnvironmentObject var purchaseAppState: PurchaseAppState
+    @State var showPurchaseView: Bool = false
     var body: some View {
-        VStack() {
+        ZStack() {
             MyProfileView()
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitleStyle("我的")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPurchaseView, content: {
+            InAppPurchaseView(isPresented: $showPurchaseView, purchaseAppState: purchaseAppState)
+        })
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: {
+                    hapticFeedback()
+                    showPurchaseView.toggle()
+                }) {
+                    SFSymbol.checkmarkCircleFill
+                }
+            }
+        }
         .onAppear {
             if !AccountState.isLogin() {
                 LoginStateChecker.LoginStateHandle()
@@ -87,7 +101,7 @@ struct MyProfileView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(AccountState.userName)
                                 .titleFontStyle()
-
+                            
                             Text("我的主页")
                                 .titleFontStyle()
                         }
@@ -136,7 +150,7 @@ struct MyProfileView: View {
                     ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
                 }
             }
-        
+            
             
             Section {
                 
@@ -151,48 +165,48 @@ struct MyProfileView: View {
                 NavigationLink(destination: FontSizePreviewView()) {
                     ProfileRow(icon: SFSymbol.textformatSize.rawValue, title: "字体大小")
                 }
-//                HStack {
-//                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
-//                    Spacer()
-//                    Picker("主题", selection: $appearanceMode) {
-//                        ForEach(ModeTypeEnum.allCases, id: \.self) { mode in
-//                            Text(mode.name)
-//                                .tag(mode)
-//                        }
-//                    }
-//                    .padding()
-//                   .pickerStyle(DefaultPickerStyle())
-//                   .onChange(of: currentMode) { newMode in
-//                       appearanceMode = newMode.rawValue
-//                       applyAppearanceMode(newMode)
-//                   }
-//                   .padding()
-//                }
-//                .onAppear {
-//                    if let savedMode = ModeTypeEnum(rawValue: appearanceMode) {
-//                        currentMode = savedMode
-//                        applyAppearanceMode(currentMode)
-//                    }
-//                }
+                //                HStack {
+                //                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
+                //                    Spacer()
+                //                    Picker("主题", selection: $appearanceMode) {
+                //                        ForEach(ModeTypeEnum.allCases, id: \.self) { mode in
+                //                            Text(mode.name)
+                //                                .tag(mode)
+                //                        }
+                //                    }
+                //                    .padding()
+                //                   .pickerStyle(DefaultPickerStyle())
+                //                   .onChange(of: currentMode) { newMode in
+                //                       appearanceMode = newMode.rawValue
+                //                       applyAppearanceMode(newMode)
+                //                   }
+                //                   .padding()
+                //                }
+                //                .onAppear {
+                //                    if let savedMode = ModeTypeEnum(rawValue: appearanceMode) {
+                //                        currentMode = savedMode
+                //                        applyAppearanceMode(currentMode)
+                //                    }
+                //                }
                 NavigationLink(destination: SettingView()) {
                     ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
                 }
             }
             
-             Section {
-                 
-                 Button {
-                     AppInfo.toAppStore()
-                 } label: {
-                     ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
-                 }
-                 
-                 Button {
-                     AppInfo.toWriteReview()
-                 } label: {
-                     ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
-                 }
-             }
+            Section {
+                
+                Button {
+                    AppInfo.toAppStore()
+                } label: {
+                    ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
+                }
+                
+                Button {
+                    AppInfo.toWriteReview()
+                } label: {
+                    ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
+                }
+            }
             
             HStack {
                 Spacer()

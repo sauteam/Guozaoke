@@ -28,42 +28,57 @@ func writeLog(message: String) {
 }
 
 struct MailView: UIViewControllerRepresentable {
-    var subject: String
-    var body: String
-    var recipient: String
-    
-    var didFinish: (Result<MFMailComposeResult, Error>) -> Void
-    
-    func makeUIViewController(context: Context) -> MFMailComposeViewController {
-        let mailComposer = MFMailComposeViewController()
-        mailComposer.mailComposeDelegate = context.coordinator
-        mailComposer.setSubject(subject) 
-        mailComposer.setMessageBody(body, isHTML: false)
-        mailComposer.setToRecipients([recipient])
-        return mailComposer
-    }
-    
-    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        return Coordinator(didFinish: didFinish)
-    }
-    
+    @Environment(\.presentationMode) var presentation
+    @Binding var result: Result<MFMailComposeResult, Error>?
+
+    var recipients: [String] = []
+
     class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
-        var didFinish: (Result<MFMailComposeResult, Error>) -> Void
-        
-        init(didFinish: @escaping (Result<MFMailComposeResult, Error>) -> Void) {
-            self.didFinish = didFinish
+        @Binding var presentation: PresentationMode
+        @Binding var result: Result<MFMailComposeResult, Error>?
+
+        init(presentation: Binding<PresentationMode>, result: Binding<Result<MFMailComposeResult, Error>?>) {
+            _presentation = presentation
+            _result = result
         }
-        
+
         func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
-            controller.dismiss(animated: true) {
-                if let error = error {
-                    self.didFinish(.failure(error))
-                } else {
-                    self.didFinish(.success(result))
-                }
+            defer {
+                $presentation.wrappedValue.dismiss()
             }
+            guard error == nil else {
+                self.result = .failure(error!)
+                return
+            }
+            self.result = .success(result)
         }
     }
+
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(presentation: presentation, result: $result)
+    }
+
+    func makeUIViewController(context: Context) -> MFMailComposeViewController {
+        let vc = MFMailComposeViewController()
+        vc.mailComposeDelegate = context.coordinator
+        vc.setToRecipients(recipients)
+
+        let device = UIDevice.current
+        let systemVersion = device.systemVersion
+        let model = DeviceUtils.getDeviceModel
+        let name = device.systemName
+        let messageBody = """
+
+        --------------------------
+        
+        \(model) \(name) \(systemVersion)
+        
+        """
+        vc.setMessageBody(messageBody, isHTML: false)
+
+        return vc
+    }
+
+    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
 }
+

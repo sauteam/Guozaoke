@@ -2,7 +2,8 @@ import SwiftUI
 
 struct SettingNodeListView: View {
     @StateObject private var viewModel = PostListViewModel()
-    
+    @EnvironmentObject var purchaseAppState: PurchaseAppState
+
     var body: some View {
         List {
             ForEach(viewModel.postListItems) { item in
@@ -22,14 +23,18 @@ struct SettingNodeListView: View {
                             .subTitleFontStyle(weight: .thin)
                     }
                     .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .disabled(!purchaseAppState.isPurchased)
                 }
                 .padding(.vertical, 8)
             }
             .onMove(perform: viewModel.movePostListItem)
+            .disabled(!purchaseAppState.isPurchased)
         }
         .tabbarToolBar()
         .navigationTitleStyle("首页节点顺序")
-        .navigationBarItems(trailing: EditButton())
+        .navigationBarItems(trailing:
+            EditButton()
+        )
     }
 }
 

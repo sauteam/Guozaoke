@@ -18,7 +18,39 @@ let subTitleFontSize = titleFontSize-2
 let titleFontSize = UserDefaultsKeys.settingFontSize
 
 let usernameFontSize = 13.0
-let menuFontSize = 15.0
+let menuFontSize     = 15.0
+
+/// 推荐字体
+enum RecommandFontOption: CaseIterable, Identifiable {
+    case system
+    case pingFangSCThin
+    case pingFangSCLight
+    case pingFangSCRegular
+    case pingFangSCMedium
+
+    var id: String {
+        name
+    }
+
+    var name: String {
+        switch self {
+        case .system:
+            return "系统默认"
+        case .pingFangSCThin:
+            return "PingFangSC-Thin"
+        case .pingFangSCLight:
+            return "PingFangSC-Light"
+        case .pingFangSCRegular:
+            return "PingFangSC-Regular"
+        case .pingFangSCMedium:
+            return "PingFangSC-Medium"
+        }
+    }
+
+    var size: CGFloat {
+        return UserDefaultsKeys.fontSize16
+    }
+}
 
 struct UserDefaultsKeys {
     static let pushNotificationsEnabled = "pushNotificationsEnabled"
@@ -30,11 +62,7 @@ struct UserDefaultsKeys {
     /// 18
     static let fontSize16  = 18.0
     static let fontName    = UIFont.systemFont(ofSize: settingFontSize).fontName
-    static let pingFangSCThin    = "PingFangSC-Thin"
-    static let pingFangSCLight   = "PingFangSC-Light"
-    static let pingFangSCRegular = "PingFangSC-Regular"
-    static let pingFangSCMedium  = "PingFangSC-Medium"
-
+    
     static var settingPushNotificationsEnabled: Bool {
         return UserDefaults.standard.bool(forKey: UserDefaultsKeys.pushNotificationsEnabled)
     }

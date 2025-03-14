@@ -109,11 +109,11 @@ struct HTMLContentView: View {
                 options: .regularExpression
             )
             
-            processedContent = processedContent.replacingOccurrences(
-                of: PatternEnum.email,
-                with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
-                options: .regularExpression
-            )
+//            processedContent = processedContent.replacingOccurrences(
+//                of: PatternEnum.email,
+//                with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
+//                options: .regularExpression
+//            )
             
             processedContent = processedContent.replacingOccurrences(
                 of: PatternEnum.phone,

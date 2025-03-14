@@ -8,6 +8,9 @@
 import SwiftUI
 
 enum SFSymbol: String {
+    case circle = "circle"
+    case checkmarkCircleFill = "checkmark.circle.fill"
+    case lockFill = "lock.fill"
     case documentViewfinderFill = "document.viewfinder.fill"
     case link = "link"
     case handPointLeft = "hand.point.up.left"

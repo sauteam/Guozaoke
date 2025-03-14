@@ -12,13 +12,13 @@ import UIKit
 import UserNotifications
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    //var notificationManager = NotificationManager()
-
+    //var notificationManager = NotificationManager()    
     // 应用启动完成时调用
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        
         print("App 启动完成")
         NotificationManager.shared.requestNotificationPermission()
         NotificationManager.shared.scheduleDailyNotification()

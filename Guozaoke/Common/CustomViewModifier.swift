@@ -183,7 +183,7 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
     if let email = userInfo.extractEmails.first, email.contains("@") {
         if email != userInfo {
             Button(action: {
-                showSafari.wrappedValue.toggle()
+                email.copyToClipboard()
             }) {
                 Text("拷贝邮箱")
                 SFSymbol.copy

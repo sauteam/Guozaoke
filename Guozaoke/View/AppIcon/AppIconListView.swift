@@ -6,6 +6,8 @@ struct AppIcon: Identifiable {
     let iconImage: String
 }
 
+// TODO: AppIconListView
+
 struct AppIconListView: View {
     
     //@StateObject private var viewModel = AppIconViewModel()
@@ -15,7 +17,6 @@ struct AppIconListView: View {
     var body: some View {
         
         VStack {
-            Text("12212")
 //            if viewModel.isLoading {
 //                ProgressView("Loading...")
 //            } else {

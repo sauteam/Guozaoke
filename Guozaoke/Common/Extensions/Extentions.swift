@@ -15,7 +15,6 @@ extension String {
     static let `default`: String = ""
     public static let empty = `default`
     
-    
     var isBlank: Bool {
         return self.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -325,6 +324,17 @@ struct DeviceUtils {
     static func isNotchScreen() -> Bool {
         let safeAreaInsets = getSafeAreaInsets()
         return safeAreaInsets.top > 20 
+    }
+    
+    static var getDeviceModel: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return identifier
     }
 }
 

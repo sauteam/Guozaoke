@@ -7,6 +7,9 @@ struct FontSizePreviewView: View {
     private let minFontSize: CGFloat = 15.0
     private let maxFontSize: CGFloat = 30.0
     
+    @EnvironmentObject var purchaseAppState: PurchaseAppState
+    @State var showPurchaseView: Bool = false
+
     private var allFontNames: [String] {
          var fontNames = [String]()
          for family in UIFont.familyNames {
@@ -41,59 +44,79 @@ struct FontSizePreviewView: View {
                  .padding()
 
                 Button(action: {
+                    hapticFeedback()
+                    if !purchaseAppState.isPurchased {
+                        showPurchaseView.toggle()
+                        ToastView.purchaseText("需要您内购或打赏才可以解锁")
+                        return
+                    }
                     saveFont()
                 }) {
-                    Text("保存设置")
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                    if !purchaseAppState.isPurchased {
+                        Label("保存设置", systemImage: .lockFill)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    } else {
+                        Text("保存设置")
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
                 }
 
                 Spacer()
             }
         }
+        .sheet(isPresented: $showPurchaseView, content: {
+            InAppPurchaseView(isPresented: $showPurchaseView, purchaseAppState: purchaseAppState)
+        })
         .navigationTitleStyle("字体预览")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button(action: {
                 }) {
                     Menu {
-                        Button {
-                            selectedFontName = UserDefaultsKeys.fontName
-                            selectedFontSize = UserDefaultsKeys.fontSize16
-                        } label: {
-                            Text("默认")
-                        }
-                        
-                        Button {
-                            selectedFontName = UserDefaultsKeys.pingFangSCThin
-                            selectedFontSize = UserDefaultsKeys.fontSize16
-                        } label: {
-                            Text(UserDefaultsKeys.pingFangSCThin)
-                        }
-                        
-                        Button {
-                            selectedFontName = UserDefaultsKeys.pingFangSCLight
-                            selectedFontSize = UserDefaultsKeys.fontSize16
-                        } label: {
-                            Text(UserDefaultsKeys.pingFangSCLight)
-                        }
-                        
-                        Button {
-                            selectedFontName = UserDefaultsKeys.pingFangSCMedium
-                            selectedFontSize = UserDefaultsKeys.fontSize16
-                        } label: {
-                            Text(UserDefaultsKeys.pingFangSCMedium)
-                        }
-                        
-                        Button {
-                            selectedFontName = UserDefaultsKeys.pingFangSCRegular
-                            selectedFontSize = UserDefaultsKeys.fontSize16
-                        } label: {
-                            Text(UserDefaultsKeys.pingFangSCRegular)
-                            .font(.custom(selectedFontName, size: selectedFontSize))
-                        }
+                        ForEach(RecommandFontOption.allCases) { fontOption in
+                            RecommandFontSelectionButton(fontOption: fontOption, selectedFontName: $selectedFontName, selectedFontSize: $selectedFontSize)
+                            }
+//                        Button {
+//                            selectedFontName = UserDefaultsKeys.fontName
+//                            selectedFontSize = UserDefaultsKeys.fontSize16
+//                        } label: {
+//                            Text("默认系统")
+//                        }
+//                        
+//                        Button {
+//                            selectedFontName = UserDefaultsKeys.pingFangSCThin
+//                            selectedFontSize = UserDefaultsKeys.fontSize16
+//                        } label: {
+//                            Text(UserDefaultsKeys.pingFangSCThin)
+//                        }
+//                        
+//                        Button {
+//                            selectedFontName = UserDefaultsKeys.pingFangSCMedium
+//                            selectedFontSize = UserDefaultsKeys.fontSize16
+//                        } label: {
+//                            Text(UserDefaultsKeys.pingFangSCMedium)
+//                        }
+//
+//                        Button {
+//                            selectedFontName = UserDefaultsKeys.pingFangSCLight
+//                            selectedFontSize = UserDefaultsKeys.fontSize16
+//                        } label: {
+//                            Text(UserDefaultsKeys.pingFangSCLight)
+//                        }
+//                                                
+//                        Button {
+//                            selectedFontName = UserDefaultsKeys.pingFangSCRegular
+//                            selectedFontSize = UserDefaultsKeys.fontSize16
+//                        } label: {
+//                            Text(UserDefaultsKeys.pingFangSCRegular)
+//                            .font(.custom(selectedFontName, size: selectedFontSize))
+//                        }
                     }
                     label: {
                         Text("推荐")
@@ -123,6 +146,22 @@ struct FontSizePreviewView: View {
         }
         if success {
             ToastView.successToast("保存成功")
+        }
+    }
+}
+
+struct RecommandFontSelectionButton: View {
+    let fontOption: RecommandFontOption
+    @Binding var selectedFontName: String
+    @Binding var selectedFontSize: CGFloat
+
+    var body: some View {
+        Button {
+            selectedFontName = fontOption.name
+            selectedFontSize = fontOption.size
+        } label: {
+            Text(fontOption.name)
+                .font(.custom(fontOption.name, size: fontOption.size))
         }
     }
 }

@@ -79,6 +79,7 @@ struct NotificationsView: View {
             .onAppear {
                 if !AccountState.isLogin() {
                     LoginStateChecker.LoginStateHandle()
+                    return
                 }
                 Task {
                     await viewModel.fetchNotifications()

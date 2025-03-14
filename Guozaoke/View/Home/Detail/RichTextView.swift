@@ -204,12 +204,12 @@ struct CopyTextView: View {
             options: .regularExpression
         )
         
-        let emailPattern = PatternEnum.email
-        processedContent = processedContent.replacingOccurrences(
-            of: emailPattern,
-            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
-            options: .regularExpression
-        )
+//        let emailPattern = PatternEnum.email
+//        processedContent = processedContent.replacingOccurrences(
+//            of: emailPattern,
+//            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
+//            options: .regularExpression
+//        )
         
         let phonePattern = PatternEnum.phone
         processedContent = processedContent.replacingOccurrences(

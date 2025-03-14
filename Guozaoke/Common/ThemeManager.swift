@@ -62,6 +62,9 @@ struct Theme: Hashable {
     }
 }
 
+// TODO:  ThemeManager
+
+/// 主题颜色 待完成
 class ThemeManager: ObservableObject {
     @Published var currentTheme: Theme
     
