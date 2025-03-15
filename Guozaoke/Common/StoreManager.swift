@@ -20,10 +20,10 @@ class StoreManager: ObservableObject {
         return "sponsorDeveloper"
     }
     var productIDs: [String] {
-        var ids = ["sponsorDeveloper", "GuozaokeReward", "GuozaokeReward2"]
-        if purchaseAppState.isPurchased {
-            ids.removeFirst()
-        }
+        let ids = ["sponsorDeveloper", "GuozaokeReward", "GuozaokeReward2"]
+//        if purchaseAppState.isPurchased {
+//            ids.removeFirst()
+//        }
         return ids
     }
     
@@ -44,7 +44,7 @@ class StoreManager: ObservableObject {
         }
         if let originalVersion = extractOriginalApplicationVersion(from: receiptData) {
             log("[iap] 📄 originalApplicationVersion: \(originalVersion)")
-            if originalVersion <= purchasedVersion {
+            if originalVersion < purchasedVersion {
                 purchaseAppState.savePurchaseStatus(isPurchased: true)
                 log("[iap] ✅ 付费下载用户，自动解锁")
             }

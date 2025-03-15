@@ -156,7 +156,7 @@ struct SendPostView: View {
     private func sendPost() async {
         isPosting = true
         do {
-            let response = try await APIService.sendPost(url: selectedTopic?.link.createPostUrl() ?? defaultNode.link.createPostUrl(), title: title, content: content)
+            let response = try await APIService.sendPost(url: selectedTopic?.link.createPostUrl ?? defaultNode.link.createPostUrl, title: title, content: content)
             print("Response: \(response)")
             postSuccess = true
             isPresented = false

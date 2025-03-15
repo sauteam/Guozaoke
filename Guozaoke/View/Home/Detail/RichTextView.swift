@@ -15,6 +15,7 @@ struct RichTextView: View {
     @State private var showUserInfo = false
     @State private var linkUserId = ""
     @State private var topicId = ""
+    @State private var searchText = ""
 
     @State private var showSafari = false
     @State private var url: URL?
@@ -26,6 +27,7 @@ struct RichTextView: View {
         var isPresented: Bool
     }
     @State private var safariState: SafariState?
+    @State private var showSearchView: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -73,6 +75,9 @@ struct RichTextView: View {
     
         .navigationDestination(isPresented: $showTopicInfo, destination: {
             PostDetailView(postId: topicId)
+        })
+        .navigationDestination(isPresented: $showSearchView, destination: {
+            SearchListView(searchQuery: searchText)
         })
         .sheet(
             isPresented: Binding(
@@ -135,6 +140,13 @@ struct RichTextView: View {
             onUserTap?(userId)
         case "tag":
             let tag = url.absoluteString.replacingOccurrences(of: "tag://", with: "")
+            if let decodedString = tag.removingPercentEncoding, decodedString.count > 0 {
+                searchText = decodedString
+            } else {
+                searchText = tag
+            }
+            showSearchView.toggle()
+            print("[tag] 解码失败 \(searchText)")
             onTagTap?(tag)
         default:
             break
@@ -204,12 +216,12 @@ struct CopyTextView: View {
             options: .regularExpression
         )
         
-//        let emailPattern = PatternEnum.email
-//        processedContent = processedContent.replacingOccurrences(
-//            of: emailPattern,
-//            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
-//            options: .regularExpression
-//        )
+        let emailPattern = PatternEnum.email
+        processedContent = processedContent.replacingOccurrences(
+            of: emailPattern,
+            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
+            options: .regularExpression
+        )
         
         let phonePattern = PatternEnum.phone
         processedContent = processedContent.replacingOccurrences(

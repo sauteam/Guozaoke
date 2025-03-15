@@ -186,7 +186,7 @@ class PostDetailParser: ObservableObject {
         guard !isLoading || postId == "0"  else { return }
         isLoading = true
         let footerUrl = "?p=\(currentPage)"
-        let urlString = (postId?.postDetailUrl() ?? "") + footerUrl
+        let urlString = (postId?.postDetailUrl ?? "") + footerUrl
         log("详情开始刷新 \(postId ?? "1111") \(urlString)")
 
         guard let url = URL(string: urlString) else {

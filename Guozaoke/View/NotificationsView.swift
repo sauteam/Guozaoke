@@ -35,7 +35,9 @@ struct NotificationsView: View {
             }
             
             List(viewModel.notifications) { notification in
-                NavigationLink(destination: PostDetailView(postId: notification.topicLink)) {
+                NavigationLink {
+                    PostDetailView(postId: notification.topicLink)
+                } label: {
                     NotificationRowView(notification: notification)
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
@@ -49,7 +51,6 @@ struct NotificationsView: View {
 //                            if notification == viewModel.notifications.last {
 //                            }
 //                        }
-
                 }
             }
             .padding(.vertical, 5)
@@ -131,46 +132,23 @@ struct NotificationRowView: View {
             }
             
             VStack(alignment: .leading) {
-                Text(notification.username)
-                    .font(.custom(titleFontName, size: subTitleFontSize))
-                    .foregroundColor(.black)
-                +
-                Text(" 回复了你的主题 ")
-                    .font(.custom(titleFontName, size: subTitleFontSize))
-                    .foregroundColor(.gray)
-                +
-                Text(notification.topicTitle)
-                    .font(.custom(titleFontName, size: subTitleFontSize))
-                    .foregroundColor(.black)
-
-                
+                HStack {
+                    Text(notification.username)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                        .foregroundColor(.adaptableBlack)
+                    +
+                    Text(" 回复了你的主题 ")
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                        .foregroundColor(.gray)
+                    +
+                    Text(notification.topicTitle)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                        .foregroundColor(.adaptableBlack)
+                }
                 HTMLContentView(content: notification.content, fontSize: subTitleFontSize)
                     .foregroundColor(.gray)
-                    
             }
             Spacer()
-        }
-        .contextMenu {
-            Button {
-                notification.topicLink.copyToClipboard()
-            } label: {
-                Label("拷贝链接", systemImage: .copy)
-            }
-            
-            Button {
-                let url = notification.topicLink.postDetailUrl()
-                url.copyToClipboard()
-                url.openURL()
-            } label: {
-                Label("网页查看帖子", systemImage: .safari)
-            }
-                        
-            Button {
-                let url = notification.username.userProfileUrl()
-                url.openURL()
-            } label: {
-                Label("网页查看主页", systemImage: .safari)
-            }
         }
     }
 }

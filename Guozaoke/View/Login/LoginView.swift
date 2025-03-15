@@ -33,6 +33,7 @@ struct LoginView: View {
                         .autocapitalization(.none)
                         .textFieldStyle(PlainTextFieldStyle())
                         .frame(height: 40)
+                        .subTitleFontStyle()
 //                        .background(Color(.secondarySystemBackground))
 //                        .cornerRadius(5)
 //                        .padding(.horizontal, 16)
@@ -41,6 +42,7 @@ struct LoginView: View {
                     SecureTextField(text: $password)
                         .frame(height: 40)
                         .listRowBackground(Color.clear)
+                        .subTitleFontStyle()
                 }
 
                 Section {
@@ -63,6 +65,7 @@ struct LoginView: View {
                                 .frame(height: 44)
                                 .background(Color.blue)
                                 .cornerRadius(10)
+                                .subTitleFontStyle()
                             
                         }
                     }
@@ -75,9 +78,9 @@ struct LoginView: View {
             }
             .listStyle(.plain)
             .navigationTitleStyle("登录过早客")
-            .navigationBarItems(trailing: Button("关闭") {
-                closeView()
-            })
+//            .navigationBarItems(trailing: Button("关闭") {
+//                closeView()
+//            })
             .sheet(isPresented: $showSafari) {
                 if let url = url {
                     SafariView(url: url)

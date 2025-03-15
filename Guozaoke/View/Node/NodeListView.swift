@@ -25,7 +25,6 @@ struct NodeListView: View {
                             .avatar()
                         
                         Text(item.title)
-                            .lineLimit(2)
                             .greedyWidth(.leading)
                             .titleFontStyle()
 

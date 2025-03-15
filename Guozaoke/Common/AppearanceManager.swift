@@ -88,7 +88,7 @@ struct UserDefaultsKeys {
     }
 }
 
-func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .heavy) {
     guard UserDefaultsKeys.settingHapticFeedbackEnabled else { return }
 
     DispatchQueue.main.async {

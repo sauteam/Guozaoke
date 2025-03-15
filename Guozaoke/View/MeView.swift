@@ -62,7 +62,7 @@ struct MeView: View {
                 if AccountState.userName.isEmpty {
                     return
                 }
-                Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl(), reset: true) }
+                Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl, reset: true) }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
@@ -70,7 +70,7 @@ struct MeView: View {
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
                 let username  = user["userName"] as? String ?? ""
-                Task { await parser.fetchUserInfoAndData(username.userProfileUrl(), reset: true) }
+                Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
             }
 
         }
@@ -212,6 +212,10 @@ struct MyProfileView: View {
                 Spacer()
                 Text(AppInfo.AppBeiAnText)
                     .subTitleFontStyle()
+                    .onTapGesture {
+                        hapticFeedback()
+                        AppInfo.beianGovUrl.openURL()
+                    }
                 Spacer()
             }
             .listRowSeparator(.hidden)

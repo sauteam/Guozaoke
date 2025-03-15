@@ -30,6 +30,7 @@ struct InAppPurchaseView: View {
     var body: some View {
         NavigationView {
             VStack {
+                productListView
                 HStack {
                     Spacer()
                     if storeManager.isLoading {
@@ -38,20 +39,19 @@ struct InAppPurchaseView: View {
                     }
                     Spacer()
                 }
-                productListView
-
-                Spacer()
                 purchaseButton
             }
             .navigationTitleStyle(purchaseAppState.isPurchased ? "已解锁": "等待解锁")
             .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        Task {
-                            await storeManager.restorePurchases()
+                if !purchaseAppState.isPurchased {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            Task {
+                                await storeManager.restorePurchases()
+                            }
+                        }) {
+                            Text("恢复购买")
                         }
-                    }) {
-                        Text("恢复购买")
                     }
                 }
             }
@@ -59,20 +59,19 @@ struct InAppPurchaseView: View {
         .onAppear {
             Task {
                 await storeManager.fetchProducts()
+                if let defaultProduct = storeManager.products.first(where: { $0.id == storeManager.sponserIds }) {
+                    selectedProduct = defaultProduct
+                } else {
+                    selectedProduct = storeManager.products.first
+                }
             }
-            
-            if let defaultProduct = storeManager.products.first(where: { $0.id == storeManager.sponserIds }) {
-                  selectedProduct = defaultProduct
-              } else {
-                  selectedProduct = storeManager.products.first
-              }
         }
     }
     
-     private func productSortOrder(lhs: Product, rhs: Product) -> Bool {
-         let ids = storeManager.productIDs
-         return (ids.firstIndex(of: lhs.id) ?? ids.count) < (ids.firstIndex(of: rhs.id) ?? ids.count)
-     }
+    private func productSortOrder(lhs: Product, rhs: Product) -> Bool {
+        let ids = storeManager.productIDs
+        return (ids.firstIndex(of: lhs.id) ?? ids.count) < (ids.firstIndex(of: rhs.id) ?? ids.count)
+    }
     
     @ViewBuilder
     private var productListView: some View {
@@ -92,22 +91,24 @@ struct InAppPurchaseView: View {
 
     @ViewBuilder
     private func productRow(for product: Product) -> some View {
-        HStack {
-            productSelectionIcon(for: product)
-            VStack(alignment: .leading) {
-                Text(product.displayPrice)
-                    .subTitleFontStyle()
-                    .padding(.bottom, 2)
-
-                Text(product.description)
-                    .subTitleFontStyle()
-            }
-            .padding(.vertical)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button(action: {
             selectedProduct = product
+        }) {
+            HStack {
+                productSelectionIcon(for: product)
+                VStack(alignment: .leading) {
+                    Text(product.displayPrice)
+                        .subTitleFontStyle()
+                        .padding(.bottom, 2)
+
+                    Text(product.description)
+                        .subTitleFontStyle()
+                }
+                .padding(.vertical)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PlainButtonStyle())
     }
 
     @ViewBuilder

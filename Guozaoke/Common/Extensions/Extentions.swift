@@ -340,6 +340,17 @@ struct DeviceUtils {
 
 
 extension Color {
+    static var adaptableBlack: Color {
+        return Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor.white.withAlphaComponent(0.8)
+            default:
+                return UIColor.black.withAlphaComponent(0.8)
+            }
+        })
+    }
+    
     /// 黑色 白色
     static let contentTextColor = Color("contentTextColor")
     

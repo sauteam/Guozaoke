@@ -21,90 +21,17 @@ struct SearchListView: View {
     @State private var showUserInfo: Bool = false
     @State private var showDetailInfo: Bool = false
 
+    init(searchQuery: String = "", selectedTab: SearchEnum = .topicList) {
+         _searchQuery = State(initialValue: searchQuery)
+         _selectedTab = State(initialValue: selectedTab)
+     }
+    
     var body: some View {
         NavigationStack {
             VStack {
-                HStack {
-                    TextField(inputText, text: $searchQuery, onCommit: {
-                        if selectedTab == .user {
-                            showUserInfo.toggle()
-                        } else if selectedTab == .topicList {
-                            viewModel.searchText(searchQuery)
-                        } else if selectedTab == .topicInfo {
-                            showDetailInfo.toggle()
-                        }
-                    })
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.search)
-                    .focused($isFocused)
-                    .navigationDestination(isPresented: $showDetailInfo, destination: {
-                        if !searchQuery.isEmpty {
-                            PostDetailView(postId: searchQuery)
-                         }
-                    })
-                    .navigationDestination(isPresented: $showUserInfo, destination: {
-                        if !searchQuery.isEmpty {
-                             UserInfoView(userId: searchQuery)
-                         }
-                    })
-                }
-                .frame(width: screenWidth-80, height: 40, alignment: .center)
+                searchTextField
                 Spacer()
-
-                
-                if selectedTab == .user {
-                    
-                } else if selectedTab == .topicList {
-                    if viewModel.isLoading && viewModel.searchList.isEmpty {
-                        ProgressView("正在搜索中...")
-                    } else if !viewModel.searchList.isEmpty {
-                        List {
-                            ForEach(viewModel.searchList) { post in
-                                NavigationLink(destination: PostDetailView(postId: post.link)) {
-                                    VStack(alignment: .leading) {
-                                        Text(post.title)
-                                            .font(.headline)
-                                        Text(post.description)
-                                            .font(.subheadline)
-                                            .lineLimit(3)
-                                    }
-                                    .padding(.vertical)
-                                    .onAppear {
-                                        if post.id == viewModel.searchList.last?.id {
-                                            viewModel.loadMore()
-                                        }
-                                    }
-                                }
-                            }
-                            if viewModel.hasMorePages {
-                                HStack {
-                                    ProgressView()
-                                    Spacer()
-                                }
-                                .onAppear {
-                                    viewModel.loadMore()
-                                }
-                            } else {
-                                if viewModel.searchList.count > 10 {
-                                    HStack {
-                                        Text("已经到底了")
-                                    }
-                                    .listRowSeparator(.hidden)
-                                }
-                            }
-                        }
-                        .listStyle(.plain)
-                    } else {
-                        let tips = viewModel.errorMessage ?? (searchQuery.count > 0 ? (viewModel.searchList.count == 0 ? changeKeyText: inputText): inputText)
-                        HStack {
-                            Text(tips)
-                                .foregroundColor(.gray)
-                        }
-                        .listRowSeparator(.hidden)
-                    }
-                } else if selectedTab == .topicInfo {
-                    
-                }
+                contentView
                 Spacer()
             }
             .navigationTitleStyle("搜索")
@@ -117,6 +44,9 @@ struct SearchListView: View {
             }
             .onAppear {
                 isFocused = true
+                if !searchQuery.isEmpty {
+                    performSearch()
+                }
             }
             .onDisappear {
                 isFocused = false
@@ -136,6 +66,114 @@ struct SearchListView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private var searchTextField: some View {
+        HStack {
+            TextField(inputText, text: $searchQuery, onCommit: {
+                if selectedTab == .user {
+                    showUserInfo.toggle()
+                } else if selectedTab == .topicList {
+                    viewModel.searchText(searchQuery)
+                } else if selectedTab == .topicInfo {
+                    showDetailInfo.toggle()
+                }
+            })
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .submitLabel(.search)
+            .focused($isFocused)
+            .navigationDestination(isPresented: $showDetailInfo, destination: {
+                if !searchQuery.isEmpty {
+                    PostDetailView(postId: searchQuery)
+                 }
+            })
+            .navigationDestination(isPresented: $showUserInfo, destination: {
+                if !searchQuery.isEmpty {
+                     UserInfoView(userId: searchQuery)
+                 }
+            })
+        }
+        .frame(width: screenWidth-80, height: 40, alignment: .center)
+    }
+        
+    private var contentView: some View {
+        Group {
+            switch selectedTab {
+            case .user:
+                HStack {
+                    Text("🔍用户名或「过早客多少号成员：1」")
+                        .foregroundColor(.gray)
+                }
+            case .topicList:
+                topicListView
+            case .topicInfo:
+                HStack {
+                    Text("🔍输入帖子ID，如：118185")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+    }
+    
+    private var topicListView: some View {
+        Group {
+            if viewModel.isLoading && viewModel.searchList.isEmpty {
+                ProgressView("正在搜索中...")
+            } else if !viewModel.searchList.isEmpty {
+                List {
+                    ForEach(viewModel.searchList) { post in
+                        NavigationLink(destination: PostDetailView(postId: post.link)) {
+                            VStack(alignment: .leading) {
+                                Text(post.title)
+                                    .font(.headline)
+                                Text(post.description)
+                                    .font(.subheadline)
+                                    .lineLimit(3)
+                            }
+                            .padding(.vertical)
+                            .onAppear {
+                                if post.id == viewModel.searchList.last?.id {
+                                    viewModel.loadMore()
+                                }
+                            }
+                        }
+                    }
+                    if viewModel.hasMorePages {
+                        HStack {
+                            ProgressView()
+                            Spacer()
+                        }
+                        .onAppear {
+                            viewModel.loadMore()
+                        }
+                    } else {
+                        if viewModel.searchList.count > 10 {
+                            HStack {
+                                Text("已经到底了")
+                            }
+                            .listRowSeparator(.hidden)
+                        }
+                    }
+                }
+                .listStyle(.plain)
+            } else {
+                let tips = viewModel.errorMessage ?? (searchQuery.isEmpty ? inputText : changeKeyText)
+                Text(tips)
+                    .foregroundColor(.gray)
+                    .padding()
+            }
+        }
+    }
+    
+    private func performSearch() {
+        switch selectedTab {
+        case .user:
+            showUserInfo.toggle()
+        case .topicList:
+            viewModel.searchText(searchQuery)
+        case .topicInfo:
+            showDetailInfo.toggle()
         }
     }
     

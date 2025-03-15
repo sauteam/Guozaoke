@@ -62,14 +62,14 @@ struct PostDetailView: View {
                     }
                     
                     Button {
-                        postId.postDetailUrl().copyToClipboard()
+                        postId.postDetailUrl.copyToClipboard()
                     } label: {
                         Label("拷贝链接", systemImage: .copy)
                     }
 
                    
                     Button {
-                        postId.postDetailUrl().openURL()
+                        postId.postDetailUrl.openURL()
                     } label: {
                         Label("网页查看详情", systemImage: .safari)
                     }
@@ -142,12 +142,14 @@ struct PostDetailView: View {
     }
     
     func shareContent() {
-        let link = postId.postDetailUrl()
-        let textToShare = (detailParser.postDetail?.title ?? "")
-        let activityController = UIActivityViewController(activityItems: [textToShare, link], applicationActivities: nil)
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootViewController = windowScene.windows.first?.rootViewController {
-            rootViewController.present(activityController, animated: true, completion: nil)
+        let link = postId.postDetailUrl
+        if link.count > 0 {
+            let textToShare = (detailParser.postDetail?.title ?? "")
+            let activityController = UIActivityViewController(activityItems: [link, textToShare], applicationActivities: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootViewController = windowScene.windows.first?.rootViewController {
+                rootViewController.present(activityController, animated: true, completion: nil)
+            }
         }
     }
 }

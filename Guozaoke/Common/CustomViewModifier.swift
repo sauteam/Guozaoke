@@ -9,6 +9,7 @@ import SwiftUI
 
 enum ContextMenuItem: String, CaseIterable {
     case copy    = "拷贝内容"
+    case link    = "拷贝链接"
     case share   = "分享"
     case delete  = "删除"
     case safari  = "浏览器打开"
@@ -24,6 +25,8 @@ enum ContextMenuItem: String, CaseIterable {
         switch self {
         case .copy:
             return SFSymbol.copy.image
+        case .link:
+            return SFSymbol.link.image
         case .share:
             return SFSymbol.share.image
         case .delete:
@@ -137,16 +140,16 @@ extension View {
 }
 
 extension View {
-    func dynamicContextMenu(userInfo: String, showSafari: Binding<Bool>, showSystemCopy: Binding<Bool>) -> some View {
+    func dynamicContextMenu(userInfo: String, report: Bool? = false, showSafari: Binding<Bool>, showSystemCopy: Binding<Bool>) -> some View {
         self.contextMenu {
-            DynamicContextMenuContent(userInfo: userInfo, showSafari: showSafari, showSystemCopy: showSystemCopy)
+            DynamicContextMenuContent(userInfo: userInfo, report: report, showSafari: showSafari, showSystemCopy: showSystemCopy)
         }
     }
 }
 
 
 @ViewBuilder
-func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, showSystemCopy: Binding<Bool>) -> some View {
+func DynamicContextMenuContent(userInfo: String,  report: Bool? = false, showSafari: Binding<Bool>, showSystemCopy: Binding<Bool>) -> some View {
     
     Button {
         showSystemCopy.wrappedValue.toggle()
@@ -172,12 +175,12 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
             }
         }
         
-        Button(action: {
-            showSafari.wrappedValue.toggle()
-        }) {
-            Text("浏览器查看")
-            SFSymbol.safari
-        }
+//        Button(action: {
+//            showSafari.wrappedValue.toggle()
+//        }) {
+//            Text("浏览器查看")
+//            SFSymbol.safari
+//        }
     }
         
     if let email = userInfo.extractEmails.first, email.contains("@") {
@@ -220,6 +223,15 @@ func DynamicContextMenuContent(userInfo: String, showSafari: Binding<Bool>, show
         }) {
             Text("拷贝Base64解码")
             SFSymbol.documentViewfinderFill
+        }
+    }
+    
+    if report == true {
+        Button {
+            ToastView.reportToast()
+        } label: {
+            Text("举报")
+            SFSymbol.report
         }
     }
 }

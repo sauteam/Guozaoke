@@ -3,6 +3,7 @@ import SwiftUI
 struct HTMLContentView: View {
     let content: String
     let fontSize: CGFloat
+    var showReport: Bool = false
     var onLinkTap: ((URL) -> Void)?
     var onUserTap: ((String) -> Void)?
     var onTagTap: ((String) -> Void)?
@@ -23,6 +24,11 @@ struct HTMLContentView: View {
     @State private var lightModeContent: AttributedString?
     @State private var darkModeContent: AttributedString?
     
+    @State private var showSystemCopy = false
+    @State private var showSystemCopySafari = false
+    @State private var text = ""
+
+
     private struct SafariState {
         var url: URL
         var isPresented: Bool
@@ -41,23 +47,6 @@ struct HTMLContentView: View {
                         .environment(\.openURL, OpenURLAction { url in
                             handleLink(url)
                         })
-                        .navigationDestination(isPresented: $showUserInfo) {
-                            UserInfoView(userId: linkUserId)
-                        }
-                        .navigationDestination(isPresented: $showTopicInfo) {
-                            PostDetailView(postId: topicId)
-                        }
-                }
-                
-                .sheet(
-                    isPresented: Binding(
-                        get: { safariState != nil },
-                        set: { if !$0 { safariState = nil } }
-                    )
-                ) {
-                    if let state = safariState {
-                        SafariView(url: state.url)
-                    }
                 }
             } else {
                 Text(content)
@@ -66,7 +55,30 @@ struct HTMLContentView: View {
                     .foregroundColor(Color.primary)
             }
         }
+        .navigationDestination(isPresented: $showUserInfo) {
+            UserInfoView(userId: linkUserId)
+        }
+        .navigationDestination(isPresented: $showTopicInfo) {
+            PostDetailView(postId: topicId)
+        }
+        .dynamicContextMenu(userInfo: content, report: showReport, showSafari: $showSystemCopySafari, showSystemCopy: $showSystemCopy)
+        .sheet(isPresented: $showSystemCopy) {
+            CopyableTextSheet(isPresented: $showSystemCopy, text: $text)
+                .presentationDetents([.height(200), .medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { safariState != nil },
+                set: { if !$0 { safariState = nil } }
+            )
+        ) {
+            if let state = safariState {
+                SafariView(url: state.url)
+            }
+        }
         .onAppear {
+            text = content
             createAttributedString()
         }
         .onChange(of: colorScheme) { newValue in
@@ -109,11 +121,11 @@ struct HTMLContentView: View {
                 options: .regularExpression
             )
             
-//            processedContent = processedContent.replacingOccurrences(
-//                of: PatternEnum.email,
-//                with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
-//                options: .regularExpression
-//            )
+            processedContent = processedContent.replacingOccurrences(
+                of: PatternEnum.email,
+                with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
+                options: .regularExpression
+            )
             
             processedContent = processedContent.replacingOccurrences(
                 of: PatternEnum.phone,

@@ -19,7 +19,7 @@ let purchasedVersion = "1.5.2"
 
 class PurchaseAppState: ObservableObject {
     @Published var isPurchased: Bool = false
-
+    
     private let purchaseKey = KeychainKeys.purchaseGuozaokeKey
     
     init() {
@@ -28,7 +28,7 @@ class PurchaseAppState: ObservableObject {
     
     func checkAndSavePurchaseStatus() {
         let currentVersion = AppInfo.appVersion
-        if currentVersion <= purchasedVersion {
+        if currentVersion < purchasedVersion {
             if let _ = KeychainHelper.retrieve(key: purchaseKey) {
             } else {
                 savePurchaseStatus(isPurchased: self.isPurchased)

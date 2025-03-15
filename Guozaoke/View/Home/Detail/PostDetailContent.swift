@@ -272,8 +272,8 @@ struct ReplyItemView: View {
                     .foregroundColor(.secondary)
             }
             let content = "\(reply.content)"
-            HTMLContentView(content: content, fontSize: subTitleFontSize)
-                .dynamicContextMenu(userInfo: reply.content, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
+            HTMLContentView(content: content, fontSize: subTitleFontSize, showReport: true)
+//                .dynamicContextMenu(userInfo: reply.content, report: true, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }

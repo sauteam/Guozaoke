@@ -14,15 +14,27 @@ struct CopyableTextEditor: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
-        textView.isEditable = false
+        textView.isEditable   = false
         textView.isSelectable = true
         textView.delegate = context.coordinator
         textView.text = text
         textView.backgroundColor = .clear
-        //textView.isScrollEnabled = false
-        textView.font = UIFont.systemFont(ofSize: titleFontSize)
-        textView.textColor = UIColor.black.withAlphaComponent(0.7)
+        ///textView.isScrollEnabled = false
+        textView.font = fontStyle
+        textView.textColor = UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor.white.withAlphaComponent(0.8)
+            default:
+                return UIColor.black.withAlphaComponent(0.8)
+            }
+        }
         return textView
+    }
+    
+    var fontStyle: UIFont {
+        let font = UIFont(name: titleFontName, size: subTitleFontSize) ?? UIFont.systemFont(ofSize: subTitleFontSize)
+        return font
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
@@ -62,11 +74,8 @@ struct CopyableTextSheet: View {
                     .titleFontStyle()
             }
             .padding()
+            .navigationBarTitle("选择文本", displayMode: .inline)
         }
-        .navigationBarTitle("复制文本", displayMode: .inline)
-        .navigationBarItems(trailing: Button("关闭") {
-            isPresented = false
-        })
     }
 }
 

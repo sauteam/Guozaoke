@@ -60,6 +60,7 @@ struct DeveloperInfo {
 struct AppInfo {
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
     static let AppBeiAnText = "粤ICP备2025374276号-2A"
+    static let beianGovUrl = "https://beian.miit.gov.cn"
     static let AppId = "6740704728"
     static let AppStoreUrl = "https://apps.apple.com/app/id\(AppId)"
     static let AppStoreReviewUrl = "itms-apps://itunes.apple.com/app/id\(AppId)?action=write-review"
@@ -341,11 +342,11 @@ extension APIService {
 
 extension String {
     /// 后面拼接参数
-    func addUrl() -> String {
+    var addUrl: String {
         return APIService.baseUrlString + self
     }
     /// 个人主页
-    func userProfileUrl() -> String {
+    var userProfileUrl: String {
         let uid = self
         if uid.hasPrefix("/u/") {
             return APIService.baseUrlString + uid
@@ -353,7 +354,7 @@ extension String {
         return APIService.baseUrlString + "/u/" + uid
     }
     /// 详情主页
-    func postDetailUrl() -> String {
+    var postDetailUrl: String {
         let uid = self
         let postDetail = APIService.baseUrlString + "/"
         
@@ -369,7 +370,7 @@ extension String {
     }
         
     /// /node/IT => /t/create/IT
-    func createPostUrl() -> String {
+    var createPostUrl: String {
         var url = self
         if url.hasPrefix("/node") {
             url = url.replacingOccurrences(of: "/node", with: "create")
