@@ -28,18 +28,16 @@ class PurchaseAppState: ObservableObject {
     
     func checkAndSavePurchaseStatus() {
         let currentVersion = AppInfo.appVersion
-        if currentVersion < purchasedVersion {
-            if let _ = KeychainHelper.retrieve(key: purchaseKey) {
-            } else {
-                savePurchaseStatus(isPurchased: self.isPurchased)
-            }
-           self.isPurchased = true
-       } else if let savedStatus = KeychainHelper.retrieve(key: purchaseKey) {
-           self.isPurchased = savedStatus == "purchased".data(using: .utf8)
-       } else {
-           self.isPurchased = false
-       }
-        log("[app][version][iap] currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(self.isPurchased)")
+        if KeychainHelper.isPurchased == true {
+            isPurchased = true
+        } else if currentVersion < purchasedVersion {
+            isPurchased = true
+            savePurchaseStatus(isPurchased: isPurchased)
+        } else {
+            isPurchased = false
+        }
+        
+        log("[app][version][iap]1 currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(isPurchased)")
     }
 
     func savePurchaseStatus(isPurchased: Bool) {
@@ -63,6 +61,16 @@ class PurchaseAppState: ObservableObject {
 
 // MARK: - KeychainHelper
 class KeychainHelper {
+    
+    static func clearPurchaseStatus() {
+        let clear = delete(key: KeychainKeys.purchaseGuozaokeKey)
+        log("[iap][clear] \(clear)")
+    }
+    
+    static var isPurchased: Bool {
+        let savedStatus = KeychainHelper.retrieve(key: KeychainKeys.purchaseGuozaokeKey)
+        return savedStatus == "purchased".data(using: .utf8)
+    }
 
     static func save(key: String, data: Data) -> Bool {
         let query: [String: Any] = [
@@ -75,7 +83,7 @@ class KeychainHelper {
         return status == errSecSuccess
     }
 
-    // Retrieve data from Keychain
+    /// Retrieve data from Keychain
     static func retrieve(key: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -116,10 +124,5 @@ class KeychainHelper {
         
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess
-    }
-    
-    static func clearPurchaseStatus() {
-        let clear = delete(key: KeychainKeys.purchaseGuozaokeKey)
-        log("[iap][clear] \(clear)")
     }
 }

@@ -43,9 +43,10 @@ struct SearchListView: View {
                 }
             }
             .onAppear {
-                isFocused = true
                 if !searchQuery.isEmpty {
                     performSearch()
+                } else {
+                    isFocused = true
                 }
             }
             .onDisappear {

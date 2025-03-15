@@ -1,7 +1,7 @@
 import MarkdownUI
 import SwiftUI
 import RichText
-
+/// 解析主题详情
 struct RichTextView: View {
     let content: String
     //let fontSize: CGFloat = UserDefaultsKeys.fontSize16
@@ -116,7 +116,7 @@ struct RichTextView: View {
         case "mailto":
             let email = url.absoluteString.replacingOccurrences(of: "mailto:", with: "")
             onEmailTap?(email)
-            let phone = "mailto://"
+            let phone = "mailto:"
             let phoneNumberFormatted = phone + email
             if let url = URL(string: phoneNumberFormatted) {
                 UIApplication.shared.open(url)
@@ -124,7 +124,7 @@ struct RichTextView: View {
         case "tel":
             let number = url.absoluteString.replacingOccurrences(of: "tel:", with: "")
             onPhoneTap?(number)
-            let phone = "tel://"
+            let phone = "tel:"
             let phoneNumberFormatted = phone + number
             if let url = URL(string: phoneNumberFormatted) {
                 UIApplication.shared.open(url)
@@ -164,24 +164,14 @@ struct RichTextView: View {
     }
 
     private func formatContent(_ content: String) -> String {
-        var processedContent = content
-        processedContent = processedContent.replacingOccurrences(
-            of: "@(\\w+)",
-            with: "<a href=\"user://$1\">@$1</a>",
-            options: .regularExpression
-        )
-
-        processedContent = processedContent.replacingOccurrences(
-            of: "#([^#]+)#",
-            with: "<a href=\"tag://$1\">#$1#</a>",
-            options: .regularExpression
-        )
-                
-        return processedContent
+        //  这里添加后显示有问题 @用户导致 本身RichText 支持解析email
+        return content.regexText
     }
 }
 
 
+
+// MARK: - MarkdownTextView
 struct MarkdownTextView: View {
     let content: String
     var body: some View {
@@ -208,36 +198,7 @@ struct CopyTextView: View {
     }
 
     private func formatContent(_ content: String) -> String {
-        var processedContent = content
-        // 转换 @用户
-        processedContent = processedContent.replacingOccurrences(
-            of: PatternEnum.atUser,
-            with: "<a href=\"user://$1\">@$1</a>",
-            options: .regularExpression
-        )
-        
-        let emailPattern = PatternEnum.email
-        processedContent = processedContent.replacingOccurrences(
-            of: emailPattern,
-            with: "<a href=\"mailto:$1\" class=\"email\">$1</a>",
-            options: .regularExpression
-        )
-        
-        let phonePattern = PatternEnum.phone
-        processedContent = processedContent.replacingOccurrences(
-            of: phonePattern,
-            with: "<a href=\"tel:$1\" class=\"phone\">$1</a>",
-            options: .regularExpression
-        )
-
-        // 转换 #标签#
-        processedContent = processedContent.replacingOccurrences(
-            of: PatternEnum.tagText,
-            with: "<a href=\"tag://$1\">#$1#</a>",
-            options: .regularExpression
-        )
-
-        return processedContent
+        return content.regexText
     }
 }
 

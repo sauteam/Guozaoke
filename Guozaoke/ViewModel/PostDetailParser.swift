@@ -270,7 +270,7 @@ class PostDetailParser: ObservableObject {
 //        } else {
 //            topicContent = content
 //        }
-        log("[content] \(topicContent)")
+        log("[content] \(contentHtml)")
         
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
@@ -330,7 +330,7 @@ class PostDetailParser: ObservableObject {
         let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
-        log("replies \(replies)")
+        //log("replies \(replies)")
         self.replies.append(contentsOf: replies)
         return PostDetail(
             id: postId ?? "",

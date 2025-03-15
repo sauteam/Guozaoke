@@ -10,7 +10,7 @@ import SwiftSoup
 import Alamofire
 
 enum PostItemEnum {
-    case homeRow, detailRow, profileRow, nodeInfo, search
+    case homeRow, detailRow, profileRow, nodeInfo, search, collectionRow
 }
 
 enum PostTypeEnum {

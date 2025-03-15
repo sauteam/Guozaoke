@@ -82,41 +82,6 @@ struct FontSizePreviewView: View {
                         ForEach(RecommandFontOption.allCases) { fontOption in
                             RecommandFontSelectionButton(fontOption: fontOption, selectedFontName: $selectedFontName, selectedFontSize: $selectedFontSize)
                             }
-//                        Button {
-//                            selectedFontName = UserDefaultsKeys.fontName
-//                            selectedFontSize = UserDefaultsKeys.fontSize16
-//                        } label: {
-//                            Text("默认系统")
-//                        }
-//                        
-//                        Button {
-//                            selectedFontName = UserDefaultsKeys.pingFangSCThin
-//                            selectedFontSize = UserDefaultsKeys.fontSize16
-//                        } label: {
-//                            Text(UserDefaultsKeys.pingFangSCThin)
-//                        }
-//                        
-//                        Button {
-//                            selectedFontName = UserDefaultsKeys.pingFangSCMedium
-//                            selectedFontSize = UserDefaultsKeys.fontSize16
-//                        } label: {
-//                            Text(UserDefaultsKeys.pingFangSCMedium)
-//                        }
-//
-//                        Button {
-//                            selectedFontName = UserDefaultsKeys.pingFangSCLight
-//                            selectedFontSize = UserDefaultsKeys.fontSize16
-//                        } label: {
-//                            Text(UserDefaultsKeys.pingFangSCLight)
-//                        }
-//                                                
-//                        Button {
-//                            selectedFontName = UserDefaultsKeys.pingFangSCRegular
-//                            selectedFontSize = UserDefaultsKeys.fontSize16
-//                        } label: {
-//                            Text(UserDefaultsKeys.pingFangSCRegular)
-//                            .font(.custom(selectedFontName, size: selectedFontSize))
-//                        }
                     }
                     label: {
                         Text("推荐")

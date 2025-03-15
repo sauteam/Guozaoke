@@ -80,15 +80,18 @@ class UserInfoParser: ObservableObject {
     var hasMoreData   = true
     private var baseUrl: String = ""
     private var isUserInfoUrl = false
-    
+    private var rowEnum: PostItemEnum = .profileRow
+
     @Published var faqContent = ""
     @Published var faqContentBottom = ""
     
     func loadOtherTopic(topicUrl: String, reset: Bool) async {
+        rowEnum = .homeRow
         await fetchUserInfoAndData(topicUrl, reset: false)
     }
 
     func loadMyTopic(linkUrl: String, reset: Bool) async {
+        rowEnum = .collectionRow
         await fetchUserInfoAndData(linkUrl, reset: false)
     }
     
@@ -455,7 +458,7 @@ class UserInfoParser: ObservableObject {
                 nodeUrl: try element.select("span.node a").attr("href"),
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
-                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), rowEnum: .profileRow
+                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), rowEnum: rowEnum
             )
         }
     }

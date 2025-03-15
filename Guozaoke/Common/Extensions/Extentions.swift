@@ -15,6 +15,10 @@ extension String {
     static let `default`: String = ""
     public static let empty = `default`
     
+    func isVersion(_ version1: String, greaterThan version2: String) -> Bool {
+        return version1.compare(version2, options: .numeric) == .orderedDescending
+    }
+    
     var isBlank: Bool {
         return self.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -84,13 +88,17 @@ extension String {
     }
 
     /// 复制文本到剪贴板
-    public func copyToClipboard() {
+    public func copyToClipboard(_ text: String? = "") {
         guard self.count > 0 else {
             return
         }
         hapticFeedback()
         UIPasteboard.general.string = self
-        ToastView.successToast("拷贝成功")
+        if let text = text, text.count > 0 {
+            ToastView.successToast("\(text) 已拷贝")
+        } else {
+            ToastView.successToast("拷贝成功")
+        }
     }
     
     var md5: String {

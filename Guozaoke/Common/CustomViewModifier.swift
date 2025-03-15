@@ -192,34 +192,34 @@ func DynamicContextMenuContent(userInfo: String,  report: Bool? = false, showSaf
                 SFSymbol.copy
             }
         }
-        
+        // 点击可以发送邮箱
+//        Button(action: {
+//            guard let url = URL(string: "mailto:\(email)") else {
+//                return
+//            }
+//            if UIApplication.shared.canOpenURL(url) {
+//                UIApplication.shared.open(url)
+//            } else {
+//                print("No email client available")
+//            }
+//        }) {
+//            Text("发送邮件")
+//            SFSymbol.envelope
+//        }
+    }
+    
+    if let userTags = userInfo.extractUserTags.first, userTags.count > 0  {
         Button(action: {
-            guard let url = URL(string: "mailto:\(email)") else {
-                return
-            }
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            } else {
-                print("No email client available")
-            }
+            userInfo.userTagString.copyToClipboard()
         }) {
-            Text("发送邮件")
-            SFSymbol.envelope
-        }
-    } else {
-        if let userTags = userInfo.extractUserTags.first, userTags.count > 0  {
-            Button(action: {
-                userInfo.userTagString.copyToClipboard()
-            }) {
-                Text("拷贝@用户")
-                SFSymbol.copy
-            }
+            Text("拷贝@用户")
+            SFSymbol.copy
         }
     }
     
     if let userTags = userInfo.base64TextList.first, userTags.count > 0  {
         Button(action: {
-            userTags.copyToClipboard()
+            userTags.copyToClipboard(userTags)
         }) {
             Text("拷贝Base64解码")
             SFSymbol.documentViewfinderFill

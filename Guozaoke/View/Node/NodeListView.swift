@@ -11,6 +11,8 @@ struct NodeListView: View {
     @StateObject private var viewModel  = PostListParser()
     @State private var showMembersView = false
     @State private var showSearchView  = false
+    @State private var showUserInfo   = false
+    @State private var username: String = ""
 
     
     var body: some View {
@@ -23,6 +25,10 @@ struct NodeListView: View {
                     HStack(spacing: 12) {
                         KFImageView(item.avatar)
                             .avatar()
+                            .onTapGesture {
+                                username = item.user
+                                showUserInfo.toggle()
+                            }
                         
                         Text(item.title)
                             .greedyWidth(.leading)
@@ -49,6 +55,11 @@ struct NodeListView: View {
                 }
             }
         }
+        .navigationDestination(isPresented: $showUserInfo, destination: {
+            if username.count > 0 {
+                UserInfoView(userId: username)
+            }
+        })
         .buttonStyle(.plain)
         .listStyle(.plain)
         .navigationTitleStyle("节点")

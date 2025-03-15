@@ -92,6 +92,8 @@ struct NodeInfoView: View {
             SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
                 
             }
+            .presentationDetents([.height(isiPad ? screenHeight: screenHeight/2), .medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .onAppear {
             if viewModel.posts.isEmpty {

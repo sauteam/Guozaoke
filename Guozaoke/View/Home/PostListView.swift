@@ -106,6 +106,8 @@ struct PostListView: View {
             .sheet(isPresented: $showAddPostView) {
                 SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
                 }
+                .presentationDetents([.height(isiPad ? screenHeight: screenHeight/2), .medium, .large])
+                .presentationDragIndicator(.visible)
             }
         }
     }

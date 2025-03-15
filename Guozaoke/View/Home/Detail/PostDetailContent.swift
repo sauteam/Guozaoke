@@ -7,8 +7,18 @@
 
 import SwiftUI
 
+
+private var devContent: String {
+    var ttt = ""
+#if DEBUG
+    //ttt = "\n @isau  i@qq.com \n 18909097788 909090 \n aXNhdUBxcS5jb20= #tag# \n https://www.guozaoke.com/t/118185"
+#endif
+    return ttt
+}
+
 // MARK: - 帖子详情内容视图
 struct PostDetailContent: View, Equatable {
+    
     let detail: PostDetail
     let postId: String
     @ObservedObject var detailParser: PostDetailParser
@@ -27,8 +37,8 @@ struct PostDetailContent: View, Equatable {
 
             PostRowView(post: post)
                 .padding(.horizontal)
-            
-            RichTextView(content: detail.contentHtml)
+            let detailContent = "\(detail.contentHtml)" + devContent
+            RichTextView(content: detailContent)
                 .padding(.horizontal)
             // 帖子图片
             if !detail.images.isEmpty {
@@ -50,27 +60,6 @@ struct PostDetailContent: View, Equatable {
     }
 }
 
-
-// TODO: 大图优化
-// MARK: - 帖子图片视图
-struct PostImagesView: View {
-    let images: [PostImage]
-    @State private var selectedImage: String?
-    
-    var body: some View {
-        let urls = images.map { $0.url }
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(urls, id: \.self) { imageUrl in
-                OptimizedImageView(
-                    urlString: imageUrl,
-                    contentMode: .fit,
-                    autoResize: true,
-                    showPreview: true
-                ).frame(height: 200)
-            }
-        }
-    }
-}
 
 struct PostFooterView: View {
     var detail: PostDetail
@@ -177,6 +166,7 @@ struct ReplyListView: View {
                 Text(NoMoreDataTitle.homeList)
                     .font(.footnote)
                     .foregroundColor(.secondary)
+                    .padding(.bottom, 15)
                 Spacer()
             }
         }
@@ -271,9 +261,9 @@ struct ReplyItemView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            let content = "\(reply.content)"
+            let content = "\(reply.content)" + devContent
             HTMLContentView(content: content, fontSize: subTitleFontSize, showReport: true)
-//                .dynamicContextMenu(userInfo: reply.content, report: true, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
+///                .dynamicContextMenu(userInfo: reply.content, report: true, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
             if !reply.images.isEmpty {
                 PostImagesView(images: reply.images)
             }
@@ -356,6 +346,27 @@ struct BottomCommentView: View {
                 SFSymbol.topics
             }
             
+        }
+    }
+}
+
+// TODO: 大图优化
+// MARK: - 帖子图片视图
+struct PostImagesView: View {
+    let images: [PostImage]
+    @State private var selectedImage: String?
+    
+    var body: some View {
+        let urls = images.map { $0.url }
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(urls, id: \.self) { imageUrl in
+                OptimizedImageView(
+                    urlString: imageUrl,
+                    contentMode: .fit,
+                    autoResize: true,
+                    showPreview: true
+                ).frame(height: 200)
+            }
         }
     }
 }

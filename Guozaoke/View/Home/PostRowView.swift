@@ -27,10 +27,10 @@ struct PostRowView: View {
                     .avatar()
                     .disabled(post.rowEnum == .profileRow)
                     .onTapGesture {
-                        log("点击 \(post.avatar)")
+                        log("点击 \(profile) isMe \(AccountState.isSelf(userName: post.author))")
                         if !profile {
                             isUserAvatarViewActive = true
-                        } 
+                        }
                     }
                     .navigationDestination(isPresented: $isUserAvatarViewActive, destination: {
                         UserInfoView(userId: post.author)

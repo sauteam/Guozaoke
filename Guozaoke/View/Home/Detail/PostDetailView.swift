@@ -118,6 +118,8 @@ struct PostDetailView: View {
             SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {
                 
             }
+            .presentationDetents([.height(isiPad ? screenHeight: screenHeight/2), .medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showComentView) {
             
