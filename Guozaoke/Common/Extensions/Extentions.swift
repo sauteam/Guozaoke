@@ -299,6 +299,19 @@ extension Bundle {
 
 
 extension URL {
+    var extractPathComponentAndQueryParams: (pathComponent: String?, queryParams: [String: String]?) {
+        let url = self 
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return (nil, nil)
+        }
+        let pathComponent = components.path.split(separator: "/").last.map(String.init)
+
+        let queryParams = components.queryItems?.reduce(into: [String: String]()) { result, item in
+            result[item.name] = item.value
+        }
+        return (pathComponent, queryParams)
+    }
+    
     func params() -> [String : String] {
         var dict = [String : String]()
 

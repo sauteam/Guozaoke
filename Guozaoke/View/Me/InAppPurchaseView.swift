@@ -64,6 +64,7 @@ struct InAppPurchaseView: View {
                 } else {
                     selectedProduct = storeManager.products.first
                 }
+                log("[iap][list] \(storeManager.products)")
             }
         }
     }
@@ -101,7 +102,7 @@ struct InAppPurchaseView: View {
                         .subTitleFontStyle()
                         .padding(.bottom, 2)
 
-                    Text(product.description)
+                    Text(product.displayName)
                         .subTitleFontStyle()
                 }
                 .padding(.vertical)

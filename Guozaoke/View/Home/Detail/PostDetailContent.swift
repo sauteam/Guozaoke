@@ -11,10 +11,19 @@ import SwiftUI
 private var devContent: String {
     var ttt = ""
 #if DEBUG
-    //ttt = "\n @isau  i@qq.com \n 18909097788 909090 \n aXNhdUBxcS5jb20= #tag# \n https://www.guozaoke.com/t/118185"
+    //ttt = "<br /> <p>写一个样式调试测试：<br /> 测试邮箱：<a target=\"_blank\" href=\"mailto:i@guozaoke.com\">i@guozaoke.com</a> 跳转<br /> 手机号：19078787878<br /> <a target=\"_blank\" href=\"/u/isau\" class=\"user-mention\">@isau</a> <br /> tag #过早客#</p> \n<p><a target=\"_blank\" href=\"https://www.guozaoke.com/t/118684\">https://www.guozaoke.com/t/118684</a></p>"
 #endif
     return ttt
 }
+
+private var commentStyle: String {
+    var ttt = ""
+#if DEBUG
+    //ttt = "\n i@guozaoke.com 手机号：19078787878 \n @isau tag #过早客# https://www.guozaoke.com/t/118684"
+#endif
+    return ttt
+}
+
 
 // MARK: - 帖子详情内容视图
 struct PostDetailContent: View, Equatable {
@@ -261,7 +270,8 @@ struct ReplyItemView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            let content = "\(reply.content)" + devContent
+            let content = "\(reply.content)" + commentStyle
+            //纯文本解析
             HTMLContentView(content: content, fontSize: subTitleFontSize, showReport: true)
 ///                .dynamicContextMenu(userInfo: reply.content, report: true, showSafari: $showSafari, showSystemCopy: $showSystemCopy)
             if !reply.images.isEmpty {

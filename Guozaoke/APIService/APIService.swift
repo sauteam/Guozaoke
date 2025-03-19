@@ -58,6 +58,8 @@ struct DeveloperInfo {
 
 /// App 版本信息
 struct AppInfo {
+    static let univerLink = "www.guozaoke.com"
+    static let scheme = "guozaoke"
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
     static let AppBeiAnText = "粤ICP备2025374276号-2A"
     static let beianGovUrl = "https://beian.miit.gov.cn"
@@ -341,10 +343,25 @@ extension APIService {
 }
 
 extension String {
+    /// 提取数字
+    var extractNumericPart: String {
+        let regex = "[0-9]+"
+        if let range = self.range(of: regex, options: .regularExpression) {
+            return String(self[range])
+        }
+        return ""
+    }
+    
+    /// 使用 CharacterSet 判断是否全部是数字
+    var allCharactersAreDigits: Bool {
+        return self.allSatisfy { $0.isNumber }
+    }
+    
     /// 后面拼接参数
     var addUrl: String {
         return APIService.baseUrlString + self
     }
+    
     /// 个人主页
     var userProfileUrl: String {
         let uid = self
@@ -353,20 +370,36 @@ extension String {
         }
         return APIService.baseUrlString + "/u/" + uid
     }
+    
     /// 详情主页
     var postDetailUrl: String {
-        let uid = self
-        let postDetail = APIService.baseUrlString + "/"
-        
-        if uid.contains(postDetail) {
-            return uid
+        var tid = self
+        let t   = "/t/"
+        let base  = APIService.baseUrlString
+        let baseT = base + t
+        //log("[tid][detail] tid \(tid)")
+        if tid.contains(baseT) {
+            return tid
         }
         
-        if uid.hasPrefix("/") {
-            return APIService.baseUrlString + uid
+        if !tid.allCharactersAreDigits {
+            tid = tid.extractNumericPart
         }
         
-        return APIService.baseUrlString + "/" + uid
+        //log("[tid][detail]2 tid \(tid)")
+        if !tid.contains(t) {
+            tid = t + tid
+        }
+        
+        if tid.contains(base) {
+            return tid
+        }
+        
+        if tid.hasPrefix(t) {
+            return base + tid
+        }
+        
+        return base + "/" + tid
     }
         
     /// /node/IT => /t/create/IT

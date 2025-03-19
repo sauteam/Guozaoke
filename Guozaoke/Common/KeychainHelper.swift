@@ -12,8 +12,8 @@ struct KeychainKeys {
     static let purchaseGuozaokeKey = "purchaseGuozaokeKey"
 }
 
-/// 1.5.2
-let purchasedVersion = "1.5.2"
+/// 1.5.3
+let purchasedVersion = "1.5.3"
 
 // MARK: - PurchaseAppState
 

@@ -108,7 +108,7 @@ struct HTMLContentView: View {
         let linkColor = "#007AFF"
         //isDarkMode ? "1E90FF" : "007AFF"
         
-        let processedContent = content.regexText
+        let processedContent = content.regexText()
         
         //font-family: -apple-system;
         let styledHTML = """

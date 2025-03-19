@@ -45,7 +45,7 @@ struct MeView: View {
                     hapticFeedback()
                     showPurchaseView.toggle()
                 }) {
-                    SFSymbol.checkmarkCircleFill
+                    SFSymbol.checkmarkSealFill
                 }
             }
         }

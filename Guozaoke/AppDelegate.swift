@@ -48,6 +48,40 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // 进入前台
     func applicationWillEnterForeground(_ application: UIApplication) {
         print("App 进入前台")
+        
+    }
+    
+    private func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserInterfaceStyle]?) -> Void) -> Bool {
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
+            if let url = userActivity.webpageURL {
+                if url.host == AppInfo.univerLink {
+                    if let path = url.pathComponents.last {
+                        let (pathComponent, queryParams) = url.extractPathComponentAndQueryParams
+                        log("[url][id]Extracted path component: \(pathComponent ?? "nil") \n Extracted query params: \(String(describing: queryParams))")
+                    }
+                }
+            }
+        }
+        return true
+    }
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        if url.scheme == AppInfo.scheme {
+            guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+               return false
+           }
+           let path = components.path
+           let queryItems = components.queryItems ?? []
+           if path == "/t" || path == "/u" {
+               if let id = queryItems.first(where: { $0.name == "id" })?.value {
+                   let isUserInfo = path == "/u"
+                   NotificationCenter.default.post(name: .openAppNotification, object: nil, userInfo: ["id": id, "isUser": isUserInfo])
+                   return true
+               }
+           }
+           log("[url][id] \(path)")
+           return true
+        }
+        return false
     }
 }
 

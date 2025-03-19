@@ -165,7 +165,7 @@ struct RichTextView: View {
 
     private func formatContent(_ content: String) -> String {
         //  这里添加后显示有问题 @用户导致 本身RichText 支持解析email
-        return content.regexText
+        return content.regexText(true)
     }
 }
 
@@ -198,7 +198,7 @@ struct CopyTextView: View {
     }
 
     private func formatContent(_ content: String) -> String {
-        return content.regexText
+        return content.regexText()
     }
 }
 

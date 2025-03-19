@@ -40,6 +40,7 @@ extension Notification.Name {
     static let logoutSuccessNoti = Notification.Name("logoutSuccessNoti")
     static let loginViewAlertNoti = Notification.Name("loginViewAlertNoti")
     static let purchaseSuccessNoti = Notification.Name("purchaseSuccessNoti")
+    static let openAppNotification = Notification.Name("openAppNotification")
 }
 
 private func showToast() {

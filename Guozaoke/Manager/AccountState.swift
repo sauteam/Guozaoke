@@ -107,7 +107,10 @@ struct AccountState {
     static func isSelf(userName: String) -> Bool {
         return userName == Self.userName && userName != .default
     }
-
+    
+    static var isISAU: Bool {
+        return isSelf(userName: "isau")
+    }
 }
 
 

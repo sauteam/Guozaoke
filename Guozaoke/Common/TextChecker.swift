@@ -38,7 +38,7 @@ enum PatternEnum: String {
 extension String {
     
     /// 文本内容正则处理
-    var regexText: String {
+    func regexText(_ richText: Bool? = false) -> String {
         var processedContent = self
         if let regex = try? NSRegularExpression(pattern: PatternEnum.uid.regText) {
             let range = NSRange(processedContent.startIndex..., in: processedContent)
@@ -50,11 +50,13 @@ extension String {
         }
         
         if !processedContent.contains("<a") {
-            processedContent = processedContent.replacingOccurrences(
-                of: PatternEnum.link.regText,
-                with: PatternEnum.link.withText,
-                options: .regularExpression
-            )
+            if richText == false {
+                processedContent = processedContent.replacingOccurrences(
+                    of: PatternEnum.link.regText,
+                    with: PatternEnum.link.withText,
+                    options: .regularExpression
+                )
+            }
             
             processedContent = processedContent.replacingOccurrences(
                 of: PatternEnum.phoneNumber.regText,
@@ -62,19 +64,20 @@ extension String {
                 options: .regularExpression
             )
         }
-        
         processedContent = processedContent.replacingOccurrences(
             of: PatternEnum.atUser.regText,
             with: PatternEnum.atUser.withText,
             options: .regularExpression
         )
 
-        processedContent = processedContent.replacingOccurrences(
-            of: PatternEnum.email.regText,
-            with: PatternEnum.email.withText,
-            options: .regularExpression
-        )
-
+        if richText == false {
+            processedContent = processedContent.replacingOccurrences(
+                of: PatternEnum.email.regText,
+                with: PatternEnum.email.withText,
+                options: .regularExpression
+            )
+        }
+        
         processedContent = processedContent.replacingOccurrences(
             of: PatternEnum.tagText.regText,
             with: PatternEnum.tagText.withText,
@@ -194,6 +197,7 @@ extension String {
         let matches = emailRegex.matches(in: self, options: [], range: NSRange(location: 0, length: self.count))
         return !matches.isEmpty
     }
+
     
     var checkText: (hasLink: Bool, hasMention: Bool, hasTag: Bool, hasEmail: Bool) {
         let hasLink    = self.containsLink

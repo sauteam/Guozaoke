@@ -9,7 +9,9 @@ import SwiftUI
 import SwiftSoup
 
 // MARK: - 登录视图
+
 struct LoginView: View {
+    let agreementUrl = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     @StateObject private var loginService = LoginService()
     @Binding var isPresented: Bool
     let onLoginSuccess: () -> Void
@@ -22,6 +24,7 @@ struct LoginView: View {
     @State private var isSecured = true
     @State private var url: URL?
     @Environment(\.dismiss) var dismiss
+    @State private var isAgreed = false
 
     var body: some View {
         NavigationView {
@@ -33,16 +36,12 @@ struct LoginView: View {
                         .autocapitalization(.none)
                         .textFieldStyle(PlainTextFieldStyle())
                         .frame(height: 40)
-                        .subTitleFontStyle()
-//                        .background(Color(.secondarySystemBackground))
-//                        .cornerRadius(5)
-//                        .padding(.horizontal, 16)
-
+                        .titleFontStyle()
 
                     SecureTextField(text: $password)
                         .frame(height: 40)
                         .listRowBackground(Color.clear)
-                        .subTitleFontStyle()
+                        .titleFontStyle()
                 }
 
                 Section {
@@ -50,11 +49,29 @@ struct LoginView: View {
                         Text(error)
                             .foregroundColor(.red)
                     }
-
                 }
-                
+
                 Section {
-                    let enable = password.count < 5 || email.count < 5
+                    HStack {
+                        Image(systemName: isAgreed ? "checkmark.circle.fill" : "circle")
+                            .onTapGesture {
+                                isAgreed.toggle()
+                            }
+                        
+                        Text("我已阅读并同意")
+                            .subTitleFontStyle()
+                        
+                        Link("《用户使用协议》", destination: URL(string: agreementUrl)!)
+                            .subTitleFontStyle()
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.vertical, 15)
+                    .buttonStyle(.plain)
+                    .listStyle(.plain)
+                }
+
+                Section {
+                    let enable = password.count < 5 || email.count < 5 || !isAgreed
                     Button(action: performLogin) {
                         if loginService.isLoading {
                             ProgressView()
@@ -66,7 +83,6 @@ struct LoginView: View {
                                 .background(Color.blue)
                                 .cornerRadius(10)
                                 .subTitleFontStyle()
-                            
                         }
                     }
                     .disabled(loginService.isLoading || enable)
@@ -77,10 +93,7 @@ struct LoginView: View {
                 .listRowSeparator(.hidden)
             }
             .listStyle(.plain)
-            .navigationTitleStyle("登录过早客")
-//            .navigationBarItems(trailing: Button("关闭") {
-//                closeView()
-//            })
+            .navigationTitle("登录过早客")
             .sheet(isPresented: $showSafari) {
                 if let url = url {
                     SafariView(url: url)
@@ -96,7 +109,7 @@ struct LoginView: View {
             }
         }
     }
-    
+
     private func successAsyn() {
         LoginStateChecker.shared.isLogin = true
         onLoginSuccess()
