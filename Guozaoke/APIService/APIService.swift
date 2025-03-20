@@ -58,7 +58,8 @@ struct DeveloperInfo {
 
 /// App 版本信息
 struct AppInfo {
-    static let univerLink = "www.guozaoke.com"
+    static let appleEula = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+    static let univerLink   = "www.guozaoke.com"
     static let scheme = "guozaoke"
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
     static let AppBeiAnText = "粤ICP备2025374276号-2A"
@@ -120,7 +121,9 @@ struct APIService {
     static let faq = "/faq"
     static let members = "/members"
     static let blockedUser = "/setting/blockedUser"
-
+    /// baseUrlString + feedback
+    static let feedbackAllLink = baseUrlString + feedback
+    
     private init() {}
     
     

@@ -43,11 +43,17 @@ struct SettingView: View {
 //            }
             Section {
                 Toggle(isOn: $pushNotificationsEnabled) {
-                    Text(pushNotificationsEnabled ? "接收推送消息" : "关闭推送消息")
+                    Text(pushNotificationsEnabled ? "一天一条" : "不推送消息")
                         .titleFontStyle()
                 }.onChange(of: pushNotificationsEnabled) { newValue in
+                    if !NotificationManager.shared.notificationGranted {
+                        pushNotificationsEnabled = false
+                        UIApplication.toSettingUrl()
+                        return
+                    }
                     handlePushNotificationToggle(newValue: newValue)
                 }
+                
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                 
                 Toggle(isOn: $hapticFeedbackEnabled) {

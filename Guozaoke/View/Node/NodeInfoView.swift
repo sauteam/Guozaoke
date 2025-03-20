@@ -17,11 +17,6 @@ struct NodeInfoView: View {
 
     var body: some View {
         VStack {
-            if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .listRowSeparator(.hidden)
-            }
             
             if viewModel.posts.isEmpty, !viewModel.isLoading {
                 HStack {
@@ -61,6 +56,7 @@ struct NodeInfoView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
+                    hapticFeedback()
                 }) {
                     Menu {
                         Button {

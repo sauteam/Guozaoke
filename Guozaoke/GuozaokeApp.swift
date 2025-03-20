@@ -127,16 +127,16 @@ private extension GuozaokeApp {
         NotificationCenter.default.addObserver(forName: .purchaseSuccessNoti, object: nil, queue: .main) { _ in
             purchaseAppState.savePurchaseStatus(isPurchased: true)
         }
-        
+        // TODO: Universal Links 如果guozaoke.com 可以配置这里就可以支持跳转个人详情，主题详情，甚至节点详情
         NotificationCenter.default.addObserver(forName: .openAppNotification, object: nil, queue: .main) { notification in
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
                 let id  = user["id"] as? String ?? ""
                 let isUser  = user["isUser"] as? Bool ?? false
                 if isUser {
-                    //UserInfoView(userId: id)
+                    
                 } else {
-                    //PostDetailView(postId: id)
+                    
                 }
             }
         }

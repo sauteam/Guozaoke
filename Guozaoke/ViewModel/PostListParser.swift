@@ -33,6 +33,11 @@ struct PostItem: Identifiable,Equatable {
     let lastReplyUser: String?
     var rowEnum: PostItemEnum  = .homeRow
     var postType: PostTypeEnum = .none
+    var bookmark: String = ""
+    
+    var isJHTopic: Bool {
+        return bookmark == "精华主题"
+    }
 }
 
 struct NavItem: Identifiable {
@@ -446,7 +451,8 @@ private extension PostListParser {
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
                 lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(),
                 rowEnum: rowEnum,
-                postType: try element.select("i.icon-bookmark-empty").last() == nil ? .none: .elite
+                postType: try element.select("i.icon-bookmark-empty").last() == nil ? .none: .elite,
+                bookmark: try element.select("h3.title a i").first()?.attr("title") ?? ""
             )
         }
     }

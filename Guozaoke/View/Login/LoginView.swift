@@ -11,7 +11,6 @@ import SwiftSoup
 // MARK: - 登录视图
 
 struct LoginView: View {
-    let agreementUrl = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     @StateObject private var loginService = LoginService()
     @Binding var isPresented: Bool
     let onLoginSuccess: () -> Void
@@ -53,7 +52,8 @@ struct LoginView: View {
 
                 Section {
                     HStack {
-                        Image(systemName: isAgreed ? "checkmark.circle.fill" : "circle")
+                        
+                        Image(systemName: isAgreed ? SFSymbol.checkmarkCircleFill.rawValue : SFSymbol.circle.rawValue)
                             .onTapGesture {
                                 isAgreed.toggle()
                             }
@@ -61,7 +61,12 @@ struct LoginView: View {
                         Text("我已阅读并同意")
                             .subTitleFontStyle()
                         
-                        Link("《用户使用协议》", destination: URL(string: agreementUrl)!)
+                        Link("《使用条款》", destination: URL(string: AppInfo.appleEula)!)
+                            .subTitleFontStyle()
+                            .foregroundColor(.blue)
+                        Text("和")
+                            .subTitleFontStyle()
+                        Link("《隐私协议》", destination: URL(string: APIService.feedbackAllLink)!)
                             .subTitleFontStyle()
                             .foregroundColor(.blue)
                     }

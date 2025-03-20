@@ -30,7 +30,7 @@ struct MeView: View {
     @EnvironmentObject var purchaseAppState: PurchaseAppState
     @State var showPurchaseView: Bool = false
     var body: some View {
-        ZStack() {
+        VStack() {
             MyProfileView()
         }
         .navigationBarBackButtonHidden(true)
@@ -165,29 +165,7 @@ struct MyProfileView: View {
                 NavigationLink(destination: FontSizePreviewView()) {
                     ProfileRow(icon: SFSymbol.textformatSize.rawValue, title: "字体大小")
                 }
-                //                HStack {
-                //                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
-                //                    Spacer()
-                //                    Picker("主题", selection: $appearanceMode) {
-                //                        ForEach(ModeTypeEnum.allCases, id: \.self) { mode in
-                //                            Text(mode.name)
-                //                                .tag(mode)
-                //                        }
-                //                    }
-                //                    .padding()
-                //                   .pickerStyle(DefaultPickerStyle())
-                //                   .onChange(of: currentMode) { newMode in
-                //                       appearanceMode = newMode.rawValue
-                //                       applyAppearanceMode(newMode)
-                //                   }
-                //                   .padding()
-                //                }
-                //                .onAppear {
-                //                    if let savedMode = ModeTypeEnum(rawValue: appearanceMode) {
-                //                        currentMode = savedMode
-                //                        applyAppearanceMode(currentMode)
-                //                    }
-                //                }
+                
                 NavigationLink(destination: SettingView()) {
                     ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
                 }
@@ -205,6 +183,18 @@ struct MyProfileView: View {
                     AppInfo.toWriteReview()
                 } label: {
                     ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
+                }
+                
+                Button {
+                    AppInfo.appleEula.openURL()
+                } label: {
+                    ProfileRow(icon: SFSymbol.personCircle.rawValue, title: "使用条款「EULA」")
+                }
+                
+                Button {
+                    APIService.feedbackAllLink.openURL()
+                } label: {
+                    ProfileRow(icon: SFSymbol.handRaisedCircle.rawValue, title: "隐私协议")
                 }
             }
             

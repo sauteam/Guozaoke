@@ -16,7 +16,7 @@ struct PostRowView: View {
     @State private var isUserAvatarViewActive = false
     @State private var isLastReplyUserInfoViewActive = false
     @State private var isUserNameInfoViewActive = false
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
@@ -38,10 +38,21 @@ struct PostRowView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         //let content = post.title + (post.postType == .elite ? Text(Image(systemName: SFSymbol.bookmark.rawValue)) : Text(""))
-                        Text(post.title)
-                            .titleFontStyle()
-                            .padding(.horizontal, 2)
-                            .lineLimit(2)
+                        if post.isJHTopic {
+                            HStack(spacing: 2) {
+                                Text(post.title)
+                                    .titleFontStyle()
+                                
+                                SFSymbol.bookmark.image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 15, height: 15)
+                            }
+                        } else {
+                            Text(post.title)
+                                .titleFontStyle()
+                                .padding(.horizontal, 2)
+                        }
                     }
                     HStack {
                         Text(post.author)

@@ -108,3 +108,18 @@ extension String {
 }
 
 
+extension UIApplication {
+    /// 去设置 UIApplication.openSettingsURLString
+    static func toSettingUrl() {
+        openUrl(UIApplication.openSettingsURLString)
+    }
+    
+    static func openUrl(_ string: String?) {
+        guard let string = string else { return  }
+        if let url = URL(string: string) {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+        }
+    }
+}

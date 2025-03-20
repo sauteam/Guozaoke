@@ -18,7 +18,7 @@ struct AboutView: View {
                
                    enjoy，欢迎反馈 ━(*｀∀´*)ノ亻!~
                
-                   在社区发帖或是邮件\(DeveloperInfo.email)
+                   在社区发帖或是邮件反馈
                """
     
     @State private var showMailView = false
@@ -75,7 +75,7 @@ struct AboutView: View {
                             showMailView.toggle()
                         } else {
                             DeveloperInfo.email.copyToClipboard()
-                            ToastView.toastText("拷贝邮箱发送")
+                            ToastView.toastText("邮箱地址已拷贝")
                         }
                     }) {
                         Text("发送邮件")
