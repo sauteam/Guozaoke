@@ -67,8 +67,14 @@ struct Base64View: View {
                 HStack {
                     Button(action: {
                         hapticFeedback()
-                        if let decoded = encodedText.base64Decoded {
-                            decodedText = decoded
+                        if encodedText.count > 0 {
+                            if let decoded = encodedText.base64Decoded, !decoded.isEmpty {
+                                decodedText = decoded
+                            }
+                        } else {
+                            if inputText.count > 0 {
+                                decodedText = inputText.base64Decoded ?? ""
+                            }
                         }
                     }) {
                         Text("解密")

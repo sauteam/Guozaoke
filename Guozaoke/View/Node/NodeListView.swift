@@ -55,6 +55,9 @@ struct NodeListView: View {
                 }
             }
         }
+        .refreshable {
+            viewModel.refreshPostList(type: .hot)
+        }
         .navigationDestination(isPresented: $showUserInfo, destination: {
             if username.count > 0 {
                 UserInfoView(userId: username)

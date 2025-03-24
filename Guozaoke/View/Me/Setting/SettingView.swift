@@ -47,7 +47,10 @@ struct SettingView: View {
                         .titleFontStyle()
                 }.onChange(of: pushNotificationsEnabled) { newValue in
                     if !NotificationManager.shared.notificationGranted {
-                        pushNotificationsEnabled = false
+                        NotificationManager.shared.requestNotificationPermission()
+                        runInMain(delay: 1) {
+                            pushNotificationsEnabled = NotificationManager.shared.notificationGranted
+                        }
                         UIApplication.toSettingUrl()
                         return
                     }

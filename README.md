@@ -3,7 +3,7 @@
 
 
 
-<a href="https://apps.apple.com/id6740704728" target="_blank">
+<a href="https://apps.apple.com/app/id6740704728" target="_blank">
     <img src="screenshot/appstore.png" alt="Guozaoke Button" style="width: 150px; height: auto;"></a>
 
 #### ![过早客](screenshot/0308guozaokeinfo.png)
@@ -12,7 +12,7 @@
 
 #### 介绍
 
-[guozaoke.com](guozaoke.com)
+[guozaoke.com](https://guozaoke.com)
 
 [接口参考](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
 
@@ -20,6 +20,7 @@
 
 目前还有部分内容没有完成等优化处理
 
+* [ ] 搜索抓取bing数据，时而获取不到，比较蛋疼，尝试用WebView加载解析或SwiftSoup处理均没有好的处理方案，优先处理
 * [ ] 支持第三方上传图片，发布主题和评论
 * [ ]  再次编辑主题和回复，发帖前支持预览，目前使用HTML解析主题详情
 * [ ] 部分解析优化，比如主题详情和评论中email显示问题

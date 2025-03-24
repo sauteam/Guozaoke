@@ -39,15 +39,11 @@ struct SearchListView: View {
             .tabbarToolBar()
             .refreshable {
                 if selectedTab == .topicList {
-                    viewModel.loadNews()
+                    viewModel.searchText(self.searchQuery)
                 }
             }
             .onAppear {
-                if !searchQuery.isEmpty {
-                    performSearch()
-                } else {
-                    isFocused = true
-                }
+                isFocused = true
             }
             .onDisappear {
                 isFocused = false
@@ -124,7 +120,7 @@ struct SearchListView: View {
             } else if !viewModel.searchList.isEmpty {
                 List {
                     ForEach(viewModel.searchList) { post in
-                        NavigationLink(destination: PostDetailView(postId: post.link)) {
+                        NavigationLink(destination: PostDetailView(postId: post.url)) {
                             VStack(alignment: .leading) {
                                 Text(post.title)
                                     .font(.headline)
@@ -140,7 +136,7 @@ struct SearchListView: View {
                             }
                         }
                     }
-                    if viewModel.hasMorePages {
+                    if viewModel.hasMoreData {
                         HStack {
                             ProgressView()
                             Spacer()
@@ -159,10 +155,10 @@ struct SearchListView: View {
                 }
                 .listStyle(.plain)
             } else {
-                let tips = viewModel.errorMessage ?? (searchQuery.isEmpty ? inputText : changeKeyText)
-                Text(tips)
-                    .foregroundColor(.gray)
-                    .padding()
+//                let tips = viewModel.errorMessage ?? (searchQuery.isEmpty ? inputText : changeKeyText)
+//                Text(tips)
+//                    .foregroundColor(.gray)
+//                    .padding()
             }
         }
     }
@@ -178,22 +174,22 @@ struct SearchListView: View {
         }
     }
     
-    private var keywordHeader: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(viewModel.savedSearchKeywords) { keyword in
-                    Text(keyword.keyword)
-                        .padding(5)
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(5)
-                        .onTapGesture {
-                            searchQuery = keyword.keyword
-                            viewModel.searchText(searchQuery)
-                        }
-                }
-            }
-            .padding(.horizontal)
-        }
-        .frame(height: 40)
-    }
+//    private var keywordHeader: some View {
+//        ScrollView(.horizontal, showsIndicators: false) {
+//            HStack(spacing: 10) {
+//                ForEach(viewModel.savedSearchKeywords) { keyword in
+//                    Text(keyword.keyword)
+//                        .padding(5)
+//                        .background(Color.gray.opacity(0.2))
+//                        .cornerRadius(5)
+//                        .onTapGesture {
+//                            searchQuery = keyword.keyword
+//                            viewModel.searchText(searchQuery)
+//                        }
+//                }
+//            }
+//            .padding(.horizontal)
+//        }
+//        .frame(height: 40)
+//    }
 }

@@ -276,6 +276,8 @@ class PostListParser: ObservableObject {
                    if self.currentPage == 1 {
                        self.posts.removeAll()
                        self.hotTodayTopic.removeAll()
+                       self.hotNodes.removeAll()
+                       self.nodes.removeAll()
                    }
                    let doc = try SwiftSoup.parse(html)
                    
