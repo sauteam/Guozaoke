@@ -86,7 +86,7 @@ class AppIconViewModel: ObservableObject {
     }
 
     func loadIconsFromInfoPlist() async -> [AppIcon] {
-        print("Loading icons from Info.plist on background thread: \(Thread.current)")
+        //print("Loading icons from Info.plist on background thread: \(Thread.current)")
         
         if let iconsDict = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
            let alternateIcons = iconsDict["CFBundleAlternateIcons"] as? [String: Any] {

@@ -9,7 +9,7 @@ import SwiftUI
 
 
 private var devContent: String {
-    var ttt = ""
+    let ttt = ""
 #if DEBUG
     //ttt = "<br /> <p>写一个样式调试测试：<br /> 测试邮箱：<a target=\"_blank\" href=\"mailto:i@guozaoke.com\">i@guozaoke.com</a> 跳转<br /> 手机号：19078787878<br /> <a target=\"_blank\" href=\"/u/isau\" class=\"user-mention\">@isau</a> <br /> tag #过早客#</p> \n<p><a target=\"_blank\" href=\"https://www.guozaoke.com/t/118684\">https://www.guozaoke.com/t/118684</a></p>"
 #endif
@@ -17,7 +17,7 @@ private var devContent: String {
 }
 
 private var commentStyle: String {
-    var ttt = ""
+    let ttt = ""
 #if DEBUG
     //ttt = "\n i@guozaoke.com 手机号：19078787878 \n @isau tag #过早客# https://www.guozaoke.com/t/118684"
 #endif

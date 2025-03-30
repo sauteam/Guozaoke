@@ -131,7 +131,7 @@ private extension GuozaokeApp {
         NotificationCenter.default.addObserver(forName: .openAppNotification, object: nil, queue: .main) { notification in
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
-                let id  = user["id"] as? String ?? ""
+                _  = user["id"] as? String ?? ""
                 let isUser  = user["isUser"] as? Bool ?? false
                 if isUser {
                     

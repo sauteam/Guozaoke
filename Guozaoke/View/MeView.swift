@@ -176,7 +176,7 @@ struct MyProfileView: View {
                 Button {
                     AppInfo.toAppStore()
                 } label: {
-                    ProfileRow(icon: SFSymbol.app.rawValue, title: "App Store查看")
+                    ProfileRow(icon: SFSymbol.app.rawValue, title: "最新版本")
                 }
                 
                 Button {
@@ -184,7 +184,9 @@ struct MyProfileView: View {
                 } label: {
                     ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
                 }
-                
+            }
+            
+            Section {
                 Button {
                     AppInfo.appleEula.openURL()
                 } label: {
@@ -195,6 +197,12 @@ struct MyProfileView: View {
                     APIService.feedbackAllLink.openURL()
                 } label: {
                     ProfileRow(icon: SFSymbol.handRaisedCircle.rawValue, title: "隐私协议")
+                }
+                
+                Button {
+                    AppInfo.guozaokeGithubUrl.openURL()
+                } label: {
+                    ProfileRow(icon: SFSymbol.share.rawValue, title: "开源地址")
                 }
             }
             

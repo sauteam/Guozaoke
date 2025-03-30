@@ -72,7 +72,7 @@ struct MailView: UIViewControllerRepresentable {
         
         --------------------------
         
-        \(AppInfo.appName) \(AppInfo.appVersion) \(model) \(name) \(systemVersion)
+        \(AppInfo.appName) \(AppInfo.appVersion) \n \(model) \(name) \(systemVersion)
         
         """
         vc.setMessageBody(messageBody, isHTML: false)

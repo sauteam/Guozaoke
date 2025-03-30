@@ -58,6 +58,8 @@ struct DeveloperInfo {
 
 /// App 版本信息
 struct AppInfo {
+    /// guozaoke github url
+    static let guozaokeGithubUrl = "https://github.com/sauteam/Guozaoke"
     static let appleEula = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     static let univerLink   = "www.guozaoke.com"
     static let scheme = "guozaoke"
@@ -116,14 +118,14 @@ struct APIService {
     static let notice        = "/node/notice"
     static let deleteTopicUrl = "/t/112831"
     static let deleteAccountUrl = "/t/116623"
-    static let iosUpdateTopicInfo = "/t/117830"
+    static let iosUpdateTopicInfo = "/t/119731"
     static let androidUpdateTopicInfo = "/t/75634"
     static let faq = "/faq"
     static let members = "/members"
     static let blockedUser = "/setting/blockedUser"
     /// baseUrlString + feedback
     static let feedbackAllLink = baseUrlString + feedback
-    
+
     private init() {}
     
     

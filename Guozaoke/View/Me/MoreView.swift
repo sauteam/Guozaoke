@@ -14,7 +14,7 @@ struct MoreView: View {
             List {
                 Section {
                     NavigationLink(destination: UserInfoView(userId: "isau")) {
-                        OneTextView(title: "过早客iOS开发者「非官方」")
+                        OneTextView(title: "过早客iOS开发「非官方」")
                     }
                     
                     NavigationLink(destination: UserInfoView(userId: "Mario")) {
@@ -60,6 +60,6 @@ struct OneTextView: View {
 }
 
 
-#Preview {
-    MoreView()
-}
+//#Preview {
+//    MoreView()
+//}

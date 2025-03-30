@@ -54,7 +54,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             if let url = userActivity.webpageURL {
                 if url.host == AppInfo.univerLink {
-                    if let path = url.pathComponents.last {
+                    if url.pathComponents.last != nil {
                         let (pathComponent, queryParams) = url.extractPathComponentAndQueryParams
                         log("[url][id]Extracted path component: \(pathComponent ?? "nil") \n Extracted query params: \(String(describing: queryParams))")
                     }

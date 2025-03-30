@@ -7,6 +7,7 @@ enum PostListType: String, CaseIterable, Codable {
     case interest  = "兴趣"
     case follows   = "关注"
     case it        = "IT"
+    case job       = "工作"
     case finance   = "金融"
     case creator   = "创客"
     case dating    = "相亲"
@@ -31,6 +32,8 @@ enum PostListType: String, CaseIterable, Codable {
             return "/?tab=follows"
         case .it:
             return "/node/IT"
+        case .job:
+            return "/node/job"
         case .finance:
             return "/node/finance"
         case .creator:

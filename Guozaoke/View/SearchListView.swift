@@ -106,7 +106,7 @@ struct SearchListView: View {
                 topicListView
             case .topicInfo:
                 HStack {
-                    Text("🔍输入帖子ID，如：118185")
+                    Text("🔍输入帖子ID，如：119731")
                         .foregroundColor(.gray)
                 }
             }

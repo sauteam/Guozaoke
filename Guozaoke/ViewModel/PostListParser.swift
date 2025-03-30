@@ -426,7 +426,7 @@ private extension PostListParser {
         
         if self.nodeInfo == nil {
             let createTopicLink = try doc.select("a.btn.btn-default").attr("href")
-            let createTopicText = try doc.select("a.btn.btn-default").text()
+            _ = try doc.select("a.btn.btn-default").text()
             // 解析板块名称
             let boardName = try doc.select("span.bread-nav").text()
             // 解析关注按钮
