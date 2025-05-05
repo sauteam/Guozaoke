@@ -39,15 +39,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print("App 点击通知了")
     }
 
-    // 进入后台
     func applicationDidEnterBackground(_ application: UIApplication) {
         print("App 进入后台")
     }
 
-    // 进入前台
     func applicationWillEnterForeground(_ application: UIApplication) {
         print("App 进入前台")
-        
     }
     
     private func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserInterfaceStyle]?) -> Void) -> Bool {

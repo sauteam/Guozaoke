@@ -47,7 +47,7 @@ struct FontSizePreviewView: View {
                     hapticFeedback()
                     if !purchaseAppState.isPurchased {
                         showPurchaseView.toggle()
-                        ToastView.purchaseText("需要您内购或打赏才可以解锁")
+                        //ToastView.purchaseText("需要您内购或打赏才可以解锁")
                         return
                     }
                     saveFont()
@@ -110,7 +110,7 @@ struct FontSizePreviewView: View {
             success = true
         }
         if success {
-            ToastView.successToast("保存成功")
+            ToastView.successToast("设置成功，重启后生效")
         }
     }
 }

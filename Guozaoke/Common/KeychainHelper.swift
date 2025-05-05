@@ -37,7 +37,7 @@ class PurchaseAppState: ObservableObject {
             isPurchased = false
         }
         
-        log("[app][version][iap]1 currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(isPurchased)")
+        //log("[app][version][iap]1 currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(isPurchased)")
     }
 
     func savePurchaseStatus(isPurchased: Bool) {
