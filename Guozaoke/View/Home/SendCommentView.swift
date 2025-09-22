@@ -39,7 +39,7 @@ struct SendCommentView: View {
                         ProgressView()
                     } else {
                         Text("回复")
-                            .frame(maxWidth: 60, minHeight: 25)
+                            .frame(maxWidth: 60, minHeight: 30)
                             .foregroundColor(Color.white)
                             .background(Color.blue)
                             .cornerRadius(12)
@@ -48,7 +48,7 @@ struct SendCommentView: View {
                 }
                 .disabled(isPosting || !contentTextValid)
                 .padding(.trailing, 20)
-                .padding(.top, 5)
+                .padding(.top, 20)
             }
 
             
@@ -57,6 +57,11 @@ struct SendCommentView: View {
                 .focused($isFocused)
                 .padding(.top, -8)
                 .subTitleFontStyle()
+                .scrollContentBackground(.hidden) // 隐藏默认背景
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial) // 液态玻璃效果
+                )
 
             if viewModel.isLoading {
                 ProgressView()
