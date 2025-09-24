@@ -36,7 +36,7 @@ class NotificationsParser: ObservableObject {
         }
         do {
             let response = try await APIService.getNotifications(url: APIService.notifications)
-            //print("Response: \(response)")
+            //logger("Response: \(response)")
             parseHTML(html: response)
         } catch {
             errorMessage = "发布失败: \(error.localizedDescription)"
@@ -70,7 +70,7 @@ class NotificationsParser: ObservableObject {
             }
             
         } catch {
-            print("解析错误: \(error.localizedDescription)")
+            logger("解析错误: \(error.localizedDescription)")
         }
     }
     

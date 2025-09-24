@@ -22,6 +22,7 @@ struct GuozaokeApp: App {
     
     @StateObject var themeManager = ThemeManager(theme: Theme(primaryColor: .systemBlue, secondaryColor: .red))
     @StateObject private var purchaseAppState = PurchaseAppState()
+    @StateObject var navigationManager = NavigationManager()
 
     init() {
         //UINavigationBar.appearance().tintColor = UIColor.brown
@@ -37,6 +38,8 @@ struct GuozaokeApp: App {
                     .onAppear {
                         applyAppearance()
                         addNoti()
+                        // 应用启动时立即检查Widget导航
+                        navigationManager.checkWidgetNavigation()
                     }
                     //.environmentObject(themeManager)
                     .environmentObject(purchaseAppState)
@@ -127,18 +130,26 @@ private extension GuozaokeApp {
         NotificationCenter.default.addObserver(forName: .purchaseSuccessNoti, object: nil, queue: .main) { _ in
             purchaseAppState.savePurchaseStatus(isPurchased: true)
         }
-        // TODO: Universal Links 如果guozaoke.com 可以配置这里就可以支持跳转个人详情，主题详情，甚至节点详情
+        // 处理从 Widget 或外部链接的跳转
         NotificationCenter.default.addObserver(forName: .openAppNotification, object: nil, queue: .main) { notification in
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
-                _  = user["id"] as? String ?? ""
-                let isUser  = user["isUser"] as? Bool ?? false
+                let id = user["id"] as? String ?? ""
+                let isUser = user["isUser"] as? Bool ?? false
+                
                 if isUser {
-                    
+                    logger("[App] 准备跳转到用户详情: \(id)")
+                    // TODO: 实现用户详情跳转逻辑
                 } else {
-                    
+                    logger("[App] 准备跳转到帖子详情: \(id)")
+                    navigationManager.navigateToPostDetail(postId: id)
                 }
             }
+        }
+        
+        // 定期检查 Widget 导航请求（降低频率）
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            navigationManager.checkWidgetNavigation()
         }
     }
     
@@ -146,7 +157,7 @@ private extension GuozaokeApp {
     func handleTokenExpiration() {
         Task {
             let (success, token) = try await  APIService.fetchLoginPage()
-            log("handleTokenExpiration \(success), \(token)")
+            logger("handleTokenExpiration \(success), \(token)")
         }
     }
 }

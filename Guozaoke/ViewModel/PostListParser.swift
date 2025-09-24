@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftSoup
 import Alamofire
+import WidgetKit
 
 enum PostItemEnum {
     case homeRow, detailRow, profileRow, nodeInfo, search, collectionRow
@@ -121,6 +122,28 @@ class PostListParser: ObservableObject {
     private var urlHeader: String?
     private var url: String?
     private var rowEnum: PostItemEnum = .homeRow
+    
+    // MARK: - Widget Data Update
+    private func updateWidgetData() {        
+        syncVIPStatusToWidget()
+        triggerWidgetRefresh()
+    }
+    
+    private func syncVIPStatusToWidget() {
+        let isVIP = PurchaseAppState().isPurchased
+        // 保存到App Groups
+        if let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget") {
+            userDefaults.set(isVIP, forKey: "is_vip_user")
+            userDefaults.set(AppInfo.appVersion, forKey: "app_version")
+            logger("[PostListParser] 同步VIP状态到Widget: \(isVIP)")
+        }
+    }
+    
+    private func triggerWidgetRefresh() {
+        // 触发Widget刷新
+        WidgetCenter.shared.reloadAllTimelines()
+        logger("[PostListParser] 触发Widget刷新")
+    }
         
     var justNodes: [Node] {
         let allNodes: [Node] = nodes.flatMap { $0.nodes }
@@ -204,7 +227,7 @@ class PostListParser: ObservableObject {
             }
             return (true, html)
         } catch {
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
         }
         return (false, "")
     }
@@ -252,7 +275,7 @@ class PostListParser: ObservableObject {
    }
     
     private func loadWithUrl(_ url: URL) {
-        log("url \(url) \(currentPage)")
+        logger("url \(url) \(currentPage)")
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
            DispatchQueue.main.async {
                guard let self = self else { return }
@@ -296,11 +319,17 @@ class PostListParser: ObservableObject {
                    
                    try self.parseNotification(doc: doc)
                    try self.parsePagination(doc: doc)
-                   //log("hotTodayTopic \(self.hotTodayTopic)")
+                   //logger("hotTodayTopic \(self.hotTodayTopic)")
                    self.currentPage += 1
                    self.posts.append(contentsOf: newPosts)
                    self.hasMore = self.currentPage <= self.totalPages
-                   //log("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
+                   
+                   // 更新Widget数据
+                   if self.currentPage == 2 { // 第一页加载完成时更新Widget
+                       self.updateWidgetData()
+                   }
+                   
+                   //logger("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
                } catch {
                    self.error = error.localizedDescription
                }
@@ -315,7 +344,7 @@ private extension PostListParser {
         let notificationLinks = try doc.select("a[href*='notifications']")
         if !notificationLinks.isEmpty() {
             let titleText = try notificationLinks.first()?.attr("title") ?? ""
-            //print("完整的提醒文本: \(titleText)")
+            //logger("完整的提醒文本: \(titleText)")
             let pattern = "\\d+"
             if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
                 let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
@@ -324,24 +353,24 @@ private extension PostListParser {
                     self.notificationLinksCount = Int(numberString) ?? 0
                     NotificationManager.shared.unreadCount = self.notificationLinksCount
                     updateAppBadge(NotificationManager.shared.unreadCount)
-                    print("解析出的未读通知数量: \(numberString)")
+                    logger("解析出的未读通知数量: \(numberString)")
                 } else {
-                    //print("未找到数字")
+                    //logger("未找到数字")
                 }
             }
             // 检查是否包含未读消息
             if try !doc.select(".mail-status.unread").isEmpty() {
-                print("存在未读通知")
+                logger("存在未读通知")
             } else {
                 self.notificationLinksCount = 0
                 NotificationManager.shared.unreadCount = 0
                 updateAppBadge(0)
-                print("没有未读通知")
+                logger("没有未读通知")
             }
         } else {
             NotificationManager.shared.unreadCount = 0
             updateAppBadge(0)
-            print("未找到通知链接")
+            logger("未找到通知链接")
         }
     }
         
@@ -351,7 +380,7 @@ private extension PostListParser {
         return try navItems.map { element in
             let link     = try element.select("a").first()
             //let isActive = try element.hasClass("active")
-            //log("parseNavbar \(link) \(navItems)")
+            //logger("parseNavbar \(link) \(navItems)")
             return NavItem(
                 title: try link?.text() ?? "",
                 link: try link?.attr("href") ?? ""
@@ -392,7 +421,7 @@ private extension PostListParser {
           hotNodes.append(NodeItem(category: category, nodes: nodes))
           self.onlyHotNodes = nodes
           self.hotNodes = hotNodes
-         //print("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
+         //logger("sendNode onlyHotNodes \(self.onlyHotNodes.count)  hotNodes \(hotNodes.count)" )
           if let nodesCloud = try doc.select("div.nodes-cloud").first() {
             let listItems = try nodesCloud.select("ul > li")
             for item in listItems {
@@ -413,7 +442,7 @@ private extension PostListParser {
             if !LoginStateChecker.isLogin {
                 NotificationCenter.default.post(name: .loginViewAlertNoti, object: nil)
             }
-            //log("未找到节点导航部分")
+            //logger("未找到节点导航部分")
         }
         return nodeItems
     }
@@ -435,10 +464,10 @@ private extension PostListParser {
             // 解析板块简介
             let description = try doc.select("span.f14").text()
             self.nodeInfo = NodeInfo(title: boardName, link: urlHeader ?? "", followText: followText, followLink: followLink, description: description, creatLink: createTopicLink)
-            //print("创建主题按钮: \(createTopicText) (\(createTopicLink))")
-            //print("板块名称: \(boardName) \(urlHeader ?? "")")
-            //print("关注链接: \(followText) (\(followLink))")
-            //print("板块简介: \(description)")
+            //logger("创建主题按钮: \(createTopicText) (\(createTopicLink))")
+            //logger("板块名称: \(boardName) \(urlHeader ?? "")")
+            //logger("关注链接: \(followText) (\(followLink))")
+            //logger("板块简介: \(description)")
         }
         
         return try topics.map { element in
@@ -503,7 +532,7 @@ private extension PostListParser {
 //        let zhong = type.url
 //        let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
 //        let urlString = APIService.baseUrlString + zhong + page
-//        log("[url] \(zhong) \(urlString)")
+//        logger("[url] \(zhong) \(urlString)")
 //        guard let _ = URL(string: urlString) else {
 //           error = "Invalid URL"
 //           isLoading = false

@@ -291,7 +291,7 @@ extension Bundle {
             }
         } else {
             // example.txt not found!
-            log("----------> local resource \(name ?? ""): not found <------------")
+            logger("----------> local resource \(name ?? ""): not found <------------")
         }
         return result
     }

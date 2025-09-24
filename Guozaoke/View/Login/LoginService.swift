@@ -68,11 +68,11 @@ class LoginService: ObservableObject {
         guard xsrfToken.isEmpty == false else {
             let (success, token) = try await APIService.fetchLoginPage()
             if success {
-                log("login success")
+                logger("login success")
                 xsrfToken = token
                 loginSuccess = try await login(email: email, password: password)
             } else {
-                log("login fail")
+                logger("login fail")
             }
             return loginSuccess
         }
@@ -120,7 +120,7 @@ class LoginService: ObservableObject {
             if let errorMessage = try doc.select("ul.alert-danger li").first()?.text() {
                 throw LoginError.loginFailed(message: errorMessage)
             }
-            log("[login] \(doc)")
+            logger("[login] \(doc)")
             let avatarElement = try doc.select(".ui-header a img").first()
             let avatar = try avatarElement?.attr("src") ?? ""
             let username = try doc.select(".ui-header .username").first()?.text() ?? ""
@@ -141,7 +141,7 @@ class LoginService: ObservableObject {
                     loginSuccess  = true
                     NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
                 }
-                log("[userInfo]\(account)")
+                logger("[userInfo]\(account)")
                 Task {
                     await updateLoginState()
                 }

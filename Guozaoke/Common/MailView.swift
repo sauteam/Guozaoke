@@ -9,7 +9,7 @@ import SwiftUI
 import MessageUI
 import Foundation
 
-func writeLog(message: String) {
+func writelogger(message: String) {
     let fileManager = FileManager.default
     let logDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
     let logFile = logDirectory.appendingPathComponent("app.txt")

@@ -20,55 +20,109 @@ struct SendCommentView: View {
     @State private var postSuccess = false
     @State private var errorMessage: String? = nil
     @FocusState private var isFocused: Bool
+    @State private var textEditorHeight: CGFloat = 40
     //var onDismiss: () -> Void
     
     var body: some View {
-        VStack {
-            HStack {
-                Spacer()
+        VStack(spacing: 0) {
+            // 自适应输入框容器
+            HStack(alignment: .bottom, spacing: 12) {
+                // 输入框
+                ZStack(alignment: .topLeading) {
+                    // 背景
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                        )
+                    
+                    // 占位符文本
+                    if content.isEmpty {
+                        Text(replyUser?.isEmpty == false ? "回复 \(replyUser ?? "")" : "写点什么...")
+                            .foregroundColor(.secondary)
+                            .subTitleFontStyle()
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .allowsHitTesting(false)
+                    }
+                    
+                    // 自适应文本输入框
+                    TextEditor(text: $content)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .focused($isFocused)
+                        .subTitleFontStyle()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(height: textEditorHeight)
+                        .onChange(of: content) { newValue in
+                            updateTextEditorHeight()
+                        }
+                        .readSize { size in
+                            let newHeight = max(40, min(120, size.height))
+                            if abs(newHeight - textEditorHeight) > 1 {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    textEditorHeight = newHeight
+                                }
+                            }
+                        }
+                }
+                .frame(maxHeight: 120)
+                
+                // 发送按钮
                 Button(action: {
                     if content.trim().isEmpty {
                         ToastView.warningToast("输入内容")
                         return
                     }
+                    // 添加触觉反馈
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                    
                     Task {
                         await sendComment()
                     }
                 }) {
-                    if isPosting {
-                        ProgressView()
-                    } else {
-                        Text("回复")
-                            .frame(maxWidth: 60, minHeight: 30)
-                            .foregroundColor(Color.white)
-                            .background(Color.blue)
-                            .cornerRadius(12)
-                            .fontStyle(fontName: titleFontName, fontSize: 16)
+                    ZStack {
+                        Circle()
+                            .fill(contentTextValid ? Color.blue : Color.gray.opacity(0.3))
+                            .frame(width: 36, height: 36)
+                            .shadow(color: contentTextValid ? Color.blue.opacity(0.3) : Color.clear, radius: 4, x: 0, y: 2)
+                        
+                        if isPosting {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(contentTextValid ? .white : .gray)
+                                .scaleEffect(contentTextValid ? 1.0 : 0.8)
+                        }
                     }
                 }
                 .disabled(isPosting || !contentTextValid)
-                .padding(.trailing, 20)
-                .padding(.top, 20)
+                .scaleEffect(contentTextValid ? 1.0 : 0.9)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: contentTextValid)
+                .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isPosting)
             }
-
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             
-            TextEditor(text: $content)
-                .frame(minHeight: 100)
-                .focused($isFocused)
-                .padding(.top, -8)
-                .subTitleFontStyle()
-                .scrollContentBackground(.hidden) // 隐藏默认背景
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.ultraThinMaterial) // 液态玻璃效果
-                )
-
+            // 加载指示器
             if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("发送中...")
+                        .subTitleFontStyle()
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 8)
             }
         }
-        
+        .keyboardAware()
         .onAppear {
             if let comment = SendCommentInfo.getCommentInfo(username ?? ""), comment.detailId == getDetailId() {
                 content = comment.content ?? ""
@@ -94,6 +148,20 @@ struct SendCommentView: View {
     
     func clear() {
         content = ""
+    }
+    
+    private func updateTextEditorHeight() {
+        let lines = content.components(separatedBy: .newlines).count
+        let baseHeight: CGFloat = 40
+        let lineHeight: CGFloat = 20
+        let newHeight = baseHeight + CGFloat(max(0, lines - 1)) * lineHeight
+        let clampedHeight = max(40, min(120, newHeight))
+        
+        if abs(clampedHeight - textEditorHeight) > 1 {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                textEditorHeight = clampedHeight
+            }
+        }
     }
     
     private var contentTextValid: Bool {
@@ -143,7 +211,7 @@ struct SendCommentView: View {
                 return
             }
             let response = try await APIService.sendComment(url: APIService.baseUrlString + getDetailId(), content: content)
-            print("Response: \(response)")
+            logger("Response: \(response)")
             postSuccess = true
             sendSuccess()
             ToastView.successToast("评论成功")

@@ -24,7 +24,7 @@ struct Persist {
     private static let userDefault = UserDefaults.standard
 
     static func save(value: Any, forkey key: String) {
-        print("[bao]save \(value) \(key)")
+        logger("[bao]save \(value) \(key)")
         userDefault.set(value, forKey: key)
     }
     
@@ -49,10 +49,10 @@ struct AccountState {
         do {
             let jsonData = try JSONEncoder().encode(account)
             Persist.save(value: jsonData, forkey: loginUserKey)
-            log("account: \(account) saved")
+            logger("account: \(account) saved")
             ACCOUNT = account
         } catch {
-            log("Save account failed")
+            logger("Save account failed")
         }
     }
     
@@ -79,7 +79,7 @@ struct AccountState {
                 .decode(AccountInfo.self, from: data)
             return ACCOUNT
         } catch {
-            log("readAccount failed")
+            logger("readAccount failed")
         }
         return nil
     }
@@ -120,7 +120,7 @@ class LoginStateChecker: ObservableObject {
     @Published var isLogin = false
     @Published var needLogin = false {
         didSet {
-            print("[login] needLogin updated to: \(needLogin)")
+            logger("[login] needLogin updated to: \(needLogin)")
         }
     }
     @Published var error: String?

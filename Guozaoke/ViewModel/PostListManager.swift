@@ -113,7 +113,7 @@ class PostListViewModel: ObservableObject {
             let data = try JSONEncoder().encode(postListItems)
             try data.write(to: saveFilePath)
         } catch {
-            print("Failed to save post list items: \(error)")
+            logger("Failed to save post list items: \(error)")
         }
     }
     
@@ -122,7 +122,7 @@ class PostListViewModel: ObservableObject {
             let data = try Data(contentsOf: saveFilePath)
             postListItems = try JSONDecoder().decode([PostListItem].self, from: data)
         } catch {
-            print("Failed to load post list items: \(error)")
+            logger("Failed to load post list items: \(error)")
         }
     }
 }

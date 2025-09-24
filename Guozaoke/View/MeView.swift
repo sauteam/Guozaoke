@@ -55,7 +55,7 @@ struct MeView: View {
             }
                         
             NotificationCenter.default.addObserver(forName: .logoutSuccessNoti, object: nil, queue: .main) { _ in
-                print("[logout] me")
+                logger("[logout] me")
             }
 
             if !parser.hadData {
@@ -66,7 +66,7 @@ struct MeView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
-            print("[login] me")
+            logger("[login] me")
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
                 let username  = user["userName"] as? String ?? ""
@@ -169,6 +169,10 @@ struct MyProfileView: View {
                 NavigationLink(destination: SettingView()) {
                     ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
                 }
+                
+//                NavigationLink(destination: AppIconListView()) {
+//                    ProfileRow(icon: SFSymbol.app.rawValue, title: "ICON")
+//                }
             }
             
             Section {

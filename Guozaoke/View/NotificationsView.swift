@@ -88,11 +88,11 @@ struct NotificationsView: View {
                 
                 NotificationCenter.default.addObserver(forName: .logoutSuccessNoti, object: nil, queue: .main) { _ in
                     viewModel.notifications.removeAll()
-                    print("[logout] noti")
+                    logger("[logout] noti")
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
-                print("[login] noti")
+                logger("[login] noti")
                 Task {
                     await viewModel.fetchNotificationsRefresh()
                 }

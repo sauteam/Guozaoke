@@ -95,7 +95,7 @@ struct FontSizePreviewView: View {
         .onAppear {
             //selectedFontName = UserDefaultsKeys.settingFontName
             //selectedFontSize = UserDefaultsKeys.settingFontSize
-            log("[font][size][name] selectedFontName \(selectedFontName) selectedFontSize \(selectedFontSize)")
+            logger("[font][size][name] selectedFontName \(selectedFontName) selectedFontSize \(selectedFontSize)")
         }
     }
     

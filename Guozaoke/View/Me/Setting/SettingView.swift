@@ -113,17 +113,17 @@ struct SettingView: View {
     
     private func handlePushNotificationToggle(newValue: Bool) {
         if newValue {
-            print("[noti]用户已开启推送消息")
+            logger("[noti]用户已开启推送消息")
             NotificationManager.shared.scheduleDailyNotification()
         } else {
-            print("[noti]用户已关闭推送消息")
+            logger("[noti]用户已关闭推送消息")
             NotificationManager.shared.cancelDailyNotification()
         }
     }
     
     private func tapTextEvent(_ urlString: String) {
         if urlString == "退出登录" {
-            print("退出登录")
+            logger("退出登录")
             if !AccountState.isLogin() {
                 ///LoginStateChecker.LoginStateHandle()
                 presentedSheet = .login
@@ -179,7 +179,7 @@ struct LogoutConfirmationSheet: View {
     private func logoutUser() {
         Task {
             let response = try await APIService.logout()
-            print("response \(response)")
+            logger("response \(response)")
             if !response.isEmpty {
                 presentedSheet = nil
 //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

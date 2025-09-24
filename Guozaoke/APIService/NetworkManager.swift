@@ -32,7 +32,7 @@ class NetworkManager: ObservableObject {
             if !allUrl.hasPrefix(APIService.baseUrlString) {
                 allUrl = APIService.baseUrlString + url
             }
-            log("[request] \(url) allUrl \(allUrl)")
+            logger("[request] \(url) allUrl \(allUrl)")
             guard let validURL = URL(string: allUrl) else {
                  continuation.resume(throwing: URLError(.badURL))
                  return
@@ -60,10 +60,10 @@ class NetworkManager: ObservableObject {
             .responseString { response in
                 switch response.result {
                 case .success(let string):
-                    //log("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
+                    //logger("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
                     continuation.resume(returning: string)
                 case .failure(let error):
-                    log("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
+                    logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
                     var desc = "出现错误❌: " + "[\(response.response?.statusCode ?? 0)[403-重新登录试试]]"
                     if !LoginStateChecker.isLogin {
@@ -71,7 +71,7 @@ class NetworkManager: ObservableObject {
                         LoginStateChecker.LoginStateHandle()
                     }
                     if error.responseCode == 403 {
-                        log("[403]重新登录处理  refreshTokenNoti \(url)")
+                        logger("[403]重新登录处理  refreshTokenNoti \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                     }
                     ToastView.warningToast(desc)

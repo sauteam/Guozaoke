@@ -110,8 +110,8 @@ extension View {
         fontStyle(fontName: titleFontName, fontSize: usernameFontSize, weight: weight)
     }
 
-    func subTitleFontStyle(weight: Font.Weight? = .light) -> some View {
-        fontStyle(fontName: titleFontName, fontSize: subTitleFontSize, weight: weight)
+    func subTitleFontStyle(weight: Font.Weight? = .light, fontSize: CGFloat = subTitleFontSize) -> some View {
+        fontStyle(fontName: titleFontName, fontSize: fontSize, weight: weight)
     }
     
     func titleFontStyle(weight: Font.Weight? = .light) -> some View {
@@ -200,7 +200,7 @@ func DynamicContextMenuContent(userInfo: String,  report: Bool? = false, showSaf
 //            if UIApplication.shared.canOpenURL(url) {
 //                UIApplication.shared.open(url)
 //            } else {
-//                print("No email client available")
+//                logger("No email client available")
 //            }
 //        }) {
 //            Text("发送邮件")

@@ -25,7 +25,7 @@ struct AppReviewRequest {
     
     static func requestReviewIfAppropriate() {
         
-        print("[review]1 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
+        logger("[review]1 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
         if !hasPromptedForReview {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
                 SKStoreReviewController.requestReview(in: windowScene)
@@ -34,15 +34,15 @@ struct AppReviewRequest {
             }
         }
         
-        print("[review]2 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
+        logger("[review]2 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
         reviewRequestCount += 1
         if let lastRequestDate = lastReviewRequestDate,
            Calendar.current.dateComponents([.day], from: lastRequestDate, to: Date()).day ?? 0 < 30 {
-            print("[review] within the last 30 days")
+            logger("[review] within the last 30 days")
             return
         }
         
-        print("[review]3 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
+        logger("[review]3 hasPromptedForReview \(hasPromptedForReview) reviewRequestCount \(reviewRequestCount) lastReviewRequestDate \(lastReviewRequestDate ?? Date())")
         
         if reviewRequestCount >= 3 {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {

@@ -59,15 +59,15 @@ struct LoginView: View {
                             }
                         
                         Text("我已阅读并同意")
-                            .subTitleFontStyle()
-                        
+                            .subTitleFontStyle(fontSize: 12)
+
                         Link("《使用条款》", destination: URL(string: AppInfo.appleEula)!)
-                            .subTitleFontStyle()
+                            .subTitleFontStyle(fontSize: 12)
                             .foregroundColor(.blue)
                         Text("和")
-                            .subTitleFontStyle()
+                            .subTitleFontStyle(fontSize: 12)
                         Link("《隐私协议》", destination: URL(string: APIService.feedbackAllLink)!)
-                            .subTitleFontStyle()
+                            .subTitleFontStyle(fontSize: 12)
                             .foregroundColor(.blue)
                     }
                     .padding(.vertical, 15)
@@ -106,7 +106,7 @@ struct LoginView: View {
             }
         }
         .onDisappear {
-            print("[login]登录提示框 needLogin2")
+            logger("[login]登录提示框 needLogin2")
         }
         .onChange(of: loginService.isLoggedIn) { newValue in
             if newValue {

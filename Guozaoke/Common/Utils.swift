@@ -20,19 +20,16 @@ let screenHeight = screenSize.height
 let toastDuration = 1.5
 
 private let loggable: Bool = true
-
-public func log(_ items: Any..., separator: String = " ", terminator: String = "\n") {
+public func logger(_ items: Any..., separator: String = " ", terminator: String = "\n") {
     if !loggable {
         return
     }
-#if DEBUG
-    print(items, separator, terminator)
-#endif
+    debugPrint("[log]", items, separator, terminator)
 }
 
 
 public func isSimulator() -> Bool {
-#if (arch(i386) || arch(x86_64)) && os(iOS)
+#if targetEnvironment(simulator)
     return true
 #endif
     return false

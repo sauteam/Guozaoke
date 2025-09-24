@@ -25,7 +25,7 @@ struct SafariView: UIViewControllerRepresentable {
 //    let delegate = SafariViewControllerDelegate()
 //
 //    func makeUIViewController(context: Context) -> SFSafariViewController {
-//        log("[web] url \(url.absoluteString)")
+//        logger("[web] url \(url.absoluteString)")
 //        let safariVC = SFSafariViewController(url: url)
 //        safariVC.preferredControlTintColor = .systemBlue
 //        safariVC.delegate = delegate
@@ -39,7 +39,7 @@ struct SafariView: UIViewControllerRepresentable {
 //    class SafariViewControllerDelegate: NSObject, SFSafariViewControllerDelegate {
 //        func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
 //            // 当用户关闭 SFSafariViewController 时调用
-//            print("Safari 视图已关闭")
+//            logger("Safari 视图已关闭")
 //        }
 //    }
 //}

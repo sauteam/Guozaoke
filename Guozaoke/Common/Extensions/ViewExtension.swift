@@ -15,7 +15,7 @@ public func topSafeAreaInset() -> UIEdgeInsets {
 
 extension View {
     public func debug(_ force: Bool = false, _ color: Color = .green) -> some View {
-        //        print(Mirror(reflecting: self).subjectType)
+        //        logger(Mirror(reflecting: self).subjectType)
         return self.modifier(DebugModifier(force, color))
     }
 }

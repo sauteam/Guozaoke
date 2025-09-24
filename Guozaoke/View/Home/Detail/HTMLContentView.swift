@@ -174,7 +174,7 @@ struct HTMLContentView: View {
                     attributedContent = attributedString
                 }
             } catch {
-                print("Error creating attributed string: \(error)")
+                logger("Error creating attributed string: \(error)")
                 await MainActor.run {
                     attributedContent = nil
                 }
@@ -215,10 +215,10 @@ struct HTMLContentView: View {
         case "user":
             if let urlString = url.absoluteString.removingPercentEncoding {
                 let userId = urlString.replacingOccurrences(of: "user://", with: "")
-                log("[at] userId \(userId)")
+                logger("[at] userId \(userId)")
                 if !userId.isEmpty {
                     linkUserId = userId
-                    log("linkUserId \(linkUserId)")
+                    logger("linkUserId \(linkUserId)")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         showUserInfo = true
                     }
@@ -233,7 +233,7 @@ struct HTMLContentView: View {
                     showSearchView.toggle()
                 }
             }
-            print("[tag] 解码失败 \(searchText)")
+            logger("[tag] 解码失败 \(searchText)")
             onTagTap?(url.host ?? "")
         case "mailto":
             if let urlString = url.absoluteString.removingPercentEncoding {
@@ -256,10 +256,10 @@ struct HTMLContentView: View {
         default:
             onLinkTap?(url)
             let urlString = url.absoluteString
-            log("[urlString] urlString \(urlString)")
+            logger("[urlString] urlString \(urlString)")
             if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
                 topicId = urlString.replacingOccurrences(of: APIService.baseUrlString, with: "")
-                log("topic \(topicId)")
+                logger("topic \(topicId)")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showTopicInfo = true
                 }

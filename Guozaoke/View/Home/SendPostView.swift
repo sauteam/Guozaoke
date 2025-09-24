@@ -110,7 +110,7 @@ struct SendPostView: View {
                     selectedTopic = Node(title: postDetail.author.node, link: postDetail.nodeUrl)
                     title   = postDetail.title
                     content = postDetail.content
-                    print("[edit] post\(postDetail)")
+                    logger("[edit] post\(postDetail)")
                 } else {
                     if let postInfo = EditPost.getEditPost() {
                         if postInfo.topicLink == selectedTopic?.link {
@@ -157,7 +157,7 @@ struct SendPostView: View {
         isPosting = true
         do {
             let response = try await APIService.sendPost(url: selectedTopic?.link.createPostUrl ?? defaultNode.link.createPostUrl, title: title, content: content)
-            print("Response: \(response)")
+            logger("Response: \(response)")
             postSuccess = true
             isPresented = false
             content = ""

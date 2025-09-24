@@ -104,7 +104,7 @@ struct UserInfoView: View {
         HStack {
             Button(action: {
                 hapticFeedback()
-                print("关注按钮点击")
+                logger("关注按钮点击")
                 Task {
                     do {
                         let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
@@ -319,7 +319,7 @@ struct UserInfoView: View {
                 Button {
                     Task {
                         let response = await parser.blockUserAction(parser.userInfo?.blockLink)
-                        print("block \(response)")
+                        logger("block \(response)")
                     }
                 } label: {
                     Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.blockUser ?? false ? .block : .unblock)
@@ -380,7 +380,7 @@ struct MyReplyRowView: View {
         })
         .onTapGesture {
             isPostDetailViewActive = true
-            log("titleLink \(myReply.titleLink)")
+            logger("titleLink \(myReply.titleLink)")
         }
     }
 }

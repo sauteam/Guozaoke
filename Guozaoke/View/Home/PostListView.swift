@@ -149,7 +149,7 @@ struct PostListContentView: View {
                             .onAppear {
                                 if post == viewModel.posts.last {
                                     viewModel.loadMorePosts(type: type)
-                                    print("2 type \(type)")
+                                    logger("2 type \(type)")
                                 }
                             }
                     }

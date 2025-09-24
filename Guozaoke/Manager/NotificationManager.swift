@@ -18,12 +18,12 @@ class NotificationManager: ObservableObject {
     
     func cancelDailyNotification() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["dailyReminder"])
-        print("[noti]设置取消推送通知了")
+        logger("[noti]设置取消推送通知了")
     }
 
     func scheduleDailyNotification() {
         if UserDefaultsKeys.settingPushNotificationsEnabled == false {
-            log("[noti]设置关闭推送通知了")
+            logger("[noti]设置关闭推送通知了")
         }
         
         let content = UNMutableNotificationContent()
@@ -42,9 +42,9 @@ class NotificationManager: ObservableObject {
 
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Error scheduling notification: \(error.localizedDescription)")
+                logger("Error scheduling notification: \(error.localizedDescription)")
             } else {
-                print("Notification scheduled for every day at 12:00 PM.")
+                logger("Notification scheduled for every day at 12:00 PM.")
             }
         }
     }
@@ -59,9 +59,9 @@ class NotificationManager: ObservableObject {
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.badge, .sound, .alert]) { [weak self] granted, error in
             if granted {
-                print("通知权限已授予")
+                logger("通知权限已授予")
             } else {
-                print("通知权限被拒绝: \(error?.localizedDescription ?? "")")
+                logger("通知权限被拒绝: \(error?.localizedDescription ?? "")")
             }
             self?.notificationGranted = granted
         }

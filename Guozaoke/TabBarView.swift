@@ -53,7 +53,7 @@ struct TabBarView: View {
         .onReceive(NotificationCenter.default.publisher(for: .loginViewAlertNoti)) { _ in
             loginChecker.needLogin = true
             showLoginView = true
-            print("[login]登录提示框 needLogin \(loginChecker.needLogin)")
+            logger("[login]登录提示框 needLogin \(loginChecker.needLogin)")
         }
         .onChange(of: notificationManager.unreadCount) { newValue in
             updateAppBadge(newValue)
@@ -88,17 +88,38 @@ struct TabBarView: View {
 struct TabContentView: View {
     @Binding var tab: TabBarView.Tab
     @ObservedObject var notificationManager = NotificationManager.shared
+    @ObservedObject var navigationManager = NavigationManager.shared
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = PostListViewModel()
 
     @State private var lastSelectedTab: TabBarView.Tab?
     @State private var lastTapTime: Date?
     @State private var lastRefreshTime: Date?
+    
+    // 添加本地状态来强制触发导航
+    @State private var shouldNavigateToPostDetail = false
+    @State private var postDetailId = ""
         
     var body: some View {
         tabViewContent
             .onTabChange(of: $tab) { newValue in
                 handleTabChange(newTab: newValue)
+            }
+            .onChange(of: navigationManager.shouldNavigateToPostDetail) { shouldNavigate in
+                if shouldNavigate {
+                    logger("[TabContentView] 检测到NavigationManager导航请求，同步到本地状态")
+                    tab = .home
+                    postDetailId = navigationManager.postDetailId
+                    shouldNavigateToPostDetail = true
+                }
+            }
+            .onChange(of: navigationManager.shouldNavigateToUserDetail) { shouldNavigate in
+                if shouldNavigate {
+                    tab = .home
+                }
+            }
+            .onOpenURL { url in
+                handleOpenURL(url)
             }
     }
     
@@ -107,13 +128,27 @@ struct TabContentView: View {
             Group {
                 NavigationStack {
                     PostListView(viewModel: viewModel)
+                        .navigationDestination(isPresented: $shouldNavigateToPostDetail) {
+                            PostDetailView(postId: postDetailId)
+                                .onAppear {
+                                    logger("[TabContentView] PostDetailView 已出现，postId: \(postDetailId)")
+                                }
+                                .onDisappear {
+                                    logger("[TabContentView] PostDetailView 已消失")
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        navigationManager.resetNavigationState()
+                                        shouldNavigateToPostDetail = false
+                                        postDetailId = ""
+                                    }
+                                }
+                        }
                 }
             }
             .tabItem { Label(TabBarView.Tab.home.rawValue, systemImage: TabBarView.Tab.home.icon) }
             .tag(TabBarView.Tab.home)
             // 在NavigationStack 不响应onTapGesture 事件
 //            .onTapGesture(count: 2) {
-//                log("[tab]\(TabBarView.Tab.home.rawValue) tap 2")
+//                logger("[tab]\(TabBarView.Tab.home.rawValue) tap 2")
 //            }
 
 
@@ -148,7 +183,6 @@ private extension TabContentView {
     
     private func handleTabChange(newTab: TabBarView.Tab) {
         let now = Date()
-        //log("[tab] \(newTab.rawValue) double tap")
         if let lastTab = lastSelectedTab, let lastTime = lastTapTime, lastTab == newTab {
             if now.timeIntervalSince(lastTime) < 0.5 {
                 handleDoubleTap(for: newTab)
@@ -165,7 +199,7 @@ private extension TabContentView {
                 refreshTab(tab)
                 self.lastRefreshTime = now
             } else {
-                print("[tab] \(tab.rawValue) double tap ignored (wait 60 seconds)")
+                logger("[tab] \(tab.rawValue) double tap ignored (wait 60 seconds)")
             }
         } else {
             refreshTab(tab)
@@ -173,8 +207,41 @@ private extension TabContentView {
         }
     }
     
+    private func handleOpenURL(_ url: URL) {
+        guard url.scheme == AppInfo.scheme else { return }
+        let path = url.path
+        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        
+        logger("[TabContentView] path: \(path)")
+        logger("[TabContentView] queryItems: \(queryItems)")
+        
+        // 处理帖子详情跳转
+        if path == "/t" {
+            if let id = queryItems.first(where: { $0.name == "id" })?.value {
+                logger("[TabContentView] 从 Widget 跳转到帖子详情: \(id)")
+                tab = .home
+                postDetailId = id
+                shouldNavigateToPostDetail = true
+                logger("[TabContentView] 已设置本地导航状态: shouldNavigateToPostDetail = \(shouldNavigateToPostDetail), postDetailId = \(postDetailId)")
+                
+                // 添加延迟确保状态设置完成
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    logger("[TabContentView] 延迟检查导航状态: shouldNavigateToPostDetail = \(self.shouldNavigateToPostDetail)")
+                }
+            }
+        }
+        
+        // 处理用户详情跳转
+        if path == "/u" {
+            if let id = queryItems.first(where: { $0.name == "id" })?.value {
+                logger("[TabContentView] 从 Widget 跳转到用户详情: \(id)")
+                navigationManager.navigateToUserDetail(userId: id)
+            }
+        }
+    }
+    
     private func refreshTab(_ tab: TabBarView.Tab) {
-        //print("[tab] \(tab.rawValue) double tap - refreshing...")
+        //logger("[tab] \(tab.rawValue) double tap - refreshing...")
         switch tab {
         case .home:
             
@@ -195,7 +262,7 @@ extension View {
         Group {
             if #available(iOS 17.0, *) {
                 self.onChange(of: tab.wrappedValue) { oldValue, newValue in
-                    log("[tab][onTabChange] \(oldValue.rawValue) -> \(newValue.rawValue)")
+                    logger("[tab][onTabChange] \(oldValue.rawValue) -> \(newValue.rawValue)")
                     action(newValue)
                 }
             } else {
@@ -217,7 +284,7 @@ struct TabTapView: View {
         Color.clear
             .contentShape(Rectangle())
             .onTapGesture {
-                //log("[tab][TabTapView] \(tab.rawValue) tapped")
+                //logger("[tab][TabTapView] \(tab.rawValue) tapped")
                 action(tab)
             }
     }

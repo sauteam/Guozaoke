@@ -50,7 +50,7 @@ class SearchListParser: NSObject, ObservableObject {
             return
         }
         
-        print("搜索URL: \(urlString)")
+        logger("搜索URL: \(urlString)")
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
@@ -75,23 +75,23 @@ class SearchListParser: NSObject, ObservableObject {
         session.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("网络请求错误: \(error)")
+                    logger("网络请求错误: \(error)")
                     self?.error = error
                     self?.isLoading = false
                     return
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse {
-                    print("HTTP状态码: \(httpResponse.statusCode)")
+                    logger("HTTP状态码: \(httpResponse.statusCode)")
                 }
                 
                 guard let data = data else {
-                   print("没有接收到数据")
+                   logger("没有接收到数据")
                    self?.isLoading = false
                    return
                 }
                        
-               print("接收到数据大小: \(data.count) bytes")
+               logger("接收到数据大小: \(data.count) bytes")
                
                let encodings: [String.Encoding] = [.utf8, .ascii, .isoLatin1, .windowsCP1252]
                var decodedHTML: String?
@@ -99,25 +99,25 @@ class SearchListParser: NSObject, ObservableObject {
                for encoding in encodings {
                    if let html = String(data: data, encoding: encoding) {
                        decodedHTML = html
-                       print("成功使用编码: \(encoding)")
+                       logger("成功使用编码: \(encoding)")
                        break
                    }
                }
                
                guard let html = decodedHTML else {
-                   print("所有编码方式都无法解码数据")
-                   print("原始数据前100字节: \(Array(data.prefix(100)))")
+                   logger("所有编码方式都无法解码数据")
+                   logger("原始数据前100字节: \(Array(data.prefix(100)))")
                    self?.isLoading = false
                    return
                }
                
                let containsResults = html.contains("b_results")
                let containsAlgo = html.contains("b_algo")
-               print("包含搜索结果容器: \(containsResults)")
-               print("包含搜索结果项: \(containsAlgo)")
+               logger("包含搜索结果容器: \(containsResults)")
+               logger("包含搜索结果项: \(containsAlgo)")
                
                if html.contains("b_no") {
-                   print("没有找到搜索结果")
+                   logger("没有找到搜索结果")
                    self?.searchList = []
                    self?.hasMoreData = false
                    self?.isLoading = false
@@ -127,12 +127,12 @@ class SearchListParser: NSObject, ObservableObject {
                if containsResults || containsAlgo {
                    self?.parseHTML(html)
                } else {
-                   print("HTML不包含预期的搜索结果结构")
+                   logger("HTML不包含预期的搜索结果结构")
 #if DEBUG
                    if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
                        let fileURL = documentsPath.appendingPathComponent("debug_response.html")
                        try? html.write(to: fileURL, atomically: true, encoding: .utf8)
-                       print("已保存响应HTML到: \(fileURL)")
+                       logger("已保存响应HTML到: \(fileURL)")
                    }
 #endif
                    self?.isLoading = false
@@ -172,9 +172,9 @@ class SearchListParser: NSObject, ObservableObject {
                         meta: meta
                     )
                     newItems.append(item)
-                    print("找到结果: \(title)")
+                    logger("找到结果: \(title)")
                 } catch {
-                    print("解析单个结果时出错: \(error)")
+                    logger("解析单个结果时出错: \(error)")
                 }
             }
             
@@ -192,10 +192,10 @@ class SearchListParser: NSObject, ObservableObject {
                 hasMoreData = false
             }
             
-            print("[search]成功解析 currentKeyword \(currentKeyword) \(newItems.count) 条结果")
+            logger("[search]成功解析 currentKeyword \(currentKeyword) \(newItems.count) 条结果")
             
         } catch {
-            print("解析错误: \(error)")
+            logger("解析错误: \(error)")
             self.error = error
         }
         isLoading = false
@@ -272,7 +272,7 @@ struct SearchPostItem: Identifiable {
 //            return
 //        }
 //
-//        log("search \(url)")
+//        logger("search \(url)")
 //
 //        isLoading = true
 //        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
@@ -300,7 +300,7 @@ struct SearchPostItem: Identifiable {
 //                    }
 //                    self.hasMoreData = page < self.totalPages
 //                }
-//                print("searchList \(self.searchList.count) webPage \(webPage) page \(page) totalPages \(totalPages)")
+//                logger("searchList \(self.searchList.count) webPage \(webPage) page \(page) totalPages \(totalPages)")
 //            } catch {
 //                DispatchQueue.main.async {
 //                    self.errorMessage = "解析失败: \(error.localizedDescription)"
@@ -350,7 +350,7 @@ struct SearchPostItem: Identifiable {
 //        savedSearchKeywords.sort(by: { $0.date > $1.date })
 //    }
 //
-//    private func log(_ message: String) {
-//        print(message)
+//    private func logger(_ message: String) {
+//        logger(message)
 //    }
 //}

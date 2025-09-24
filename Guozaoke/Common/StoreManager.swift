@@ -39,17 +39,17 @@ class StoreManager: ObservableObject {
     func syncPaidDownloadUsers() async {
         guard let receiptURL  = Bundle.main.appStoreReceiptURL,
               let receiptData = try? Data(contentsOf: receiptURL) else {
-            log("[iap] ❌ 无法获取收据文件")
+            logger("[iap] ❌ 无法获取收据文件")
             return
         }
         if let originalVersion = extractOriginalApplicationVersion(from: receiptData) {
-            log("[iap] 📄 originalApplicationVersion: \(originalVersion)")
+            logger("[iap] 📄 originalApplicationVersion: \(originalVersion)")
             if originalVersion < purchasedVersion {
                 purchaseAppState.savePurchaseStatus(isPurchased: true)
-                log("[iap] ✅ 付费下载用户，自动解锁")
+                logger("[iap] ✅ 付费下载用户，自动解锁")
             }
         } else {
-            log("[iap] ❌ 无法解析收据")
+            logger("[iap] ❌ 无法解析收据")
         }
     }
     
@@ -59,7 +59,7 @@ class StoreManager: ObservableObject {
             let storeProducts = try await Product.products(for: productIDs)
             products = storeProducts
         } catch {
-            log("[iap]Failed to fetch products: \(error)")
+            logger("[iap]Failed to fetch products: \(error)")
         }
         isLoading = false
     }
@@ -74,20 +74,20 @@ class StoreManager: ObservableObject {
                 case .verified(let transaction):
                     await transaction.finish()
                     ToastView.purchaseText("支付成功，感谢！")
-                    log("[iap] Purchase successful")
+                    logger("[iap] Purchase successful")
                     NotificationCenter.default.post(name: .purchaseSuccessNoti, object: ["success": "1"])
                     purchaseAppState.savePurchaseStatus(isPurchased: true)
                 case .unverified:
-                    log("[iap]Purchase unverified")
+                    logger("[iap]Purchase unverified")
                 }
             case .userCancelled, .pending:
                 ToastView.purchaseText("取消支付")
-                log("[iap]Purchase cancelled or pending")
+                logger("[iap]Purchase cancelled or pending")
             @unknown default:
                 break
             }
         } catch {
-            log("[iap]Purchase failed: \(error)")
+            logger("[iap]Purchase failed: \(error)")
         }
         isLoading = false
     }
@@ -97,7 +97,7 @@ class StoreManager: ObservableObject {
         do {
             let transactions = try await getPurchasedTransactions()
             if transactions.isEmpty {
-                log("[iap] No previous purchases found")
+                logger("[iap] No previous purchases found")
                 if toast == true {
                     if purchaseAppState.isPurchased {
                         ToastView.purchaseText("已解锁个性设置功能")
@@ -107,13 +107,13 @@ class StoreManager: ObservableObject {
                 }
             } else {
                 purchaseAppState.savePurchaseStatus(isPurchased: true)
-                log("[iap] Restored previous purchases")
+                logger("[iap] Restored previous purchases")
                 if toast == true {
                     ToastView.purchaseText("恢复购买成功！")
                 }
             }
         } catch {
-            log("[iap]Failed to restore purchases: \(error)")
+            logger("[iap]Failed to restore purchases: \(error)")
             ToastView.purchaseText("恢复购买失败，发生错误。")
         }
         isLoading = false
@@ -148,7 +148,7 @@ class StoreManager: ObservableObject {
             let receiptDict = try PropertyListSerialization.propertyList(from: data, options: .mutableContainersAndLeaves, format: &format) as? [String: Any]
             return receiptDict ?? [:]
         } catch {
-            print("❌ 解析收据失败: \(error)")
+            logger("❌ 解析收据失败: \(error)")
             return [:]
         }
     }

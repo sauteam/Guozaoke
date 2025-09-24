@@ -64,7 +64,7 @@ struct InAppPurchaseView: View {
                 } else {
                     selectedProduct = storeManager.products.first
                 }
-                log("[iap][list] \(storeManager.products)")
+                logger("[iap][list] \(storeManager.products)")
             }
         }
     }

@@ -131,7 +131,12 @@ struct PostDetailView: View {
             .presentationDragIndicator(.visible)
         }
         .onAppear() {
-            guard detailParser.postDetail == nil else { return }
+            logger("[PostDetailView] onAppear, postId: \(postId)")
+            guard detailParser.postDetail == nil else { 
+                logger("[PostDetailView] 帖子详情已存在，跳过加载")
+                return 
+            }
+            logger("[PostDetailView] 开始加载帖子详情")
             detailParser.loadNews(postId: postId)
         }
         

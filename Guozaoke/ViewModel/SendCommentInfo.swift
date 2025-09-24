@@ -17,15 +17,15 @@ struct SendCommentInfo: Codable {
     static func saveComment(_ comment: SendCommentInfo) {
         do {
             if let info = getCommentInfo(comment.username ?? ""), info.content == comment.content {
-                log("[comment][save] 相同内容不保存")
+                logger("[comment][save] 相同内容不保存")
                 return
             }
             
             let jsonData = try JSONEncoder().encode(comment)
             Persist.save(value: jsonData, forkey: keyValue(comment.username))
-            log("[comment][save]: \(comment) saved \(keyValue(comment.username))")
+            logger("[comment][save]: \(comment) saved \(keyValue(comment.username))")
         } catch {
-            log("Save post failed")
+            logger("Save post failed")
         }
     }
     
@@ -39,10 +39,10 @@ struct SendCommentInfo: Codable {
             guard let data = data else { return nil }
             let info = try JSONDecoder()
                 .decode(SendCommentInfo.self, from: data)
-            log("[comment][getCommentInfo] get: \(info) saved \(keyValue(username))")
+            logger("[comment][getCommentInfo] get: \(info) saved \(keyValue(username))")
             return info
         } catch {
-            log("[comment][getCommentInfo] readAccount failed")
+            logger("[comment][getCommentInfo] readAccount failed")
         }
         return nil
     }
@@ -54,7 +54,7 @@ struct SendCommentInfo: Codable {
         
     static func removeComment(_ commentId: String) {
         Persist.remove(key: keyValue(commentId))
-        log("[comment][remove] \(keyValue(commentId))")
+        logger("[comment][remove] \(keyValue(commentId))")
     }
     
     static func clearAllSendCommentInfo() {
@@ -79,9 +79,9 @@ struct EditPost: Codable {
         do {
             let jsonData = try JSONEncoder().encode(post)
             Persist.save(value: jsonData, forkey: editPostInfoKey)
-            log("account: \(post) saved")
+            logger("account: \(post) saved")
         } catch {
-            log("Save post failed")
+            logger("Save post failed")
         }
     }
     
@@ -97,7 +97,7 @@ struct EditPost: Codable {
                 .decode(EditPost.self, from: data)
             return info
         } catch {
-            log("readAccount failed")
+            logger("readAccount failed")
         }
         return nil
     }

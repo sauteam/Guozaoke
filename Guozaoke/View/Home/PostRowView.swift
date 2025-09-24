@@ -27,7 +27,7 @@ struct PostRowView: View {
                     .avatar()
                     .disabled(post.rowEnum == .profileRow)
                     .onTapGesture {
-                        log("点击 \(profile) isMe \(AccountState.isSelf(userName: post.author))")
+                        logger("点击 \(profile) isMe \(AccountState.isSelf(userName: post.author))")
                         if !profile {
                             isUserAvatarViewActive = true
                         }
@@ -58,12 +58,12 @@ struct PostRowView: View {
                         Text(post.author)
                             .usernameFontStyle()
                             .lineLimit(1)
-                            .onTapGesture {
-                                log("点击 \(post.author) \(post.nodeUrl)")
-                                if !profile {
-                                    isUserNameInfoViewActive = true
-                                }
-                            }
+//                            .onTapGesture {
+//                                logger("点击 \(post.author) \(post.nodeUrl)")
+//                                if !profile {
+//                                    isUserNameInfoViewActive = true
+//                                }
+//                            }
                         
                         if let lastReplyUser = post.lastReplyUser {
                             Text("\(post.time)" + dotText + "\(lastReplyUser)" + "回复")
@@ -97,7 +97,7 @@ struct PostRowView: View {
                             .clipShape(Rectangle())
                             .onTapGesture {
                                 hapticFeedback()
-                                log("点击 \(post.node) \(post.nodeUrl)")
+                                logger("点击 \(post.node) \(post.nodeUrl)")
                                 if !nodeInfo {
                                     isNodeInfoViewActive = true
                                 }

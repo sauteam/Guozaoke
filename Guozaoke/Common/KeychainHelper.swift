@@ -37,7 +37,7 @@ class PurchaseAppState: ObservableObject {
             isPurchased = false
         }
         
-        //log("[app][version][iap]1 currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(isPurchased)")
+        //logger("[app][version][iap]1 currentVersion \(currentVersion) purchasedVersion \(purchasedVersion) isPurchased \(isPurchased)")
     }
 
     func savePurchaseStatus(isPurchased: Bool) {
@@ -46,9 +46,9 @@ class PurchaseAppState: ObservableObject {
         if let data = status.data(using: .utf8) {
             let success = KeychainHelper.save(key: purchaseKey, data: data)
             if success {
-                log("[iap][purchase] Purchase status saved successfully")
+                logger("[iap][purchase] Purchase status saved successfully")
             } else {
-                log("[iap][purchase] Failed to save purchase status")
+                logger("[iap][purchase] Failed to save purchase status")
             }
         }
     }
@@ -64,7 +64,7 @@ class KeychainHelper {
     
     static func clearPurchaseStatus() {
         let clear = delete(key: KeychainKeys.purchaseGuozaokeKey)
-        log("[iap][clear] \(clear)")
+        logger("[iap][clear] \(clear)")
     }
     
     static var isPurchased: Bool {

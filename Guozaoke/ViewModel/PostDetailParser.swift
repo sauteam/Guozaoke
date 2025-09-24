@@ -187,7 +187,7 @@ class PostDetailParser: ObservableObject {
         isLoading = true
         let footerUrl = "?p=\(currentPage)"
         let urlString = (postId?.postDetailUrl ?? "") + footerUrl
-        log("详情开始刷新 \(postId ?? "1111") \(urlString)")
+        logger("详情开始刷新 \(postId ?? "1111") \(urlString)")
 
         guard let url = URL(string: urlString) else {
             error = "Invalid URL"
@@ -226,7 +226,7 @@ class PostDetailParser: ObservableObject {
                     self.currentPage += 1
                     self.postDetail = try self.parsePostDetail(doc: doc)
                     self.hasMore = self.currentPage <= self.totalPages
-                    log("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
+                    logger("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
                 } catch {
                     self.error = error.localizedDescription
                 }
@@ -270,7 +270,7 @@ class PostDetailParser: ObservableObject {
 //        } else {
 //            topicContent = content
 //        }
-        log("[content] \(contentHtml)")
+        logger("[content] \(contentHtml)")
         
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
@@ -330,7 +330,7 @@ class PostDetailParser: ObservableObject {
         let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
-        //log("replies \(replies)")
+        //logger("replies \(replies)")
         self.replies.append(contentsOf: replies)
         return PostDetail(
             id: postId ?? "",
@@ -447,7 +447,7 @@ class PostDetailParser: ObservableObject {
             return Int(try element.text())
         }.max() ?? currentPage
         self.totalPages = pageNumbers
-        log("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl ?? "1") nextPageUrl\(nextPageUrl ?? "") pageNumbers\(pageNumbers)")
+        logger("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl ?? "1") nextPageUrl\(nextPageUrl ?? "") pageNumbers\(pageNumbers)")
 //        if totalPages == 1 {
 //            let mobilePaginationText = try doc.select("div.pagination-wap div").text()
 //            if let range = mobilePaginationText.range(of: "/") {
@@ -468,7 +468,7 @@ class PostDetailParser: ObservableObject {
             if let jsonData = response.data(using: .utf8) {
                 do {
                     let model = try JSONDecoder().decode(BaseResponse.self, from: jsonData)
-                    log("jsonData \(jsonData) \(model)")
+                    logger("jsonData \(jsonData) \(model)")
                     let message = model.message
                     if message == "user_not_login" {
                         runInMain {
@@ -483,7 +483,7 @@ class PostDetailParser: ObservableObject {
                         if model.success == 1 {
                             if link.contains("favorite") {
                                 self.isCollection.toggle()
-                                log("isCollection \(self.isCollection)")
+                                logger("isCollection \(self.isCollection)")
                                 if self.isCollection {
                                     self.postDetail?.collections += 1
                                     self.postDetail?.collectionString = "取消收藏"
@@ -496,7 +496,7 @@ class PostDetailParser: ObservableObject {
                                 self.postDetail?.collectionsLink = url ?? ""
                             } else if link.contains("vote?topic_id") {
                                 self.isZan.toggle()
-                                log("isZan \(self.isZan)")
+                                logger("isZan \(self.isZan)")
                                 if self.isZan {
                                     self.postDetail?.zans += 1
                                     self.postDetail?.zanString = "感谢已表示"
@@ -532,11 +532,11 @@ class PostDetailParser: ObservableObject {
                     }
                     return model
                 } catch {
-                    log("JSON 解析错误: \(error.localizedDescription)")
+                    logger("JSON 解析错误: \(error.localizedDescription)")
                 }
             }
         } catch {
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
             //response = "请求失败: \(error.localizedDescription)"
         }
         return nil

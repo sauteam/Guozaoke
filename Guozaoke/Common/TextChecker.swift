@@ -114,7 +114,7 @@ extension String {
                 }
             }
         } catch let error {
-            print("[base64]无效的正则表达式: \(error.localizedDescription)")
+            logger("[base64]无效的正则表达式: \(error.localizedDescription)")
         }
         return decodedStrings
     }

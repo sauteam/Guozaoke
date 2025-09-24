@@ -85,7 +85,7 @@ struct AppInfo {
     
     /// 去AppStore
     static func toAppStore() {
-        print("url \(AppInfo.AppStoreUrl)")
+        logger("url \(AppInfo.AppStoreUrl)")
         AppInfo.AppStoreUrl.openURL()
     }
     /// 去评论
@@ -176,7 +176,7 @@ struct APIService {
                 
                 if let cookie = HTTPCookie(properties: cookieProperties) {
                     HTTPCookieStorage.shared.setCookie(cookie)
-                    print("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
+                    logger("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
                 }
             }
         }
@@ -287,13 +287,13 @@ extension APIService {
         let cookieStorage = HTTPCookieStorage.shared
         for cookie in cookies {
             cookieStorage.setCookie(cookie)
-            log("[save]Saved Cookie: \(cookie.name) = \(cookie.value)")
+            logger("[save]Saved Cookie: \(cookie.name) = \(cookie.value)")
         }
     }
     
     static func cookies() -> [HTTPCookie]? {
         let cookies = HTTPCookieStorage.shared.cookies
-        //log("[cookies]\(cookies)")
+        //logger("[cookies]\(cookies)")
         return cookies
     }
     
@@ -302,7 +302,7 @@ extension APIService {
             for cookie in cookies {
                 if cookie.domain.contains("guozaoke.com") {
                     HTTPCookieStorage.shared.deleteCookie(cookie)
-                    log("[cookies]Deleted cookie: \(cookie.name)")
+                    logger("[cookies]Deleted cookie: \(cookie.name)")
                 }
             }
         }
@@ -313,7 +313,7 @@ extension APIService {
         cookieStore?.cookies?.forEach { cookie in
             cookieStore?.deleteCookie(cookie)
         }
-        log("[cookies][httpCookieStorage] Deleted all session cookies.")
+        logger("[cookies][httpCookieStorage] Deleted all session cookies.")
     }
     
     static func clearWebViewCookies() {
@@ -321,7 +321,7 @@ extension APIService {
         dataStore.fetchDataRecords(ofTypes: [WKWebsiteDataTypeCookies]) { records in
             records.forEach { record in
                 dataStore.removeData(ofTypes: [WKWebsiteDataTypeCookies], for: [record]) {
-                    print("Deleted WebView cookies for \(record.displayName)")
+                    logger("Deleted WebView cookies for \(record.displayName)")
                 }
             }
         }
@@ -341,7 +341,7 @@ extension APIService {
         let storage = HTTPCookieStorage.shared
         if let cookies = storage.cookies {
             for cookie in cookies {
-                log("\(tag) --> cookie: \(cookie.name), \(cookie.value)")
+                logger("\(tag) --> cookie: \(cookie.name), \(cookie.value)")
             }
         }
     }
@@ -382,7 +382,7 @@ extension String {
         let t   = "/t/"
         let base  = APIService.baseUrlString
         let baseT = base + t
-        //log("[tid][detail] tid \(tid)")
+        //logger("[tid][detail] tid \(tid)")
         if tid.contains(baseT) {
             return tid
         }
@@ -391,7 +391,7 @@ extension String {
             tid = tid.extractNumericPart
         }
         
-        //log("[tid][detail]2 tid \(tid)")
+        //logger("[tid][detail]2 tid \(tid)")
         if !tid.contains(t) {
             tid = t + tid
         }

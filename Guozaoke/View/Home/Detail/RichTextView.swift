@@ -92,7 +92,7 @@ struct RichTextView: View {
     }
 
     private func handleLink(_ url: URL) {
-        log("content url \(url)")
+        logger("content url \(url)")
         switch url.scheme {
         case "https", "http":
             let urlString = url.absoluteString
@@ -103,7 +103,7 @@ struct RichTextView: View {
                 }
             } else {
                 self.url = url
-                log("content url \(url)")
+                logger("content url \(url)")
                 if urlString.contains(".png") || urlString.contains(".jpg") || urlString.contains(".webp") || urlString.contains(".gif") {
                     return
                 }
@@ -146,7 +146,7 @@ struct RichTextView: View {
                 searchText = tag
             }
             showSearchView.toggle()
-            print("[tag] 解码失败 \(searchText)")
+            logger("[tag] 解码失败 \(searchText)")
             onTagTap?(tag)
         default:
             break

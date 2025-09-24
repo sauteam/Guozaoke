@@ -152,7 +152,7 @@ class UserInfoParser: ObservableObject {
                 }
                 memberInfo.append(MemberInfo(title: title, member: memberModel))
             }
-            print("[member] \(memberInfo)")
+            logger("[member] \(memberInfo)")
             runInMain {
                 self.isLoading  = false
                 self.memberInfo = memberInfo
@@ -162,7 +162,7 @@ class UserInfoParser: ObservableObject {
             runInMain {
                 self.isLoading  = false
             }
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
         }
     }
     
@@ -180,20 +180,20 @@ class UserInfoParser: ObservableObject {
                 self.faqContentBottom = footerText
             }
             
-            print("Footer content \(containerText) \n \(footerText)")
+            logger("Footer content \(containerText) \n \(footerText)")
 
             if self.faqContentValid() {
                 success = true
             }
 //            if let containerDiv = try document.select("div.container.mt15").first() {
 //                let containerText = try containerDiv.text()
-//                print("Container content: \(containerText)")
+//                logger("Container content: \(containerText)")
 //                runInMain {
 //                    self.faqContent = containerText
 //                }
 //                success = true
 //            } else {
-//                print("No div with class 'container mt15' found.")
+//                logger("No div with class 'container mt15' found.")
 //            }
                 
 //            if let footerDiv = try document.select("div.footer.mt15").first() {
@@ -201,13 +201,13 @@ class UserInfoParser: ObservableObject {
 //                runInMain {
 //                    self.faqContentBottom = footerText
 //                }
-//                print("Footer content: \(footerText)")
+//                logger("Footer content: \(footerText)")
 //            } else {
-//                print("No div with class 'footer mt15' found.")
+//                logger("No div with class 'footer mt15' found.")
 //            }
             return (success, html)
         } catch {
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
         }
         return (false, "")
     }
@@ -240,7 +240,7 @@ class UserInfoParser: ObservableObject {
             }
             return html
         } catch {
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
         }
         return ""
     }
@@ -268,7 +268,7 @@ class UserInfoParser: ObservableObject {
             let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
 
             let followText = try doc.select(".label.label-success").text()
-            log("followText \(followText) followLink\(followLink)")
+            logger("followText \(followText) followLink\(followLink)")
             var success = false
             if followText != userInfo?.followText {
                 success = true
@@ -279,7 +279,7 @@ class UserInfoParser: ObservableObject {
             }
             return (success, html)
         } catch {
-            log("请求失败: \(error.localizedDescription)")
+            logger("请求失败: \(error.localizedDescription)")
         }
         return nil
     }
@@ -314,7 +314,7 @@ class UserInfoParser: ObservableObject {
             let newTopics  = try parseTopics(doc: doc, isTopic: true)
             let newReplies = try parseReply(doc: doc)
             try self.parsePagination(doc: doc)
-            log("currentPage \(currentPage) totalPages \(totalPages) newTopics \(newTopics.count) newReplies \(newReplies)")
+            logger("currentPage \(currentPage) totalPages \(totalPages) newTopics \(newTopics.count) newReplies \(newReplies)")
             
 
             let _ =  try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
@@ -370,7 +370,7 @@ class UserInfoParser: ObservableObject {
         let followLink = try followElement?.attr("href") ?? ""
         
         let followText = try doc.select(".label.label-success").text()
-        log("followText \(followText) followLink\(followLink)")
+        logger("followText \(followText) followLink\(followLink)")
         let idElement = try doc.select("dl:has(dt:contains(ID)) dd").first()
         let id = try idElement?.text() ?? ""
         // Nickname
@@ -396,7 +396,7 @@ class UserInfoParser: ObservableObject {
         var profile:[String] = []
         // 打印解析结果
         for (key, value) in parsedData {
-            print("[userInfo]\(key): \(value)")
+            logger("[userInfo]\(key): \(value)")
             profile.append("\(key): \(value)")
         }
         
@@ -424,8 +424,8 @@ class UserInfoParser: ObservableObject {
                 blockUser = true
             }
             blockLink = linkHref
-            print("文本内容: \(linkText)")
-            print("链接地址: \(linkHref)")
+            logger("文本内容: \(linkText)")
+            logger("链接地址: \(linkHref)")
         } 
         
         return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topicLink: topicsLink, replyLink: repliesLink, favoritesLink: favoritesLink, topicCount: topicsCount.int, replyCount: repliesCount.int, favoritesCount: favoritesCount.int, reputationNumber: reputation, topics: topics, replies: replies, blockUser: blockUser)

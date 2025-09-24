@@ -90,7 +90,7 @@ struct AboutView: View {
 //                case .success(let result):
 //                    let isSend = result.rawValue == 2
 //                case .failure(let error):
-//                    log("发送失败: \(error.localizedDescription)")
+//                    logger("发送失败: \(error.localizedDescription)")
 //                }
 //            }
             Spacer()
