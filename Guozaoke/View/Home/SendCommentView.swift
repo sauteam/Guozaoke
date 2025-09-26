@@ -24,60 +24,64 @@ struct SendCommentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemGray6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-                    )
-                    .frame(height: textEditorHeight)
-                
-                if content.isEmpty {
-                    Text(replyUser?.isEmpty == false ? "回复 \(replyUser ?? "")" : "写点什么...")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 16))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .allowsHitTesting(false)
-                }
-                
-                TextEditor(text: $content)
-                    .font(.system(size: 16))
-                    .focused($isFocused)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .frame(height: textEditorHeight)
-                    .onChange(of: content) { _ in
-                        updateTextEditorHeight()
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color(.systemGray6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                        )
+                        .frame(height: textEditorHeight)
+                        .clipped() 
+                    
+                    if content.isEmpty {
+                        Text(replyUser?.isEmpty == false ? "回复 \(replyUser ?? "")" : "写点什么...")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 16))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .allowsHitTesting(false)
                     }
-                    .onSubmit {
-                        if contentTextValid && !isPosting {
-                            Task {
-                                await sendComment()
+                    
+                    TextEditor(text: $content)
+                        .font(.system(size: 16))
+                        .focused($isFocused)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(height: textEditorHeight - 16) // 减去padding，确保不超出背景
+                        .clipped() // 确保TextEditor内容不超出边界
+                        .onChange(of: content) { _ in
+                            updateTextEditorHeight()
+                        }
+                        .onSubmit {
+                            if contentTextValid && !isPosting {
+                                Task {
+                                    await sendComment()
+                                }
                             }
                         }
-                    }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            
-            if viewModel.isLoading {
-                HStack {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                    Text("发送中...")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
                 }
-                .padding(.top, 8)
-            }
-        }
-        .background(Color(.systemBackground))
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .onAppear {
+            .padding(.horizontal, 16)
+            .overlay(
+                VStack {
+                    if viewModel.isLoading {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("发送中...")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 8)
+                    }
+                    Spacer()
+                }
+            )
+            .background(Color(.systemBackground))
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .onAppear {
             if let comment = SendCommentInfo.getCommentInfo(username ?? ""), comment.detailId == getDetailId() {
                 content = comment.content ?? ""
             } else {
@@ -86,7 +90,9 @@ struct SendCommentView: View {
                 }
             }
             self.isFocused = true
-            updateTextEditorHeight()
+            DispatchQueue.main.async {
+                updateTextEditorHeight()
+            }
         }
         .onDisappear() {
             self.isFocused = false
@@ -99,26 +105,32 @@ struct SendCommentView: View {
                 }
             }
         }
+        }
     }
     
-    func clear() {
+    private func clear() {
         content = ""
     }
     
     private func updateTextEditorHeight() {
         let minHeight: CGFloat = 60
-        let maxHeight: CGFloat = 200
+        let maxHeight: CGFloat = 300
         
-        // 计算文本行数
-        let lines = content.components(separatedBy: .newlines).count
-        let lineHeight: CGFloat = 20
-        let padding: CGFloat = 16 // 上下padding
+        let font = UIFont.systemFont(ofSize: 16)
+        let lineHeight: CGFloat = 22
+        let padding: CGFloat = 16
         
-        let calculatedHeight = max(minHeight, min(maxHeight, CGFloat(lines) * lineHeight + padding))
+        let containerWidth = UIScreen.main.bounds.width - 32 - 24
+        let textSize = content.size(withAttributes: [.font: font])
         
-        withAnimation(.easeInOut(duration: 0.2)) {
-            textEditorHeight = calculatedHeight
-        }
+        let actualLines = max(1, Int(ceil(textSize.width / containerWidth)))
+        let manualLines = content.components(separatedBy: .newlines).count
+        let totalLines = max(actualLines, manualLines)
+        
+        let calculatedHeight = max(minHeight, min(maxHeight, CGFloat(totalLines) * lineHeight + padding))
+        
+        logger("[SendCommentView] 内容: '\(content)', 文本宽度: \(textSize.width), 容器宽度: \(containerWidth), 计算行数: \(actualLines), 手动换行: \(manualLines), 总行数: \(totalLines), 计算高度: \(calculatedHeight)")
+        textEditorHeight = calculatedHeight
     }
     
     private var contentTextValid: Bool {

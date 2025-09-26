@@ -131,7 +131,7 @@ struct PostDetailView: View {
             SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
                 
             }
-            .presentationDetents([.height(isiPad ? screenHeight: 200)])
+            .presentationDetents([.height(isiPad ? screenHeight: 80)])
             .presentationDragIndicator(.visible)
         }
         .onAppear() {
