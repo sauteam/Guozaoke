@@ -16,6 +16,10 @@ struct PostDetailView: View {
     @State private var showSendView    = false
     @State private var showRelateTopic = false
     @State private var selectedTopic: Node? = nil
+    
+    // 添加NavigationManager监听
+    @ObservedObject private var navigationManager = NavigationManager.shared
+    @State private var currentPostId: String = ""
 
     var body: some View {
         ScrollView {
@@ -127,11 +131,12 @@ struct PostDetailView: View {
             SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
                 
             }
-            .presentationDetents([.height(isiPad ? screenHeight: 130)])
+            .presentationDetents([.height(isiPad ? screenHeight: 200)])
             .presentationDragIndicator(.visible)
         }
         .onAppear() {
             logger("[PostDetailView] onAppear, postId: \(postId)")
+            currentPostId = postId
             guard detailParser.postDetail == nil else { 
                 logger("[PostDetailView] 帖子详情已存在，跳过加载")
                 return 
@@ -140,8 +145,21 @@ struct PostDetailView: View {
             detailParser.loadNews(postId: postId)
         }
         
+        .onChange(of: navigationManager.shouldNavigateToPostDetail) { shouldNavigate in
+            if shouldNavigate && navigationManager.postDetailId != currentPostId {
+                logger("[PostDetailView] 检测到新的导航请求，从 \(currentPostId) 切换到 \(navigationManager.postDetailId)")
+                currentPostId = navigationManager.postDetailId
+                detailParser.loadNews(postId: navigationManager.postDetailId)
+                
+                // 重置导航状态，为下次导航做准备
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    navigationManager.resetNavigationState()
+                }
+            }
+        }
+        
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { _ in
-            detailParser.loadNews(postId: postId)
+            detailParser.loadNews(postId: currentPostId)
         }
         .onDisappear() {
             NotificationCenter.default.removeObserver(self, name: .loginSuccessNoti, object: nil)

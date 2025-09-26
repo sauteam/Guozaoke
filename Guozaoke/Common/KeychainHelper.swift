@@ -20,6 +20,7 @@ let purchasedVersion = "1.5.3"
 class PurchaseAppState: ObservableObject {
     @Published var isPurchased: Bool = false
     
+    
     private let purchaseKey = KeychainKeys.purchaseGuozaokeKey
     
     init() {
@@ -68,6 +69,9 @@ class KeychainHelper {
     }
     
     static var isPurchased: Bool {
+//#if DEBUG
+//    return true
+//#endif
         let savedStatus = KeychainHelper.retrieve(key: KeychainKeys.purchaseGuozaokeKey)
         return savedStatus == "purchased".data(using: .utf8)
     }

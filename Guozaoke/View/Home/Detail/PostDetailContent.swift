@@ -147,7 +147,7 @@ struct PostFooterView: View {
             SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
                 
             }
-            .presentationDetents([.height(isiPad ? screenHeight: 130)])
+            .presentationDetents([.height(isiPad ? screenHeight: 200)])
             .presentationDragIndicator(.visible)
         }
     }
@@ -233,7 +233,7 @@ struct ReplyItemView: View {
                     SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", username: reply.author.name, isPresented: $showActions) {
                         
                     }
-                    .presentationDetents([.height(130)])
+                    .presentationDetents([.height(isiPad ? screenHeight: 200)])
                     .presentationDragIndicator(.visible)
                 }
                 let number  = reply.like

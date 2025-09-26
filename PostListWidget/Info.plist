@@ -7,5 +7,19 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>CFBundleDisplayName</key>
+	<string>过早客</string>
+	<key>CFBundleName</key>
+	<string>过早客</string>
+	<key>CFBundleKeywords</key>
+	<array>
+		<string>guozaoke</string>
+		<string>guo</string>
+		<string>过早客</string>
+		<string>光谷</string>
+		<string>guanggu</string>
+		<string>武汉</string>
+		<string>wuhan</string>
+	</array>
 </dict>
 </plist>

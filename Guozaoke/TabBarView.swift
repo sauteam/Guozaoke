@@ -109,8 +109,30 @@ struct TabContentView: View {
                 if shouldNavigate {
                     logger("[TabContentView] 检测到NavigationManager导航请求，同步到本地状态")
                     tab = .home
-                    postDetailId = navigationManager.postDetailId
-                    shouldNavigateToPostDetail = true
+                    
+                    // 如果当前已经在详情页面，需要强制更新
+                    if shouldNavigateToPostDetail && postDetailId != navigationManager.postDetailId {
+                        logger("[TabContentView] 当前已在详情页面，强制更新到新帖子: \(navigationManager.postDetailId)")
+                        // 先重置状态，然后设置新的状态
+                        shouldNavigateToPostDetail = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            postDetailId = navigationManager.postDetailId
+                            shouldNavigateToPostDetail = true
+                            
+                            // 重置NavigationManager状态，为下次导航做准备
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                navigationManager.resetNavigationState()
+                            }
+                        }
+                    } else {
+                        postDetailId = navigationManager.postDetailId
+                        shouldNavigateToPostDetail = true
+                        
+                        // 重置NavigationManager状态，为下次导航做准备
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationManager.resetNavigationState()
+                        }
+                    }
                 }
             }
             .onChange(of: navigationManager.shouldNavigateToUserDetail) { shouldNavigate in
@@ -157,7 +179,8 @@ struct TabContentView: View {
                     NodeListView()
                 }
             }
-            .tabItem { Label(TabBarView.Tab.node.rawValue, systemImage: TabBarView.Tab.node.icon) }
+            .tabItem { Label(TabBarView.Tab.node.rawValue,
+                             systemImage: TabBarView.Tab.node.icon) }
             .tag(TabBarView.Tab.node)
             
             Group {

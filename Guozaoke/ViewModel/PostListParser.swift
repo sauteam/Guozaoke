@@ -132,7 +132,7 @@ class PostListParser: ObservableObject {
     private func syncVIPStatusToWidget() {
         let isVIP = PurchaseAppState().isPurchased
         // 保存到App Groups
-        if let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget") {
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
             userDefaults.set(isVIP, forKey: "is_vip_user")
             userDefaults.set(AppInfo.appVersion, forKey: "app_version")
             logger("[PostListParser] 同步VIP状态到Widget: \(isVIP)")

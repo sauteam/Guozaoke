@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+let guozaokeGroup = "group.com.guozaoke.widget"
 
 // MARK: - 导航管理器
 class NavigationManager: ObservableObject {
@@ -20,9 +21,7 @@ class NavigationManager: ObservableObject {
     init() {}
     
     // MARK: - 导航到帖子详情
-    func navigateToPostDetail(postId: String) {
-        logger("[NavigationManager] 准备导航到帖子详情: \(postId)")
-        
+    func navigateToPostDetail(postId: String) {        
         DispatchQueue.main.async {
             self.postDetailId = postId
             self.shouldNavigateToPostDetail = true
@@ -32,15 +31,16 @@ class NavigationManager: ObservableObject {
     
     // MARK: - 检查 App Groups 中的导航信息
     func checkWidgetNavigation() {
-        let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget")
+        let userDefaults = UserDefaults(suiteName: guozaokeGroup)
         
         if let shouldNavigate = userDefaults?.bool(forKey: "should_navigate"), shouldNavigate {
             if let postId = userDefaults?.string(forKey: "navigate_post_id"),
                let postTitle = userDefaults?.string(forKey: "navigate_post_title") {
                 logger("[NavigationManager] 从 Widget 检测到导航请求: \(postId), \(postTitle)")
                 
-                // 清除导航标记
+                // 立即清除导航标记，防止重复触发
                 userDefaults?.set(false, forKey: "should_navigate")
+                userDefaults?.synchronize()
                 
                 // 执行导航
                 DispatchQueue.main.async {
@@ -50,6 +50,9 @@ class NavigationManager: ObservableObject {
                 }
             } else {
                 logger("[NavigationManager] 检测到导航标记但缺少帖子信息")
+                // 即使缺少信息也要清除标记
+                userDefaults?.set(false, forKey: "should_navigate")
+                userDefaults?.synchronize()
             }
         }
     }

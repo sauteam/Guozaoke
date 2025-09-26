@@ -69,6 +69,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3205A9AF2E857983002C3D39 /* Exceptions for "Guozaoke" folder in "PostListWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Common/SFSymbol.swift,
+			);
+			target = 324855292E81955400A6D13B /* PostListWidgetExtension */;
+		};
 		324855432E81955600A6D13B /* Exceptions for "PostListWidget" folder in "PostListWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -90,6 +97,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				327B92482D3E6E7500358C42 /* Exceptions for "Guozaoke" folder in "Guozaoke" target */,
+				3205A9AF2E857983002C3D39 /* Exceptions for "Guozaoke" folder in "PostListWidgetExtension" target */,
 			);
 			path = Guozaoke;
 			sourceTree = "<group>";
@@ -554,7 +562,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 138;
+				CURRENT_PROJECT_VERSION = 139;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -595,7 +603,7 @@
 				CODE_SIGN_ENTITLEMENTS = Guozaoke/GuozaokeRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 138;
+				CURRENT_PROJECT_VERSION = 139;
 				DEVELOPMENT_ASSET_PATHS = "\"Guozaoke/Preview Content\"";
 				DEVELOPMENT_TEAM = 63K948ZA2P;
 				ENABLE_PREVIEWS = YES;
@@ -715,7 +723,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios.post.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -747,7 +755,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios.post.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guozaoke.app.ios.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

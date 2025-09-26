@@ -40,6 +40,10 @@ struct GuozaokeApp: App {
                         addNoti()
                         // 应用启动时立即检查Widget导航
                         navigationManager.checkWidgetNavigation()
+                        // 应用启动时延迟保存Cookie到App Groups，避免被其他逻辑清除
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            APIService.saveCookiesToAppGroups()
+                        }
                     }
                     //.environmentObject(themeManager)
                     .environmentObject(purchaseAppState)

@@ -8,7 +8,6 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
-let guozaokeSchemeText = "guozaoke"
 // MARK: - Post Widget Data Model
 struct PostWidgetItem: Identifiable, Codable {
     let id: String
@@ -135,9 +134,6 @@ struct SmallWidgetView: View {
                     Image(systemName: "newspaper")
                         .font(.system(size: 18))
                         .foregroundColor(.secondary)
-                    Text("暂无讨论")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -168,7 +164,6 @@ struct SmallWidgetView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .onTapGesture {
-                            // 同时保存到App Groups作为备用方案
                             WidgetNavigationManager.shared.saveNavigationInfo(postId: post.url ?? "", postTitle: post.title)
                         }
                     }
@@ -214,9 +209,6 @@ struct MediumWidgetView: View {
                 VStack(spacing: 6) {
                     Image(systemName: "newspaper")
                         .font(.system(size: 20))
-                        .foregroundColor(.secondary)
-                    Text("暂无讨论")
-                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -268,7 +260,6 @@ struct MediumWidgetView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .onTapGesture {
-                            // 同时保存到App Groups作为备用方案
                             WidgetNavigationManager.shared.saveNavigationInfo(postId: post.url ?? "", postTitle: post.title)
                         }
                     }
@@ -307,14 +298,12 @@ struct LargeWidgetView: View {
                     .padding(.vertical, 3)
                     .background(Color.blue.opacity(0.1))
                     .cornerRadius(4)
-                
-                if isVIP {
-                    Image(systemName: "crown.fill")
-                        .foregroundColor(.yellow)
-                        .font(.system(size: 11))
-                }
-                
-                Spacer()
+//                if isVIP {
+//                    Image(systemName: "crown.fill")
+//                        .foregroundColor(.yellow)
+//                        .font(.system(size: 11))
+//                }
+//                Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, 4)
@@ -324,9 +313,6 @@ struct LargeWidgetView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "newspaper")
                         .font(.system(size: 24))
-                        .foregroundColor(.secondary)
-                    Text("暂无讨论")
-                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -399,8 +385,8 @@ struct PostListWidget: Widget {
             PostListWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("过早客讨论")
-        .description("查看最新讨论列表")
+        .configurationDisplayName("过早客小组件")
+        .description("最新、热门主题一览，VIP用户可选择更多类型。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

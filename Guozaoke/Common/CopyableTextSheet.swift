@@ -78,4 +78,3 @@ struct CopyableTextSheet: View {
         }
     }
 }
-

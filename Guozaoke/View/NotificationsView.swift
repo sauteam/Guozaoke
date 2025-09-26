@@ -71,7 +71,7 @@ struct NotificationsView: View {
                     showCommentView = false
                     selectedNotification = nil
                 }
-                .presentationDetents([.height(isiPad ? screenHeight: 150)])
+                .presentationDetents([.height(isiPad ? screenHeight: 200)])
                 .presentationDragIndicator(.visible)
             })
             .navigationTitleStyle("通知")

@@ -161,15 +161,13 @@ struct APIService {
     // 将响应中的 Cookies 保存到 HTTPCookieStorage
     static func saveCookies(from response: HTTPURLResponse) {
         if let cookies = response.allHeaderFields["Set-Cookie"] as? String {
-            // 分割多个 Cookies
             let cookieArray = cookies.split(separator: ";")
-            
             for cookie in cookieArray {
                 let cookieProperties: [HTTPCookiePropertyKey: Any] = [
                     .domain: "www.guozaoke.com",
                     .path: "/",
                     .name: "session_id", // 或者使用从 cookie 字符串中解析出的名称
-                    .value: cookie, // 存储每个 Cookie 的值
+                    .value: cookie,
                     .secure: "TRUE",
                     .expires: NSDate(timeIntervalSinceNow: 31536000)
                 ]
@@ -179,6 +177,28 @@ struct APIService {
                     logger("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
                 }
             }
+            saveCookiesToAppGroups()
+        }
+    }
+    
+    // 保存Cookie到App Groups供Widget使用
+    static func saveCookiesToAppGroups() {
+        let cookieString = getStoredCookies()
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
+            userDefaults.set(cookieString, forKey: "stored_cookies")
+            userDefaults.synchronize() // 强制同步到磁盘
+            logger("[cookies]保存Cookie到App Groups: \(cookieString)")
+            logger("[cookies]Cookie长度: \(cookieString.count) 字符")
+            
+            // 验证保存是否成功
+            let savedCookie = userDefaults.string(forKey: "stored_cookies")
+            if savedCookie == cookieString {
+                logger("[cookies]Cookie保存验证成功")
+            } else {
+                logger("[cookies]Cookie保存验证失败")
+            }
+        } else {
+            logger("[cookies]无法访问App Groups")
         }
     }
     
@@ -280,6 +300,16 @@ extension APIService {
                 }
             }
         }
+        
+        // 如果从HTTPCookieStorage获取不到Cookie，尝试从App Groups读取
+        if cookieHeader.isEmpty {
+            if let userDefaults = UserDefaults(suiteName: guozaokeGroup),
+               let storedCookies = userDefaults.string(forKey: "stored_cookies") {
+                cookieHeader = storedCookies
+                logger("[cookies]从App Groups读取Cookie: \(cookieHeader)")
+            }
+        }
+        
         return cookieHeader
     }
     
@@ -334,6 +364,15 @@ extension APIService {
         let cookieStore = HTTPCookieStorage.shared
         for cookie in cookieStore.cookies ?? [] {
             cookieStore.deleteCookie(cookie)
+        }
+        
+        // 同时清除App Groups中的Cookie
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
+            let beforeClear = userDefaults.string(forKey: "stored_cookies")
+            logger("[cookies]清除前App Groups中的Cookie: \(beforeClear ?? "无")")
+            userDefaults.removeObject(forKey: "stored_cookies")
+            userDefaults.synchronize()
+            logger("[cookies]已清除App Groups中的Cookie")
         }
     }
     

@@ -9,6 +9,10 @@ import WidgetKit
 import AppIntents
 import UIKit
 
+let guozaokeSchemeText = "guozaoke"
+let guozaokeGroup = "group.com.guozaoke.widget"
+
+
 enum PostListType: String, CaseIterable, AppEnum {
     case hot = "默认"
     case latest = "最新"
@@ -16,11 +20,11 @@ enum PostListType: String, CaseIterable, AppEnum {
     case interest = "兴趣"
     case follows = "关注"
     case it = "IT"
-    case job = "工作"
     case finance = "金融"
     case creator = "创客"
-    case dating = "相亲"
-    case hand2 = "二手"
+//    case job = "工作"
+//    case dating = "相亲"
+//    case hand2 = "二手"
     case auto = "汽车"
     case digital = "数码"
     case education = "教育"
@@ -39,11 +43,11 @@ enum PostListType: String, CaseIterable, AppEnum {
             .interest: "兴趣 (VIP)",
             .follows: "关注 (VIP)",
             .it: "IT (VIP)",
-            .job: "工作 (VIP)",
             .finance: "金融 (VIP)",
             .creator: "创客 (VIP)",
-            .dating: "相亲 (VIP)",
-            .hand2: "二手 (VIP)",
+//            .job: "工作 (VIP)",
+//            .dating: "相亲 (VIP)",
+//            .hand2: "二手 (VIP)",
             .auto: "汽车 (VIP)",
             .digital: "数码 (VIP)",
             .education: "教育 (VIP)",
@@ -56,7 +60,8 @@ enum PostListType: String, CaseIterable, AppEnum {
         switch self {
         case .latest, .hot:
             return false
-        case .elite, .interest, .follows, .it, .job, .finance, .creator, .dating, .hand2, .auto, .digital, .education, .food, .film:
+        case .elite, .interest, .follows, .it, .finance, .creator, .auto, .digital, .education, .food, .film:
+            //.job, .dating, .hand2,
             return true
         }
     }
@@ -75,16 +80,16 @@ enum PostListType: String, CaseIterable, AppEnum {
             return "/?tab=follows"
         case .it:
             return "/node/IT"
-        case .job:
-            return "/node/job"
         case .finance:
             return "/node/finance"
         case .creator:
             return "/node/startup"
-        case .dating:
-            return "/node/date"
-        case .hand2:
-            return "/node/2ndhand"
+//        case .job:
+//            return "/node/job"
+//        case .dating:
+//            return "/node/date"
+//        case .hand2:
+//            return "/node/2ndhand"
         case .auto:
             return "/node/auto"
         case .digital:
@@ -100,27 +105,26 @@ enum PostListType: String, CaseIterable, AppEnum {
 }
 
 struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "过早客讨论" }
-    static var description: IntentDescription { "显示讨论列表" }
+    static var title: LocalizedStringResource { "过早客" }
+    static var description: IntentDescription { "主题列表" }
 
-    @Parameter(title: "帖子类型", default: .latest)
+    @Parameter(title: "类型", default: .latest)
     var postType: PostListType
     
     func perform() async throws -> some IntentResult {
-        // Widget Configuration Intent 不需要实际执行操作
         return .result()
     }
 }
 
 // MARK: - Open Post Detail Intent
 struct OpenPostDetailIntent: AppIntent {
-    static var title: LocalizedStringResource { "打开帖子详情" }
-    static var description: IntentDescription { "在过早客App中打开帖子详情页面" }
+    static var title: LocalizedStringResource { "打开主题详情" }
+    static var description: IntentDescription { "在过早客App中打开主题详情页面" }
     
-    @Parameter(title: "帖子ID")
+    @Parameter(title: "主题ID")
     var postId: String
     
-    @Parameter(title: "帖子标题")
+    @Parameter(title: "主题标题")
     var postTitle: String
     
     init() {
@@ -134,12 +138,7 @@ struct OpenPostDetailIntent: AppIntent {
     }
     
     func perform() async throws -> some IntentResult {
-        logger("[OpenPostDetailIntent] 准备跳转到帖子详情: \(postId)")
-        
-        // 使用 App Groups 保存导航信息
         WidgetNavigationManager.shared.saveNavigationInfo(postId: postId, postTitle: postTitle)
-        // 主应用会通过定时器或应用启动时检查这些信息
-        logger("[OpenPostDetailIntent] 已保存导航信息到App Groups")
         return .result()
     }
 }
