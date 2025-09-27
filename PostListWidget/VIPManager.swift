@@ -15,10 +15,8 @@ class VIPManager {
     private let selectedPostTypeKey = "selected_post_type"
     
     private init() {
-        self.userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget")
-        if userDefaults == nil {
-            logger("[VIPManager] 警告: 无法访问App Group UserDefaults")
-        }
+        self.userDefaults = UserDefaults(suiteName: guozaokeGroup)
+        // App Groups UserDefaults initialization
     }
     
     var isVIP: Bool {
@@ -26,40 +24,37 @@ class VIPManager {
             if let appGroupVIP = userDefaults?.bool(forKey: vipKey) {
                 return appGroupVIP
             }
-            return checkVIPFromKeychain()
+            let keychainVIP = checkVIPFromKeychain()
+            userDefaults?.set(keychainVIP, forKey: vipKey)
+            userDefaults?.synchronize()
+            return keychainVIP
         }
         set {
             userDefaults?.set(newValue, forKey: vipKey)
+            userDefaults?.synchronize()
         }
     }
     
     private func checkVIPFromKeychain() -> Bool {
-        // 检查Keychain中的购买状态
         let purchaseKey = "purchaseGuozaokeKey"
-        
-        // 尝试从Keychain读取购买状态
         if let data = KeychainHelper.load(key: purchaseKey),
            let status = String(data: data, encoding: .utf8) {
             return status == "purchased"
         }
-        
-        // 检查版本号（付费下载用户）
         let currentVersion = getAppVersion()
         let purchasedVersion = "1.5.3"
-        
+        var isPurchased = false
         if currentVersion < purchasedVersion {
-            return true
+            isPurchased =  true
         }
-        
-        return false
+        return isPurchased
     }
     
     private func getAppVersion() -> String {
-        // 从App Groups获取版本信息，如果没有则返回当前版本
         if let version = userDefaults?.string(forKey: "app_version") {
             return version
         }
-        return "1.5.5" // 默认版本，假设当前版本高于付费版本
+        return "1.5.5"
     }
     
     func canAccessPostType(_ type: PostListType) -> Bool {
@@ -73,48 +68,46 @@ class VIPManager {
         if isVIP {
             return PostListType.allCases
         } else {
-            // 非VIP用户可以访问"最新"和"默认"类型
             return [.latest, .hot]
         }
     }
     
     // MARK: - 用户选择的帖子类型管理
     func saveSelectedPostType(_ type: PostListType) {
-        // 检查用户是否有权限访问该类型
         if canAccessPostType(type) {
             userDefaults?.set(type.rawValue, forKey: selectedPostTypeKey)
-            logger("[VIPManager] 保存用户选择的帖子类型: \(type.rawValue)")
+            // Save selected post type
         } else {
-            logger("[VIPManager] 警告: 用户无权限访问类型 \(type.rawValue)，保存被拒绝")
+            // User doesn't have permission to access this type
         }
     }
     
     func getSelectedPostType() -> PostListType {
         if let savedType = userDefaults?.string(forKey: selectedPostTypeKey),
            let postType = PostListType(rawValue: savedType) {
-            // 检查用户是否有权限访问该类型
             if canAccessPostType(postType) {
                 return postType
             }
         }
-        // 根据用户权限返回默认类型
         if isVIP {
-            return .hot // VIP用户默认返回"默认"
+            return .hot
         } else {
-            return .latest // 非VIP用户默认返回"最新"
+            return .latest
         }
     }
     
     func clearSelectedPostType() {
         userDefaults?.removeObject(forKey: selectedPostTypeKey)
-        logger("[VIPManager] 清除用户选择的帖子类型")
+        // Clear selected post type
     }
     
-    // 从主应用同步VIP状态
     func syncVIPStatus() {
+        if let appGroupVIP = userDefaults?.bool(forKey: vipKey) {
+            return
+        }
         let vipStatus = checkVIPFromKeychain()
         userDefaults?.set(vipStatus, forKey: vipKey)
-        logger("[VIPManager] 同步VIP状态: \(vipStatus)")
+        userDefaults?.synchronize()
     }
 }
 

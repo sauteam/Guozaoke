@@ -141,9 +141,7 @@ class LoginService: ObservableObject {
                     loginSuccess  = true
                     NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
                 }
-                logger("[userInfo]\(account)")
-                
-                // 保存Cookie到App Groups供Widget使用
+                logger("[userInfo]\(account)")                
                 APIService.saveCookiesToAppGroups()
                 
                 Task {

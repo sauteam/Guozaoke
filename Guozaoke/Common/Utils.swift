@@ -20,11 +20,32 @@ let screenHeight = screenSize.height
 let toastDuration = 1.5
 
 private let loggable: Bool = true
-public func logger(_ items: Any..., separator: String = " ", terminator: String = "\n") {
+
+public func logger(_ items: Any..., separator: String = " ", terminator: String = "\n", tag: String = "", file: String = #file, function: String = #function, line: Int = #line) {
     if !loggable {
         return
     }
-    debugPrint("[log]", items, separator, terminator)
+    
+    // 获取当前时间
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+    let timestamp = formatter.string(from: Date())
+    
+    // 获取文件名（不包含路径）
+    let fileName = (file as NSString).lastPathComponent
+    
+    // 构建日志前缀
+    var logPrefix = "[\(timestamp)]"
+    
+    if !tag.isEmpty {
+        logPrefix += "[\(tag)]"
+    }
+    
+    logPrefix += "[\(fileName):\(line)]"
+    logPrefix += "[\(function)]"
+    
+    // 输出日志
+    debugPrint(logPrefix, items, separator, terminator)
 }
 
 

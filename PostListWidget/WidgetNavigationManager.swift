@@ -11,7 +11,7 @@ import Foundation
 class WidgetNavigationManager {
     static let shared = WidgetNavigationManager()
     
-    private let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget")
+    private let userDefaults = UserDefaults(suiteName: guozaokeGroup)
     
     private init() {}
     

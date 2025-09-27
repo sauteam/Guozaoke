@@ -1,27 +1,7 @@
 import Foundation
 import AppIntents
 
-// MARK: - Post Widget Data Manager
 class PostWidgetData {
-    static let samplePosts: [PostWidgetItem] = [
-        PostWidgetItem(
-            id: "1",
-            title: "iOS 18 新功能体验分享",
-            author: "开发者小王",
-            timeAgo: "2小时前",
-            replyCount: 15,
-            node: "iOS"
-        ),
-        PostWidgetItem(
-            id: "2", 
-            title: "SwiftUI 最佳实践讨论",
-            author: "Swift爱好者",
-            timeAgo: "4小时前",
-            replyCount: 8,
-            node: "Swift"
-        )
-    ]
-    
     // MARK: - Fetch Latest Posts
     static func fetchLatestPosts() async -> [PostWidgetItem] {
         do {
@@ -35,7 +15,7 @@ class PostWidgetData {
                 logger("[Widget] 使用缓存数据，共 \(cachedPosts.count) 条")
                 return cachedPosts
             }
-            return samplePosts
+            return []
         }
     }
     
@@ -43,7 +23,6 @@ class PostWidgetData {
     static func fetchPosts(by type: PostListType) async -> [PostWidgetItem] {
         VIPManager.shared.syncVIPStatus()
         if !VIPManager.shared.canAccessPostType(type) {
-            logger("[Widget] 用户无VIP权限，返回最新帖子")
             return await fetchPosts(by: .latest)
         }
         
@@ -54,10 +33,9 @@ class PostWidgetData {
             return posts
         } catch {
             if let cachedPosts = loadCachedPosts(for: type), !cachedPosts.isEmpty {
-                logger("[Widget] 使用缓存数据，共 \(cachedPosts.count) 条")
                 return cachedPosts
             }
-            return samplePosts
+            return []
         }
     }
     
@@ -78,7 +56,7 @@ class PostWidgetData {
     
     private static func loadCachedPosts(for type: PostListType) -> [PostWidgetItem]? {
         let cacheKey = "posts_\(type.rawValue)"
-        guard let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget"),
+        guard let userDefaults = UserDefaults(suiteName: guozaokeGroup),
               let data = userDefaults.data(forKey: cacheKey) else {
             return nil
         }
@@ -93,7 +71,7 @@ class PostWidgetData {
     
     private static func savePostsToCache(_ posts: [PostWidgetItem], for type: PostListType) {
         let cacheKey = "posts_\(type.rawValue)"
-        guard let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget") else { return }
+        guard let userDefaults = UserDefaults(suiteName: guozaokeGroup) else { return }
         
         do {
             let data = try JSONEncoder().encode(posts)
@@ -111,7 +89,7 @@ class PostWidgetData {
             return posts
         } catch {
             logger("Widget fetch posts error: \(error)")
-            return samplePosts
+            return []
         }
     }
     
@@ -122,7 +100,7 @@ class PostWidgetData {
 
 // MARK: - Widget Data Persistence
 class WidgetDataManager {
-    private static let userDefaults = UserDefaults(suiteName: "group.com.guozaoke.widget")
+    private static let userDefaults = UserDefaults(suiteName: guozaokeGroup)
     
     static func savePosts(_ posts: [PostWidgetItem]) {
         do {
@@ -136,14 +114,14 @@ class WidgetDataManager {
     
     static func loadPosts() -> [PostWidgetItem] {
         guard let data = userDefaults?.data(forKey: "latest_posts") else {
-            return PostWidgetData.samplePosts
+            return []
         }
         
         do {
             return try JSONDecoder().decode([PostWidgetItem].self, from: data)
         } catch {
             logger("Failed to load posts: \(error)")
-            return PostWidgetData.samplePosts
+            return []
         }
     }
     

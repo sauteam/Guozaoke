@@ -32,12 +32,13 @@ struct PostWidgetItem: Identifiable, Codable {
 // MARK: - Timeline Provider
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), posts: PostWidgetData.samplePosts, postType: .latest)
+        SimpleEntry(date: Date(), posts: [], postType: .latest)
     }
 
     func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        // 同步VIP状态并检查权限
         VIPManager.shared.syncVIPStatus()
+        
+        // Widget snapshot
         let postType = VIPManager.shared.canAccessPostType(configuration.postType) ? configuration.postType : .latest
         
         let posts = await PostWidgetData.fetchPosts(by: postType)
@@ -53,18 +54,25 @@ struct Provider: AppIntentTimelineProvider {
         // 确定要使用的帖子类型
         let postType: PostListType
         
+        logger("[Widget] 用户选择的类型: \(configuration.postType.rawValue)")
+        // Check VIP status and permissions
+        
         // 如果用户选择了新类型且用户有权限访问，则保存并使用新类型
         if VIPManager.shared.canAccessPostType(configuration.postType) {
             VIPManager.shared.saveSelectedPostType(configuration.postType)
             postType = configuration.postType
+            logger("[Widget] 使用用户选择的类型: \(postType.rawValue)")
         } else {
             // 如果用户没有权限访问选择的类型，使用用户之前保存的类型
             let savedType = VIPManager.shared.getSelectedPostType()
+            logger("[Widget] 用户之前保存的类型: \(savedType.rawValue)")
             if VIPManager.shared.canAccessPostType(savedType) {
                 postType = savedType
+                logger("[Widget] 使用之前保存的类型: \(postType.rawValue)")
             } else {
                 // 如果保存的类型也没有权限，使用默认类型
                 postType = VIPManager.shared.isVIP ? .hot : .latest
+                logger("[Widget] 使用默认类型: \(postType.rawValue)")
             }
         }
         
@@ -396,19 +404,19 @@ struct PostListWidget: Widget {
 #Preview(as: .systemSmall) {
     PostListWidget()
 } timeline: {
-    SimpleEntry(date: .now, posts: PostWidgetData.samplePosts, postType: .latest)
+    SimpleEntry(date: .now, posts: [], postType: .latest)
 }
 
 @available(iOS 17.0, *)
 #Preview(as: .systemMedium) {
     PostListWidget()
 } timeline: {
-    SimpleEntry(date: .now, posts: PostWidgetData.samplePosts, postType: .latest)
+    SimpleEntry(date: .now, posts: [], postType: .latest)
 }
 
 @available(iOS 17.0, *)
 #Preview(as: .systemLarge) {
     PostListWidget()
 } timeline: {
-    SimpleEntry(date: .now, posts: PostWidgetData.samplePosts, postType: .latest)
+    SimpleEntry(date: .now, posts: [], postType: .latest)
 }

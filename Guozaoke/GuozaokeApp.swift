@@ -23,6 +23,7 @@ struct GuozaokeApp: App {
     @StateObject var themeManager = ThemeManager(theme: Theme(primaryColor: .systemBlue, secondaryColor: .red))
     @StateObject private var purchaseAppState = PurchaseAppState()
     @StateObject var navigationManager = NavigationManager()
+    @StateObject private var launchCounter = LaunchCounter.shared
 
     init() {
         //UINavigationBar.appearance().tintColor = UIColor.brown
@@ -38,15 +39,36 @@ struct GuozaokeApp: App {
                     .onAppear {
                         applyAppearance()
                         addNoti()
-                        // 应用启动时立即检查Widget导航
                         navigationManager.checkWidgetNavigation()
-                        // 应用启动时延迟保存Cookie到App Groups，避免被其他逻辑清除
+                        
+                        // 增加启动次数
+                        launchCounter.incrementLaunchCount()
+                        
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             APIService.saveCookiesToAppGroups()
+                            syncVIPStatusToAppGroups()
                         }
                     }
                     //.environmentObject(themeManager)
                     .environmentObject(purchaseAppState)
+                    .environmentObject(launchCounter)
+                    .overlay(
+                        Group {
+                            // 评论引导
+                            if launchCounter.shouldShowReviewGuide {
+                                ReviewGuideView(isPresented: $launchCounter.shouldShowReviewGuide)
+                                    .onDisappear {
+                                        launchCounter.markReviewGuideShown()
+                                    }
+                            }
+                        }
+                    )
+                    .sheet(isPresented: $launchCounter.shouldShowPurchaseView) {
+                        InAppPurchaseView(isPresented: $launchCounter.shouldShowPurchaseView, purchaseAppState: purchaseAppState)
+                            .onDisappear {
+                                launchCounter.markPurchasePromptShown()
+                            }
+                    }
             } else {
                 LaunchScreenView()
                     .onAppear {
@@ -70,6 +92,15 @@ struct GuozaokeApp: App {
 
 
 private extension GuozaokeApp {
+    
+    func syncVIPStatusToAppGroups() {
+        let isVIP = purchaseAppState.isPurchased
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
+            userDefaults.set(isVIP, forKey: "is_vip_user")
+            userDefaults.set(AppInfo.appVersion, forKey: "app_version")
+            userDefaults.synchronize()
+        }
+    }
     
     struct LaunchScreenView: View {
         var body: some View {

@@ -74,7 +74,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
            let queryItems = components.queryItems ?? []
            
            logger("[AppDelegate] 处理URL: \(url)")
-           // 处理帖子详情跳转
            if path == "/t" {
                if let id = queryItems.first(where: { $0.name == "id" })?.value {
                    let title = queryItems.first(where: { $0.name == "title" })?.value ?? ""

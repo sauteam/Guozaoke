@@ -9,20 +9,21 @@ import SwiftUI
 import StoreKit
 
 let purchaseInfo = """
-过早客还有很多功能需要完善，感谢同学们的关注与支持，仅有部分个性设置需要内购或打赏才可使用，希望大家理解，非常感谢！
+过早客还有很多功能需要完善，仅有部分个性设置需要内购或打赏才可使用，基本不影响使用，感谢支持！
 
-如果付费下载显示还需要付费，请尝试恢复购买，如果还是需要付费请联系开发者。
+如果您觉得过早客App很有意义，您可以考虑赞助，有利于我们积极更新和维护，不断提高产品体验。
 """
 
 
 struct InAppPurchaseView: View {
     @Binding var isPresented: Bool
-    @EnvironmentObject var purchaseAppState: PurchaseAppState
+    @ObservedObject var purchaseAppState: PurchaseAppState
     @StateObject private var storeManager: StoreManager
     @State private var selectedProduct: Product?
     
     init(isPresented: Binding<Bool>, purchaseAppState: PurchaseAppState) {
         self._isPresented  = isPresented
+        self.purchaseAppState = purchaseAppState
         let storeManager   = StoreManager(purchaseAppState: purchaseAppState)
         self._storeManager = StateObject(wrappedValue: storeManager)
     }
@@ -41,30 +42,49 @@ struct InAppPurchaseView: View {
                 }
                 purchaseButton
             }
-            .navigationTitleStyle(purchaseAppState.isPurchased ? "已解锁": "等待解锁")
+            .navigationTitleStyle(purchaseAppState.isPurchased ? "感谢支持 ": "赞助我们")
+            .onAppear {
+                // 立即显示加载状态
+                if storeManager.products.isEmpty {
+                    storeManager.isLoading = true
+                }
+                storeManager.refreshIfNeeded()
+            }
             .toolbar {
-                if !purchaseAppState.isPurchased {
-                    ToolbarItemGroup(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            Task {
-                                await storeManager.restorePurchases()
-                            }
-                        }) {
-                            Text("恢复购买")
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        Task {
+                            await storeManager.restorePurchases()
                         }
+                    }) {
+                        Text("恢复购买")
                     }
                 }
             }
         }
         .onAppear {
+            // 如果产品列表为空，立即显示加载状态
+            if storeManager.products.isEmpty {
+                storeManager.isLoading = true
+            }
+            
             Task {
                 await storeManager.fetchProducts()
-                if let defaultProduct = storeManager.products.first(where: { $0.id == storeManager.sponserIds }) {
+                
+                let rewardProducts = storeManager.products.filter { product in
+                    product.id == "GuozaokeReward" || product.id == "GuozaokeReward2" || product.id == "sponsorDeveloper"
+                }
+                
+                if !rewardProducts.isEmpty {
+                    selectedProduct = rewardProducts.randomElement()
+                    logger("[iap] 随机选择默认商品: \(selectedProduct?.id ?? "无")", tag: "InAppPurchaseView")
+                } else if let defaultProduct = storeManager.products.first(where: { $0.id == storeManager.sponserIds }) {
                     selectedProduct = defaultProduct
                 } else {
-                    selectedProduct = storeManager.products.first
+                    selectedProduct = storeManager.products.last
                 }
-                logger("[iap][list] \(storeManager.products)")
+                
+                logger("[iap][list] \(storeManager.products.map { $0.id })", tag: "InAppPurchaseView")
             }
         }
     }
@@ -83,7 +103,9 @@ struct InAppPurchaseView: View {
 
             ForEach(storeManager.products.sorted(by: productSortOrder), id: \.self) { product in
                 productRow(for: product)
-                    .frame(width: .infinity, height: 60)
+                    .frame(maxWidth: .infinity, minHeight: 60)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)
@@ -106,8 +128,15 @@ struct InAppPurchaseView: View {
                         .subTitleFontStyle()
                 }
                 .padding(.vertical)
+                
+                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(product == selectedProduct ? Color.blue.opacity(0.1) : Color.clear)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }

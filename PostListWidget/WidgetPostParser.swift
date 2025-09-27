@@ -73,7 +73,7 @@ class WidgetAPIService {
         let urlString = buildURL(for: type)
         
         if WidgetPostParser.isDebugEnabled {
-            logger("[Widget] 开始获取\(type.rawValue)帖子，URL: \(urlString)")
+            //logger("[Widget] 开始获取\(type.rawValue)帖子，URL: \(urlString)")
         }
         
         guard let url = URL(string: urlString) else {
@@ -113,7 +113,7 @@ class WidgetAPIService {
         }
         
         if WidgetPostParser.isDebugEnabled {
-            logger("[Widget] HTML数据长度: \(html.count) 字符 HTML预览: \(html)")
+            //logger("[Widget] HTML数据长度: \(html.count) 字符 HTML预览: \(html)")
         }
         
         let posts = WidgetPostParser.parsePostsFromHTML(html)
@@ -158,9 +158,8 @@ class WidgetAPIService {
             logger("[Widget] 从App Groups读取到Cookie: \(cookies)")
         } else {
             logger("[Widget] App Groups中没有找到Cookie")
-            // 检查所有可用的键
-            let allKeys = userDefaults.dictionaryRepresentation().keys
-            logger("[Widget] App Groups中的所有键: \(Array(allKeys))")
+            //let allKeys = userDefaults.dictionaryRepresentation().keys
+            //logger("[Widget] App Groups中的所有键: \(Array(allKeys))")
         }
         return cookies
     }

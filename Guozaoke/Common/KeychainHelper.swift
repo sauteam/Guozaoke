@@ -48,15 +48,26 @@ class PurchaseAppState: ObservableObject {
             let success = KeychainHelper.save(key: purchaseKey, data: data)
             if success {
                 logger("[iap][purchase] Purchase status saved successfully")
+                syncVIPStatusToAppGroups()
             } else {
                 logger("[iap][purchase] Failed to save purchase status")
             }
         }
     }
     
+    private func syncVIPStatusToAppGroups() {
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
+            userDefaults.set(isPurchased, forKey: "is_vip_user")
+            userDefaults.set(AppInfo.appVersion, forKey: "app_version")
+            userDefaults.synchronize()
+        }
+    }
+    
     func clear() {
         isPurchased = false
         KeychainHelper.clearPurchaseStatus()
+        // 同步VIP状态到App Groups
+        syncVIPStatusToAppGroups()
     }
 }
 

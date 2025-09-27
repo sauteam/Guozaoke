@@ -135,7 +135,7 @@ class PostListParser: ObservableObject {
         if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
             userDefaults.set(isVIP, forKey: "is_vip_user")
             userDefaults.set(AppInfo.appVersion, forKey: "app_version")
-            logger("[PostListParser] 同步VIP状态到Widget: \(isVIP)")
+            // Sync VIP status to Widget
         }
     }
     

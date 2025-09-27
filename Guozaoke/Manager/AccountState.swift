@@ -169,10 +169,9 @@ class LoginStateChecker: ObservableObject {
             }
             return true
         } else {
-            // 如果没有登录表单，说明用户已登录，保存Cookie到App Groups
             APIService.saveCookiesToAppGroups()
         }
-        //这里有些问题 
+        // todo 这里有些问题 
 //        Task { @MainActor in
 //            if self.needLogin == true {
 //                self.needLogin = false

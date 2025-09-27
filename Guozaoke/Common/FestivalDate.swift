@@ -13,7 +13,7 @@ class FestivalDate {
     
     static func getFestivalGreeting() -> String {
         let userName = AccountState.userName
-        var text     = todayEvents() ?? "欢迎进入过早客"
+        var text     = todayEvents() ?? "过早客欢迎您"
         if !userName.isEmpty {
             text = userName + " " + text
         }
