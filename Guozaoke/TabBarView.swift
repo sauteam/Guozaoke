@@ -38,14 +38,19 @@ struct TabBarView: View {
     let items = ["首页", "节点", "通知", "我的"]
         
     var body: some View {
-        Group {
-            if isiPad {
-                TabContentView(tab: $tab)
-            } else {
-                if showTabBar {
+        ZStack {
+            Group {
+                if isiPad {
                     TabContentView(tab: $tab)
+                } else {
+                    if showTabBar {
+                        TabContentView(tab: $tab)
+                    }
                 }
             }
+            
+            // 全局评论输入弹框
+            GlobalCommentInputView()
         }
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}

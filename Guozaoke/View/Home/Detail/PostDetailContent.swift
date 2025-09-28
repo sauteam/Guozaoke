@@ -141,14 +141,14 @@ struct PostFooterView: View {
             }
             .font(.caption)
         }
-        .sheet(isPresented: $showComentView) {
-            
-            let detailId = detailParser.postDetail?.detailId ?? ""
-            SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
-                
+        .onChange(of: showComentView) { isPresented in
+            if isPresented {
+                let detailId = detailParser.postDetail?.detailId ?? ""
+                let username = detailParser.postDetail?.author.name ?? ""
+                CommentInputManager.shared.showCommentInput(detailId: detailId, replyUser: "", username: username) {
+                    showComentView = false
+                }
             }
-            .presentationDetents([.height(isiPad ? screenHeight: 80)])
-            .presentationDragIndicator(.visible)
         }
     }
 }
@@ -229,12 +229,14 @@ struct ReplyItemView: View {
                     Label("回复", systemImage: .reply)
                 }
                 .font(.caption)
-                .sheet(isPresented: $showActions) {
-                    SendCommentView(detailId: detailParser.postId ?? "" , replyUser: "@" + reply.author.name + " \(reply.author.floor ?? "1") ", username: reply.author.name, isPresented: $showActions) {
-                        
+                .onChange(of: showActions) { isPresented in
+                    if isPresented {
+                        let detailId = detailParser.postId ?? ""
+                        let replyUser = "@" + reply.author.name + " \(reply.author.floor ?? "1") "
+                        CommentInputManager.shared.showCommentInput(detailId: detailId, replyUser: replyUser, username: reply.author.name) {
+                            showActions = false
+                        }
                     }
-                    .presentationDetents([.height(isiPad ? screenHeight: 80)])
-                    .presentationDragIndicator(.visible)
                 }
                 let number  = reply.like
                 let zanText = "赞 \(number)"

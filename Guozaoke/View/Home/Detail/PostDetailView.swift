@@ -125,14 +125,14 @@ struct PostDetailView: View {
             .presentationDetents([.height(isiPad ? screenHeight: screenHeight/2), .medium, .large])
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showComentView) {
-            
-            let detailId = detailParser.postDetail?.detailId ?? ""
-            SendCommentView(detailId: detailId, replyUser: "", username: detailParser.postDetail?.author.name ?? "", isPresented: $showComentView) {
-                
+        .onChange(of: showComentView) { isPresented in
+            if isPresented {
+                let detailId = detailParser.postDetail?.detailId ?? ""
+                let username = detailParser.postDetail?.author.name ?? ""
+                CommentInputManager.shared.showCommentInput(detailId: detailId, replyUser: "", username: username) {
+                    showComentView = false
+                }
             }
-            .presentationDetents([.height(isiPad ? screenHeight: 80)])
-            .presentationDragIndicator(.visible)
         }
         .onAppear() {
             logger("[PostDetailView] onAppear, postId: \(postId)")

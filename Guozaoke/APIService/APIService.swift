@@ -189,7 +189,7 @@ struct APIService {
             // 验证保存是否成功
             let savedCookie = userDefaults.string(forKey: "stored_cookies")
             if savedCookie == cookieString {
-                logger("[cookies]Cookie长度: \(cookieString.count) 字符 [cookies]保存Cookie到App Groups: \(cookieString)")
+                //logger("[cookies]Cookie长度: \(cookieString.count) 字符 [cookies]保存Cookie到App Groups: \(cookieString)")
             } else {
                 logger("[cookies]Cookie保存验证失败")
             }

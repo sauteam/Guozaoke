@@ -61,19 +61,19 @@ struct NotificationsView: View {
                     await viewModel.fetchNotificationsRefresh()
                 }
             }
-            .sheet(item: $selectedNotification, content: { notification in
-                let reply = "@" + notification.username + " "
-                SendCommentView(
-                    detailId: notification.topicLink,
-                    replyUser: reply, username: notification.username,
-                    isPresented: $showCommentView
-                ) {
-                    showCommentView = false
-                    selectedNotification = nil
+            .onChange(of: showCommentView) { isPresented in
+                if isPresented, let notification = selectedNotification {
+                    let reply = "@" + notification.username + " "
+                    CommentInputManager.shared.showCommentInput(
+                        detailId: notification.topicLink,
+                        replyUser: reply,
+                        username: notification.username
+                    ) {
+                        showCommentView = false
+                        selectedNotification = nil
+                    }
                 }
-                .presentationDetents([.height(isiPad ? screenHeight: 200)])
-                .presentationDragIndicator(.visible)
-            })
+            }
             .navigationTitleStyle("通知")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
