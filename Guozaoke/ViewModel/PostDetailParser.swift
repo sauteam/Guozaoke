@@ -330,7 +330,6 @@ class PostDetailParser: ObservableObject {
         let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
-        //logger("replies \(replies)")
         self.replies.append(contentsOf: replies)
         return PostDetail(
             id: postId ?? "",
@@ -358,7 +357,6 @@ class PostDetailParser: ObservableObject {
     private func parseReplies(doc: Document, node: String) throws -> [Reply] {
         let replyItems = try doc.select("div.reply-item")
         return try replyItems.map { item -> Reply in
-            // 1. 解析回复作者
             let replyAuthor = ReplyAuthor(
                 name: try item.select(spanUsername).text(),
                 avatar: try item.select(imgAvatar).attr(gsrc),

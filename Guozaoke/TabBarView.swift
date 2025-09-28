@@ -112,32 +112,12 @@ struct TabContentView: View {
             }
             .onChange(of: navigationManager.shouldNavigateToPostDetail) { shouldNavigate in
                 if shouldNavigate {
-                    logger("[TabContentView] 检测到NavigationManager导航请求，同步到本地状态")
+                    logger("[TabContentView] 检测到NavigationManager导航请求，切换到首页")
                     tab = .home
-                    
-                    // 如果当前已经在详情页面，需要强制更新
-                    if shouldNavigateToPostDetail && postDetailId != navigationManager.postDetailId {
-                        logger("[TabContentView] 当前已在详情页面，强制更新到新帖子: \(navigationManager.postDetailId)")
-                        // 先重置状态，然后设置新的状态
-                        shouldNavigateToPostDetail = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            postDetailId = navigationManager.postDetailId
-                            shouldNavigateToPostDetail = true
-                            
-                            // 重置NavigationManager状态，为下次导航做准备
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                navigationManager.resetNavigationState()
-                            }
-                        }
-                    } else {
-                        postDetailId = navigationManager.postDetailId
-                        shouldNavigateToPostDetail = true
-                        
-                        // 重置NavigationManager状态，为下次导航做准备
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationManager.resetNavigationState()
-                        }
-                    }
+                    // 同步NavigationManager状态到本地状态
+                    postDetailId = navigationManager.postDetailId
+                    shouldNavigateToPostDetail = true
+                    logger("[TabContentView] 已同步本地导航状态: shouldNavigateToPostDetail = \(shouldNavigateToPostDetail), postDetailId = \(postDetailId)")
                 }
             }
             .onChange(of: navigationManager.shouldNavigateToUserDetail) { shouldNavigate in
@@ -239,23 +219,19 @@ private extension TabContentView {
         guard url.scheme == AppInfo.scheme else { return }
         let path = url.path
         let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-        
-        logger("[TabContentView] path: \(path)")
-        logger("[TabContentView] queryItems: \(queryItems)")
-        
+                
         // 处理帖子详情跳转
         if path == "/t" {
             if let id = queryItems.first(where: { $0.name == "id" })?.value {
                 logger("[TabContentView] 从 Widget 跳转到帖子详情: \(id)")
                 tab = .home
+                // 设置NavigationManager状态
+                navigationManager.postDetailId = id
+                navigationManager.shouldNavigateToPostDetail = true
+                // 同时设置本地状态，确保立即触发导航
                 postDetailId = id
                 shouldNavigateToPostDetail = true
-                logger("[TabContentView] 已设置本地导航状态: shouldNavigateToPostDetail = \(shouldNavigateToPostDetail), postDetailId = \(postDetailId)")
-                
-                // 添加延迟确保状态设置完成
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    logger("[TabContentView] 延迟检查导航状态: shouldNavigateToPostDetail = \(self.shouldNavigateToPostDetail)")
-                }
+                logger("[TabContentView] 已设置NavigationManager和本地状态: shouldNavigateToPostDetail = \(shouldNavigateToPostDetail), postDetailId = \(postDetailId)")
             }
         }
         

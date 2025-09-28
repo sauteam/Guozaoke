@@ -60,8 +60,8 @@ struct PostDetailContent: View, Equatable {
                 .padding(.horizontal)
                 .frame(maxWidth: .infinity)
             // 回复列表
-            if !detail.replies.isEmpty {
-                ReplyListView(detailParser: detailParser, replies: detailParser.replies)
+            if !detailParser.replies.isEmpty {
+                ReplyListView(detailParser: detailParser)
                     .padding(.horizontal)
                     
             }
@@ -156,18 +156,19 @@ struct PostFooterView: View {
 // MARK: - 回复列表视图
 struct ReplyListView: View {
     @ObservedObject var detailParser: PostDetailParser
-    @State  var replies: [Reply]
     
     var body: some View {
-        Text("全部回复 (\(replies.count))")
+        Text("全部回复 (\(detailParser.replies.count))")
             .titleFontStyle()
-        ForEach($replies) { $reply in
-            ReplyItemView(detailParser: detailParser, reply: $reply)
-                .onAppear {
-                    if reply.id == replies.last?.id {
-                        detailParser.loadMore()
+        ForEach(detailParser.replies.indices, id: \.self) { index in
+            if index < detailParser.replies.count {
+                ReplyItemView(detailParser: detailParser, reply: $detailParser.replies[index])
+                    .onAppear {
+                        if index == detailParser.replies.count - 1 {
+                            detailParser.loadMore()
+                        }
                     }
-                }
+            }
         }
         if !detailParser.hasMore {
             HStack {

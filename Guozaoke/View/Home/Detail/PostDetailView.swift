@@ -43,7 +43,7 @@ struct PostDetailView: View {
             }
         }
         .refreshable {
-            detailParser.loadNews(postId: postId)
+            detailParser.loadNews(postId: currentPostId)
         }
         .tabbarToolBar()
         .navigationBarTitleDisplayMode(.inline)
@@ -136,25 +136,47 @@ struct PostDetailView: View {
         }
         .onAppear() {
             logger("[PostDetailView] onAppear, postId: \(postId)")
-            currentPostId = postId
-            guard detailParser.postDetail == nil else { 
-                logger("[PostDetailView] 帖子详情已存在，跳过加载")
-                return 
-            }
-            logger("[PostDetailView] 开始加载帖子详情")
-            detailParser.loadNews(postId: postId)
-        }
-        
-        .onChange(of: navigationManager.shouldNavigateToPostDetail) { shouldNavigate in
-            if shouldNavigate && navigationManager.postDetailId != currentPostId {
-                logger("[PostDetailView] 检测到新的导航请求，从 \(currentPostId) 切换到 \(navigationManager.postDetailId)")
+            
+            // 检查NavigationManager是否有新的导航请求
+            if !navigationManager.postDetailId.isEmpty && navigationManager.postDetailId != postId {
+                logger("[PostDetailView] 检测到NavigationManager中的新ID，使用新ID: \(navigationManager.postDetailId)")
                 currentPostId = navigationManager.postDetailId
-                detailParser.loadNews(postId: navigationManager.postDetailId)
-                
-                // 重置导航状态，为下次导航做准备
+                detailParser.loadNews(postId: currentPostId)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     navigationManager.resetNavigationState()
                 }
+            } else {
+                currentPostId = postId
+                guard detailParser.postDetail == nil else { 
+                    logger("[PostDetailView] 帖子详情已存在，跳过加载")
+                    return 
+                }
+                logger("[PostDetailView] 开始加载帖子详情")
+                detailParser.loadNews(postId: postId)
+            }
+        }
+        
+        .onChange(of: navigationManager.postDetailId) { newPostId in
+            if !newPostId.isEmpty && newPostId != currentPostId {
+                logger("[PostDetailView] 检测到新的导航请求，从 \(currentPostId) 切换到 \(newPostId)")
+                currentPostId = newPostId
+                // 强制重新加载，清除旧数据
+                detailParser.postDetail = nil
+                detailParser.replies = []
+                detailParser.relatedTopics = []
+                detailParser.error = nil
+                detailParser.needLogin = false
+                detailParser.loadNews(postId: newPostId)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    navigationManager.resetNavigationState()
+                }
+            }
+        }
+        
+        // 监听detailParser的postDetail变化，确保数据同步
+        .onChange(of: detailParser.postDetail?.detailId) { newDetailId in
+            if let newDetailId = newDetailId, !newDetailId.isEmpty {
+                logger("[PostDetailView] 帖子详情数据已更新，detailId: \(newDetailId)")
             }
         }
         

@@ -38,6 +38,7 @@ struct CustomCommentInputView: View {
                 Spacer()
                 
                 VStack(spacing: 0) {
+                    // 拖拽指示器
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(Color(.systemGray3))
                         .frame(width: 36, height: 5)
@@ -64,10 +65,11 @@ struct CustomCommentInputView: View {
                             
                             TextEditor(text: $content)
                                 .font(.system(size: 16))
+                                .foregroundColor(.primary)
                                 .focused($isFocused)
                                 .scrollContentBackground(.hidden)
                                 .background(Color.clear)
-                                .padding(.horizontal, 8)
+                                .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
                                 .frame(height: textEditorHeight - 8)
                                 .onChange(of: content) { _ in
@@ -82,6 +84,7 @@ struct CustomCommentInputView: View {
                                 }
                         }
                         
+                        // 发送按钮
                         Button(action: {
                             if contentTextValid && !isPosting {
                                 Task {
@@ -90,7 +93,7 @@ struct CustomCommentInputView: View {
                             }
                         }) {
                             Image(systemName: "paperplane.fill")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(contentTextValid && !isPosting ? .blue : .gray)
                                 .frame(width: 25, height: 25)
                                 .background(
@@ -101,11 +104,11 @@ struct CustomCommentInputView: View {
                         .disabled(!contentTextValid || isPosting)
                     }
                     .padding(.horizontal, 10)
-                    .padding(.bottom, 40) // 底部留空40以适应安全区域
+                    .padding(.bottom, 20) // 底部留空20以适应安全区域
                 }
                 .background(Color(.systemBackground))
                 .cornerRadius(20, corners: [.topLeft, .topRight])
-                .shadow(radius: 10)
+                .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: -5)
                 .frame(height: textEditorHeight + 60)
                 .offset(y: isAnimating ? 0 : textEditorHeight + 100)
                 .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: isAnimating)
@@ -154,7 +157,8 @@ struct CustomCommentInputView: View {
         let font = UIFont.systemFont(ofSize: 16)
         let lineHeight: CGFloat = 22
         let verticalPadding: CGFloat = 8
-        let containerWidth = UIScreen.main.bounds.width - 20 - 25 - 8 // 减去左右边距和发送按钮宽度及间距
+        let containerWidth = UIScreen.main.bounds.width - 20 - 25 - 12
+        // 减去左右边距和发送按钮宽度及间距
         
         let textSize = content.size(withAttributes: [.font: font])
         let textWidth = textSize.width
@@ -232,23 +236,4 @@ struct CustomCommentInputView: View {
     }
 }
 
-// 扩展用于圆角
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
 
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
-    }
-}
