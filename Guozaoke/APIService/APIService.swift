@@ -132,18 +132,11 @@ struct APIService {
     static func fetchLoginPage() async throws -> (Bool, String) {
         var success   = false
         var tokenText = ""
-        guard let url = URL(string: loginUrl) else {
-            throw LoginError.invalidURL
-        }
         
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let html = String(data: data, encoding: .utf8) else {
-            throw LoginError.invalidData
-        }
+        let html = try await NetworkManager.shared.get(loginUrl)
         
-        if let httpResponse = response as? HTTPURLResponse {
-            saveCookies(from: httpResponse)
-        }
+        // 注意：NetworkManager使用Alamofire，cookie会自动处理
+        // 如果需要手动保存cookie，可以通过Alamofire的响应获取
         
         let doc = try SwiftSoup.parse(html)
         if let tokenInput = try doc.select("input[name=_xsrf]").first() {

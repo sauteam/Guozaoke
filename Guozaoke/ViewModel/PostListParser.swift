@@ -276,37 +276,28 @@ class PostListParser: ObservableObject {
     
     private func loadWithUrl(_ url: URL) {
         logger("url \(url) \(currentPage)")
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-           DispatchQueue.main.async {
-               guard let self = self else { return }
-               
-               defer {
-                   self.isLoading = false
-               }
-               
-               if let error = error {
-                   self.error = error.localizedDescription
-                   return
-               }
-               
-               guard let data = data,
-                     let html = String(data: data, encoding: .utf8) else {
-                     self.error = "无法解析数据"
-                   return
-               }
-               
-               do {
-                   if self.currentPage == 1 {
-                       self.posts.removeAll()
-                       self.hotTodayTopic.removeAll()
-                       self.hotNodes.removeAll()
-                       self.nodes.removeAll()
-                   }
-                   let doc = try SwiftSoup.parse(html)
-                   
-                   let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
-                   
-                   let newPosts  = try self.parseTopics(doc: doc)
+        Task {
+            do {
+                let html = try await NetworkManager.shared.get(url.absoluteString)
+                
+                await MainActor.run {
+                    
+                    defer {
+                        self.isLoading = false
+                    }
+                    
+                    do {
+                        if self.currentPage == 1 {
+                            self.posts.removeAll()
+                            self.hotTodayTopic.removeAll()
+                            self.hotNodes.removeAll()
+                            self.nodes.removeAll()
+                        }
+                        let doc = try SwiftSoup.parse(html)
+                        
+                        let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                        
+                        let newPosts  = try self.parseTopics(doc: doc)
                    if self.navItems.count <= 0 {
                        self.navItems = try self.parseNavbar(doc: doc)
                    }
@@ -330,12 +321,17 @@ class PostListParser: ObservableObject {
                    }
                    
                    //logger("page \(self.currentPage) totalPage \(self.totalPages) has \(self.hasMore) \(newPosts.count) \(self.posts.count)")
-               } catch {
-                   self.error = error.localizedDescription
-               }
-           }
-        }.resume()
-
+                    } catch {
+                        self.error = error.localizedDescription
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.error = error.localizedDescription
+                }
+            }
+        }
     }
 }
 
@@ -508,83 +504,3 @@ private extension PostListParser {
         }
     }
 }
-
-
-
-//    // 加载更多
-//    func loadMoreIfNeeded(type: PostListType, post: PostItem) {
-//       guard let lastPost = posts.last,
-//             lastPost.id == post.id,
-//             !isLoading,
-//            hasMore else {
-//           return
-//       }
-//        loadPosts(type: type, isRefresh: false)
-//   }
-
-/// 加载帖子列表
-//    @MainActor
-//    func loadPosts(type: PostListType, isRefresh: Bool = true) async {
-//
-//        currentType = type
-//        guard !isLoading && hasMore else { return }
-//        isLoading = true
-//        let zhong = type.url
-//        let page  = currentPage > 1 ? "/?p=\(currentPage)" : ""
-//        let urlString = APIService.baseUrlString + zhong + page
-//        logger("[url] \(zhong) \(urlString)")
-//        guard let _ = URL(string: urlString) else {
-//           error = "Invalid URL"
-//           isLoading = false
-//           return
-//        }
-//
-//        if isRefresh {
-//            currentPage = 1
-//            posts = []
-//            hasMore = true
-//        }
-//
-//        isLoading = true
-//
-//        do {
-//        // 构建请求参数
-//        var parameters: Parameters = [:]
-//        if currentPage > 1 {
-//            parameters["p"] = currentPage
-//        }
-//
-//        // 发起请求
-//        let html = try await NetworkManager.shared.get(
-//            urlString,
-//            parameters: parameters,
-//            headers: [
-//                "User-Agent": "Mozilla/5.0",
-//                "Accept": "text/html,application/xhtml+xml,application/xml"
-//            ]
-//        )
-//
-//            if self.currentPage == 1 || isRefresh {
-//                self.posts = []
-//            }
-//
-//            // 解析HTML
-//            let doc = try SwiftSoup.parse(html)
-//            let newPosts  = try self.parseTopics(doc: doc)
-//            self.navItems = try self.parseNavbar(doc: doc)
-//            try self.parsePagination(doc: doc)
-//
-//            // 累加数据
-//            self.posts.append(contentsOf: newPosts)
-//            self.currentPage += 1
-//            self.hasMore = self.currentPage <= self.totalPages
-//            self.isLoading = false
-//            self.error = nil
-//
-//        } catch {
-//            await MainActor.run {
-//                self.error = error.localizedDescription
-//                self.isLoading = false
-//            }
-//        }
-//    }

@@ -89,6 +89,7 @@ class LoginService: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0", forHTTPHeaderField: "User-Agent")
         
         // 构建请求参数
         let parameters: [String: String] = [
@@ -161,55 +162,4 @@ class LoginService: ObservableObject {
         isLoggedIn = true
         LoginStateChecker.LoginStateHandle()
     }
-    
-//    func login(email: String, password: String) {
-//        isLoading = true
-//        
-//        Task {
-//            do {
-//                // 获取登录页面的XSRF Token
-//                let loginPageHtml = try await NetworkManager.shared.request(
-//                    "https://www.guozaoke.com/login",
-//                    method: .get
-//                )
-//                
-//                let doc = try SwiftSoup.parse(loginPageHtml)
-//                let xsrfToken = try doc.select("input[name=_xsrf]").first()?.attr("value") ?? ""
-//                
-//                // 发起登录请求
-//                let parameters: Parameters = [
-//                    "email": email,
-//                    "password": password,
-//                    "_xsrf": xsrfToken
-//                ]
-//                
-//                let headers: HTTPHeaders = [
-//                    "Content-Type": "application/x-www-form-urlencoded",
-//                    "User-Agent": "Mozilla/5.0",
-//                    "Referer": "https://www.guozaoke.com/login"
-//                ]
-//                
-//                let response = try await NetworkManager.shared.request(
-//                    "https://www.guozaoke.com/login",
-//                    method: .post,
-//                    parameters: parameters,
-//                    headers: headers
-//                )
-//                
-//                await MainActor.run {
-//                    self.isLoading = false
-//                    // 处理登录响应
-//                    if response.contains("登录失败") {
-//                        self.error = "登录失败，请检查账号密码"
-//                    }
-//                }
-//            } catch {
-//                await MainActor.run {
-//                    self.isLoading = false
-//                    self.error = error.localizedDescription
-//                }
-//            }
-//        }
-//    }
-
 }

@@ -195,43 +195,41 @@ class PostDetailParser: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                defer { self.isLoading = false }
+        Task {
+            do {
+                let html = try await NetworkManager.shared.get(url.absoluteString)
                 
-                if let error = error {
-                    self.error = error.localizedDescription
-                    return
-                }
-                
-                guard let data = data,
-                      let html = String(data: data, encoding: .utf8) else {
-                    self.error = "无法解析数据"
-                    return
-                }
-                
-                do {
+                await MainActor.run {
+                    guard self != nil else { return }
+                    defer { self.isLoading = false }
                     
-                    let doc = try SwiftSoup.parse(html)
-                    if self.currentPage == 1 || !self.hasMore {
-                        self.postDetail = nil
-                        self.replies.removeAll()
+                    do {
+                        let doc = try SwiftSoup.parse(html)
+                        if self.currentPage == 1 || !self.hasMore {
+                            self.postDetail = nil
+                            self.replies.removeAll()
+                        }
+                        self.relatedTopics.removeAll()
+                        // 检查登录状态
+                        let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                        
+                        try self.parsePagination(doc: doc)
+                        self.currentPage += 1
+                        self.postDetail = try self.parsePostDetail(doc: doc)
+                        self.hasMore = self.currentPage <= self.totalPages
+                        logger("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
+                    } catch {
+                        self.error = error.localizedDescription
                     }
-                    self.relatedTopics.removeAll()
-                    // 检查登录状态
-                    let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
-                    
-                    try self.parsePagination(doc: doc)
-                    self.currentPage += 1
-                    self.postDetail = try self.parsePostDetail(doc: doc)
-                    self.hasMore = self.currentPage <= self.totalPages
-                    logger("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
-                } catch {
+                }
+            } catch {
+                await MainActor.run {
+                    guard self != nil else { return }
+                    self.isLoading = false
                     self.error = error.localizedDescription
                 }
             }
-        }.resume()
+        }
     }
     
     private func parsePostDetail(doc: Document) throws -> PostDetail {

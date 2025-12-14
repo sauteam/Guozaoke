@@ -38,11 +38,13 @@ class NetworkManager: ObservableObject {
                  return
              }
      
-            // 默认头部
+            // 默认头部 - 使用iOS Safari User-Agent，并在后面添加应用标识
             var defaultHeaders: HTTPHeaders = [
-                "Accept": "application/json, text/javascript, text/html, application/xhtml+xml, application/xml",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                 "X-Requested-With": "XMLHttpRequest",
                 "Content-Type": "text/html",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0",
                 "Cookie": APIService.getStoredCookies()
             ]
 
@@ -54,7 +56,7 @@ class NetworkManager: ObservableObject {
                 validURL,
                 method: method,
                 parameters: parameters,
-                headers: headers
+                headers: defaultHeaders
             )
             .validate()
             .responseString { response in
@@ -116,176 +118,3 @@ enum NetworkError: LocalizedError {
         }
     }
 }
-
-
-
-//// MARK: - 使用示例
-//class PostListViewModel: ObservableObject {
-//    @Published var posts: [Post] = []
-//    @Published var isLoading = false
-//    @Published var error: String?
-//    @Published var currentPage = 1
-//    @Published var hasMoreData = true
-//    
-//    // 加载帖子列表
-//    func loadPosts(type: PostListType, isRefresh: Bool = true) async {
-//        guard !isLoading else { return }
-//        
-//        if isRefresh {
-//            currentPage = 1
-//            posts = []
-//            hasMoreData = true
-//        }
-//        
-//        isLoading = true
-//        
-//        do {
-//            // 构建请求参数
-//            var parameters: Parameters = [:]
-//            if currentPage > 1 {
-//                parameters["p"] = currentPage
-//            }
-//            
-//            // 发起请求
-//            let html = try await NetworkManager.shared.get(
-//                type.url,
-//                parameters: parameters,
-//                headers: [
-//                    "User-Agent": "Mozilla/5.0",
-//                    "Accept": "text/html,application/xhtml+xml,application/xml"
-//                ]
-//            )
-//            
-//            // 解析HTML
-//            let newPosts = try parsePostList(html: html)
-//            
-//            await MainActor.run {
-//                if isRefresh {
-//                    self.posts = newPosts
-//                } else {
-//                    self.posts.append(contentsOf: newPosts)
-//                }
-//                
-//                self.hasMoreData = !newPosts.isEmpty
-//                self.currentPage += 1
-//                self.isLoading = false
-//                self.error = nil
-//            }
-//        } catch {
-//            await MainActor.run {
-//                self.error = error.localizedDescription
-//                self.isLoading = false
-//            }
-//        }
-//    }
-//}
-
-//func request<T: Codable>(
-//    _ url: String,
-//    method: HTTPMethod = .get,
-//    parameters: Parameters? = nil,
-//    headers: HTTPHeaders? = nil,
-//    responseType: T.Type
-//) async throws -> Result<T, String> {
-//    return try await withCheckedThrowingContinuation { continuation in
-//        var allUrl = url
-//        if !allUrl.hasPrefix(APIService.baseUrlString) {
-//            allUrl = APIService.baseUrlString + url
-//        }
-//        
-//        guard let validURL = URL(string: allUrl) else {
-//             continuation.resume(throwing: URLError(.badURL))
-//             return
-//         }
-// 
-//        // 默认头部
-//        var defaultHeaders: HTTPHeaders = [
-//            "Accept": "application/json, text/javascript, text/html, application/xhtml+xml,application/xml, */*; q=0.01",
-//            "X-Requested-With": "XMLHttpRequest",
-//            "Content-Type": "text/html"
-//        ]
-//
-//        // 如果有传入 headers，则合并
-//        if let headers = headers {
-//            headers.forEach { defaultHeaders.add($0) }
-//        }
-//        
-//        AF.request(
-//            validURL,
-//            method: method,
-//            parameters: parameters,
-//            headers: headers
-//        )
-//        .validate()
-//        .responseString { response in
-//            switch response.result {
-//            case .success(let string):
-//                guard let data = data else {
-//                    continuation.resume(throwing: APIError(message: "InvalidResponse: No data received"))
-//                        return
-//                   }
-
-//               // 检查 Content-Type
-//               if let contentType = response.response?.mimeType {
-//                   if contentType.contains("application/json") {
-//                       do {
-//                           if let responseType = responseType {
-//                               let decoded = try JSONDecoder().decode(responseType, from: data)
-//                               continuation.resume(returning: .success(decoded))
-//                           } else {
-//                               continuation.resume(returning: .success(nil))
-//                           }
-//                       } catch {
-//                           continuation.resume(throwing: error)
-//                       }
-//                   } else if contentType.contains("text/html") || contentType.contains("text/plain") {
-//                       if let htmlString = String(data: data, encoding: .utf8) {
-//                           let documents = try SwiftSoup.parse(htmlString)
-//                           continuation.resume(returning: .failure(documents))
-//                       } else {
-//                           continuation.resume(throwing: APIError(message: "Failed to decode HTML content"))
-//                       }
-//                   } else {
-//                       continuation.resume(throwing: APIError(message: "Unsupported content type"))
-//                   }
-//               } else {
-//                   continuation.resume(throwing: APIError(message: "Unsupported content type"))
-//               }
-//            case .failure(let error):
-//                continuation.resume(throwing: error)
-//            }
-//        }
-//    }
-//}
-//
-///// GET 请求
-//func get<T: Codable>(
-//    _ url: String,
-//    parameters: Parameters? = nil,
-//    headers: HTTPHeaders? = nil,
-//    responseType: T.Type
-//) async throws -> T {
-//    let result = try await request(url, method: .get, parameters: parameters, headers: headers, responseType: responseType)
-//    switch result {
-//    case .success(let data):
-//        return data
-//    case .failure(let errorMessage):
-//        throw APIError(message: errorMessage)
-//    }
-//}
-//
-///// POST 请求
-//func post<T: Codable>(
-//    _ url: String,
-//    parameters: Parameters? = nil,
-//    headers: HTTPHeaders? = nil,
-//    responseType: T.Type
-//) async throws -> T {
-//    let result = try await request(url, method: .post, parameters: parameters, headers: headers, responseType: responseType)
-//    switch result {
-//    case .success(let data):
-//        return data
-//    case .failure(let errorMessage):
-//        throw APIError(message: errorMessage)
-//    }
-//}
