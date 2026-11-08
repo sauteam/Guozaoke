@@ -285,6 +285,15 @@ class UserInfoParser: ObservableObject {
     }
 
     func fetchUserInfoAndData(_ userId: String, reset: Bool = false) async {
+        let trimmedId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedId.isEmpty &&
+              trimmedId != APIService.baseUrlString + "/u/" &&
+              trimmedId != "/u/" &&
+              trimmedId != APIService.baseUrlString &&
+              trimmedId != APIService.baseUrlString + "/u" else {
+            logger("[UserInfo] 用户名或主页路径无效，跳过加载: \(userId)")
+            return
+        }
         baseUrl = userId
         guard !isLoading && (hasMoreData || reset) else { return }
         await MainActor.run {
@@ -325,6 +334,18 @@ class UserInfoParser: ObservableObject {
                     self.topics.removeAll()
                     self.replies.removeAll()
                     self.userInfo = parsedUserInfo
+                    
+                    // 如果拉取的是当前登录用户的个人主页，同步头像到 AccountState
+                    if AccountState.isSelf(userName: parsedUserInfo.username) || parsedUserInfo.username == AccountState.userName {
+                        if let account = AccountState.getAccount() {
+                            var updated = account
+                            if !parsedUserInfo.avatar.isEmpty && updated.avatar != parsedUserInfo.avatar {
+                                updated.avatar = parsedUserInfo.avatar
+                                AccountState.saveAccount(updated)
+                                logger("[UserInfoParser] 同步头像至本地账户: \(parsedUserInfo.avatar)")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -435,9 +456,12 @@ class UserInfoParser: ObservableObject {
         let topics = try doc.select("div.reply-item")
         
         return try topics.map { element in
-            MyReply(
+            let topicLink = try element.select("span.title a[href^='/t/']").attr("href")
+            let titleLink = topicLink.isEmpty ? (try element.select("a[href^='/t/']").attr("href")) : topicLink
+            let finalLink = titleLink.isEmpty ? (try element.select("a").attr("href")) : titleLink
+            return MyReply(
                 title: try element.select("span.title").text(),
-                titleLink: try element.select("a").attr("href"),
+                titleLink: finalLink,
                 content: try element.select("div.content").text(),
                 mentionedUser: try element.select("a.user-mention").text(),
                 userLink: try element.select("a.user-mention").attr("href")

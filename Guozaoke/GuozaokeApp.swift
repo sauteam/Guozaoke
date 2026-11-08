@@ -121,6 +121,7 @@ private extension GuozaokeApp {
                         .foregroundColor(Color.primary)
                 }
                 .offset(y: -30)
+                
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

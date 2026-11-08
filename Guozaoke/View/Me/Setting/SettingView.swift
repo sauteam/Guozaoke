@@ -26,76 +26,51 @@ struct SettingView: View {
 
     
     var body: some View {
-        Form {
-//            Section {
-//                HStack {
-//                    ProfileRow(icon: SFSymbol.exit.rawValue, title: "主题色")
-//                    Picker("主题色", selection: $themeManager.selectedColor) {
-//                       Text("系统蓝").tag(ThemeColor.systemBlue)
-//                       Text("咖啡色").tag(ThemeColor.coffeeBrown)
-//                       Text("红色").tag(ThemeColor.red)
-//                   }
-//                   .pickerStyle(SegmentedPickerStyle())
-//                   .padding()
-//                }
-//            } header: {
-//                Text("主题色")
-//            }
-            Section {
-                Toggle(isOn: $pushNotificationsEnabled) {
-                    Text(pushNotificationsEnabled ? "一天一条" : "不推送消息")
-                        .titleFontStyle()
-                }.onChange(of: pushNotificationsEnabled) { newValue in
-                    if !NotificationManager.shared.notificationGranted {
-                        NotificationManager.shared.requestNotificationPermission()
-                        runInMain(delay: 1) {
-                            pushNotificationsEnabled = NotificationManager.shared.notificationGranted
-                        }
-                        UIApplication.toSettingUrl()
-                        return
+        GeometryReader { proxy in
+            let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
+            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
+                geometryTrailing: proxy.safeAreaInsets.trailing
+            )
+            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
+                geometryBottom: proxy.safeAreaInsets.bottom
+            )
+            
+            if isDual {
+                // 折叠屏展开横屏：偏好设置与账号管理双窗格 (Dual Pane Settings)
+                HStack(spacing: 0) {
+                    // 左窗格：基础设置与交互偏好
+                    Form {
+                        preferencesSection
                     }
-                    handlePushNotificationToggle(newValue: newValue)
+                    .listStyle(InsetGroupedListStyle())
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom, safeBottom)
+                    
+                    // 中缝避让隔离 (32pt)
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
+                        .allowsHitTesting(false)
+                    
+                    // 右窗格：账号管理与安全
+                    Form {
+                        accountSection
+                    }
+                    .listStyle(InsetGroupedListStyle())
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.trailing, safeTrailing)
+                    .padding(.bottom, safeBottom)
                 }
-                
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                
-                Toggle(isOn: $hapticFeedbackEnabled) {
-                    Text("触感反馈")
-                        .titleFontStyle()
+                .environment(\.isGKDualColumn, true)
+            } else {
+                Form {
+                    preferencesSection
+                    accountSection
                 }
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                
-                Toggle(isOn: $homeListRefreshEnabled) {
-                    Text("首页刷新")
-                        .titleFontStyle()
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                
-                Toggle(isOn: $hiddenTabView) {
-                    Text(hiddenTabView ? "隐藏TabView": "一直显示TabView")
-                        .titleFontStyle()
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-
-            } header: {
-                Text("设置")
-            }
-                        
-            Section {
-                Button {
-                    tapTextEvent("退出登录")
-                } label: {
-                    ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录")
-                }
-
-                NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
-                    ProfileRow(icon: SFSymbol.remove.rawValue, title: "删除账户") 
-                }
-            } header: {
-                Text("账号管理")
+                .listStyle(InsetGroupedListStyle())
+                .environment(\.isGKDualColumn, false)
             }
         }
-        .listStyle(InsetGroupedListStyle())
         .tabbarToolBar()
         .sheet(item: $presentedSheet) { sheetType in
             switch sheetType {
@@ -109,6 +84,68 @@ struct SettingView: View {
             }
         }
         .navigationTitleStyle("设置")
+    }
+    
+    // MARK: - Grouped Setting Sections
+    
+    @ViewBuilder
+    private var preferencesSection: some View {
+        Section {
+            Toggle(isOn: $pushNotificationsEnabled) {
+                Text(pushNotificationsEnabled ? "一天一条" : "不推送消息")
+                    .titleFontStyle()
+            }
+            .onChange(of: pushNotificationsEnabled) { newValue in
+                if !NotificationManager.shared.notificationGranted {
+                    NotificationManager.shared.requestNotificationPermission()
+                    runInMain(delay: 1) {
+                        pushNotificationsEnabled = NotificationManager.shared.notificationGranted
+                    }
+                    UIApplication.toSettingUrl()
+                    return
+                }
+                handlePushNotificationToggle(newValue: newValue)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+            
+            Toggle(isOn: $hapticFeedbackEnabled) {
+                Text("触感反馈")
+                    .titleFontStyle()
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+            
+            Toggle(isOn: $homeListRefreshEnabled) {
+                Text("首页刷新")
+                    .titleFontStyle()
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+            
+            Toggle(isOn: $hiddenTabView) {
+                Text(hiddenTabView ? "隐藏TabView" : "一直显示TabView")
+                    .titleFontStyle()
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .blue))
+
+        } header: {
+            Text("基础设置")
+        }
+    }
+    
+    @ViewBuilder
+    private var accountSection: some View {
+        Section {
+            Button {
+                tapTextEvent("退出登录")
+            } label: {
+                ProfileRow(icon: SFSymbol.exit.rawValue, title: "退出登录")
+            }
+
+            NavigationLink(destination: PostDetailView(postId: APIService.deleteAccountUrl)) {
+                ProfileRow(icon: SFSymbol.remove.rawValue, title: "删除账户") 
+            }
+        } header: {
+            Text("账号管理")
+        }
     }
     
     private func handlePushNotificationToggle(newValue: Bool) {
@@ -172,6 +209,7 @@ struct LogoutConfirmationSheet: View {
                     .cornerRadius(10)
             }
         }
+        .frame(maxWidth: GKDisplayMetrics.floatingPanelWidth)
         .frame(height: 230)
         .padding()
     }

@@ -16,9 +16,21 @@ struct UserInfoView: View {
     @State private var showCollectionView = false
     @State private var showMyReplyView = false
 
+    private var resolvedUserId: String {
+        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed == "/u/" {
+            return AccountState.userName
+        }
+        return trimmed
+    }
+
     var body: some View {
         VStack {
-            if parser.isLoading && parser.userInfo == nil {
+            if resolvedUserId.isEmpty {
+                Text("未获取到用户信息，请重新登录")
+                    .foregroundColor(.secondary)
+                    .padding()
+            } else if parser.isLoading && parser.userInfo == nil {
                 ProgressView("")
             } else if let errorMessage = parser.errorMessage {
                 Text("加载失败: \(errorMessage)")
@@ -27,6 +39,10 @@ struct UserInfoView: View {
                 userInfoHeader(userInfo)
                 userInfoTabs(userInfo)
                 userInfoContent(userInfo)
+            } else {
+                Text("暂无个人信息")
+                    .foregroundColor(.secondary)
+                    .padding()
             }
         }
         .navigationDestination(isPresented: $showCollectionView, destination: {
@@ -54,13 +70,18 @@ struct UserInfoView: View {
         }
         .onAppear {
             if !parser.hadData {
-                Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
+                let targetId = resolvedUserId
+                if !targetId.isEmpty {
+                    Task { await parser.fetchUserInfoAndData(profileUrl(targetId), reset: true) }
+                }
             }
             NotificationCenter.default.addObserver(forName: .loginSuccessNoti, object: nil, queue: .main) { notification in
                 if let userInfo = notification.userInfo,
                    let user = userInfo as? [String: Any] {
                     let username  = user["userName"] as? String ?? ""
-                    Task { await parser.fetchUserInfoAndData(username, reset: true) }
+                    if !username.isEmpty {
+                        Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
+                    }
                 }
             }
         }
@@ -68,7 +89,9 @@ struct UserInfoView: View {
             if let userInfo = notification.userInfo,
                let user = userInfo as? [String: Any] {
                 let username  = user["userName"] as? String ?? ""
-                Task { await parser.fetchUserInfoAndData(username, reset: true) }
+                if !username.isEmpty {
+                    Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
+                }
             }
         }
         .onDisappear {
@@ -77,7 +100,11 @@ struct UserInfoView: View {
     }
     
     private func profileUrl(_ userId: String) -> String {
-        return userId.userProfileUrl
+        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed == "/u/" {
+            return AccountState.userName.userProfileUrl
+        }
+        return trimmed.userProfileUrl
     }
     
     private func userInfoHeader(_ userInfo: UserInfo) -> some View {
@@ -109,7 +136,7 @@ struct UserInfoView: View {
                     do {
                         let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
                         if success {
-                            await parser.fetchUserInfoAndData(self.userId.userProfileUrl)
+                            await parser.fetchUserInfoAndData(profileUrl(resolvedUserId))
                         }
                     }
                 }

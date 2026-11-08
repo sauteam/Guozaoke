@@ -38,7 +38,12 @@ struct MembersGridView: View {
 
 
 struct MemberItemView: View {
-    let columns = Array(repeating: GridItem(.flexible()), count: isiPad ? 10: 6)
+    private var columnCount: Int {
+        isPadOrWideScreen ? 10 : 6
+    }
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: columnCount)
+    }
         
     let data: MemberInfo
     @State private var showUserInfoView = false

@@ -64,6 +64,8 @@ struct AppInfo {
     static let univerLink   = "www.guozaoke.com"
     static let scheme = "guozaoke"
     static let appIntro = "过早客是源自武汉的高端社交网络，这里有关于创业、创意、IT、金融等最热话题的交流，也有招聘问答、活动交友等最新资讯的发布。"
+    /// 默认不展示备案号，后期有需要可置为 true
+    static let showBeiAnNumber: Bool = false
     static let AppBeiAnText = "粤ICP备2025374276号-2A"
     static let beianGovUrl = "https://beian.miit.gov.cn"
     static let AppId = "6740704728"
@@ -98,6 +100,8 @@ struct AppInfo {
 struct BaseResponse: Codable {
     let message: String?
     let success: Int?
+    let voted: Bool?
+    let count: Int?
 }
 
 struct APIError: Error {
@@ -308,12 +312,18 @@ extension APIService {
         return cookies
     }
     
+    private static func isAntiBotCookieName(_ name: String) -> Bool {
+        return name == "acw_sc__v2" || name == "acw_tc" || name == "cdn_sec_tc"
+    }
+
     static func clearCookiesForDomain() {
         if let cookies = cookies() {
             for cookie in cookies {
                 if cookie.domain.contains("guozaoke.com") {
-                    HTTPCookieStorage.shared.deleteCookie(cookie)
-                    logger("[cookies]Deleted cookie: \(cookie.name)")
+                    if !isAntiBotCookieName(cookie.name) {
+                        HTTPCookieStorage.shared.deleteCookie(cookie)
+                        logger("[cookies]Deleted user session cookie: \(cookie.name)")
+                    }
                 }
             }
         }
@@ -322,9 +332,11 @@ extension APIService {
     static func clearCookieStorage() {
         let cookieStore = URLSession.shared.configuration.httpCookieStorage
         cookieStore?.cookies?.forEach { cookie in
-            cookieStore?.deleteCookie(cookie)
+            if !isAntiBotCookieName(cookie.name) {
+                cookieStore?.deleteCookie(cookie)
+            }
         }
-        logger("[cookies][httpCookieStorage] Deleted all session cookies.")
+        logger("[cookies][httpCookieStorage] Deleted user session cookies.")
     }
     
     static func clearWebViewCookies() {
@@ -344,17 +356,14 @@ extension APIService {
         clearCookiesForDomain()
         let cookieStore = HTTPCookieStorage.shared
         for cookie in cookieStore.cookies ?? [] {
-            cookieStore.deleteCookie(cookie)
+            if !isAntiBotCookieName(cookie.name) {
+                cookieStore.deleteCookie(cookie)
+            }
         }
         
-        // 同时清除App Groups中的Cookie
-        if let userDefaults = UserDefaults(suiteName: guozaokeGroup) {
-            let beforeClear = userDefaults.string(forKey: "stored_cookies")
-            logger("[cookies]清除前App Groups中的Cookie: \(beforeClear ?? "无")")
-            userDefaults.removeObject(forKey: "stored_cookies")
-            userDefaults.synchronize()
-            logger("[cookies]已清除App Groups中的Cookie")
-        }
+        // 重新同步保留的防爬Cookie到App Groups
+        saveCookiesToAppGroups()
+        logger("[cookies]已清理用户登录Cookie，并保留防爬盾通行证")
     }
     
     private func printCookies(tag: String = .empty) {

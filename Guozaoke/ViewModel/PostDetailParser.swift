@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftSoup
+import Alamofire
 
 // MARK: - 帖子详情模型
 struct PostDetail: Identifiable {
@@ -319,10 +320,13 @@ class PostDetailParser: ObservableObject {
         if collectionString != "加入收藏" {
             isCollection = true
         }
-        if zanString == "感谢已表示" {
+        let topicVotedAttr = try topicDetail.select("a.J_topicVote").attr("data-voted")
+        if topicVotedAttr == "1" || zanString.contains("已赞") || zanString.contains("感谢已表示") {
             isZan = true
+            zanString = "已赞"
         } else {
-            zanString = "感谢"
+            isZan = false
+            zanString = "赞"
         }
         let zanNumber = Int(zan.split(separator: " ").first ?? "0") ?? 0
         let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
@@ -405,9 +409,11 @@ class PostDetailParser: ObservableObject {
                 let text = try item.select(".floor").last()?.text() ?? "0"
                 return text
             }()
-            let zanNumber  = likeCount.replacingOccurrences(of: "赞 ", with: "")
+            let zanNumber  = likeCount.replacingOccurrences(of: "赞 ", with: "").replacingOccurrences(of: "已赞 ", with: "")
             let replyZanNumber = Int(zanNumber) ?? 0
-            let likeLink = try item.select("a.J_replyVote").first()?.attr("href")
+            let likeVoteElement = try item.select("a.J_replyVote").first()
+            let likeLink = try likeVoteElement?.attr("href")
+            let isVoted = try likeVoteElement?.attr("data-voted") == "1"
             return Reply(
                 floor: floor,
                 author: replyAuthor,
@@ -417,7 +423,7 @@ class PostDetailParser: ObservableObject {
                 time: time,
                 location: location,
                 like: replyZanNumber,
-                isLiked: false,
+                isLiked: isVoted,
                 likeLink: likeLink ?? ""
             )
         }
@@ -454,13 +460,37 @@ class PostDetailParser: ObservableObject {
     }
     
     
-    func fetchCollectionAction(link: String?) async -> BaseResponse? {
-        guard let link else {
+    func fetchCollectionAction(link: String?, voted: Bool = true) async -> BaseResponse? {
+        guard let link = link, !link.isEmpty else {
             return nil
         }
         
         do {
-            let response = try await NetworkManager.shared.get(link)
+            let response: String
+            let isVoteAction = link.contains("vote?topic_id") || link.contains("replyVote")
+            
+            if isVoteAction {
+                // 点赞接口遵循官方 topic-votes-20261029.js 规范：必须为 POST，参数带 voted 与 _xsrf
+                var token = AccountState.token()
+                if token.isEmpty {
+                    token = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "_xsrf" })?.value ?? ""
+                }
+                let parameters: [String: Any] = [
+                    "voted": voted ? "1" : "0",
+                    "_xsrf": token
+                ]
+                let headers: HTTPHeaders = [
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                ]
+                response = try await NetworkManager.shared.post(link, parameters: parameters, headers: headers)
+            } else {
+                let headers: HTTPHeaders = [
+                    "Accept": "application/json"
+                ]
+                response = try await NetworkManager.shared.get(link, headers: headers)
+            }
+            
             if let jsonData = response.data(using: .utf8) {
                 do {
                     let model = try JSONDecoder().decode(BaseResponse.self, from: jsonData)
@@ -469,7 +499,9 @@ class PostDetailParser: ObservableObject {
                     if message == "user_not_login" {
                         runInMain {
                             LoginStateChecker.clearUserInfo()
+                            ToastView.warningToast("请先登录再操作")
                         }
+                        return model
                     }
                     runInMain {
                         var url = self.postDetail?.collectionsLink
@@ -491,24 +523,30 @@ class PostDetailParser: ObservableObject {
                                 }
                                 self.postDetail?.collectionsLink = url ?? ""
                             } else if link.contains("vote?topic_id") {
-                                self.isZan.toggle()
-                                logger("isZan \(self.isZan)")
-                                if self.isZan {
-                                    self.postDetail?.zans += 1
-                                    self.postDetail?.zanString = "感谢已表示"
+                                if let isVoted = model.voted {
+                                    self.isZan = isVoted
                                 } else {
-                                    self.postDetail?.zanString = "感谢"
+                                    self.isZan.toggle()
                                 }
+                                logger("isZan \(self.isZan)")
+                                if let count = model.count {
+                                    self.postDetail?.zans = count
+                                } else if self.isZan {
+                                    self.postDetail?.zans += 1
+                                }
+                                self.postDetail?.zanString = self.isZan ? "已赞" : "赞"
+                                ToastView.successToast(self.isZan ? "点赞成功" : "已取消点赞")
                             } else if link.contains("replyVote") {
-                                
+                                // 楼层回复点赞状态在 PostDetailContent 中按楼层模型更新
                             }
-                            
-                            
                         } else {
                             if message == "already_voted" {
-                                self.postDetail?.zanString = "感谢已表示"
+                                self.postDetail?.zanString = "已赞"
+                                ToastView.successToast("已点赞")
                             } else if message == "can_not_vote_your_topic" {
-                                ToastView.warningToast("不能感谢自己啊啊啊，o(╯□╰)o")
+                                ToastView.warningToast("不能点赞自己的主题哦")
+                            } else if message == "can_not_vote_your_reply" {
+                                ToastView.warningToast("不能点赞自己的回复")
                             } else if message == "already_favorited" {
                                 ToastView.warningToast("已经收藏啦！")
                                 self.postDetail?.collectionString = "取消收藏"
@@ -520,9 +558,9 @@ class PostDetailParser: ObservableObject {
                                 url = url?.replacingOccurrences(of: unfav, with: fav)
                                 self.postDetail?.collectionsLink = url ?? ""
                             } else if message == "can_not_favorite_your_topic" {
-                                ToastView.warningToast("不能收藏自己的主题，我也不知道为何")
-                            } else {
-                                ToastView.warningToast(message ?? "")
+                                ToastView.warningToast("不能收藏自己的主题")
+                            } else if let msg = message, !msg.isEmpty {
+                                ToastView.warningToast(msg)
                             }
                         }
                     }
@@ -533,7 +571,6 @@ class PostDetailParser: ObservableObject {
             }
         } catch {
             logger("请求失败: \(error.localizedDescription)")
-            //response = "请求失败: \(error.localizedDescription)"
         }
         return nil
     }

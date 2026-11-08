@@ -20,27 +20,41 @@ struct PostDetailView: View {
     // 添加NavigationManager监听
     @ObservedObject private var navigationManager = NavigationManager.shared
     @State private var currentPostId: String = ""
+    @Environment(\.isGKDualColumn) private var isDualColumn
 
     var body: some View {
-        ScrollView {
-            LazyVStack {
-                if let detail = detailParser.postDetail {
-                    PostDetailContent(detail: detail, postId: postId, detailParser: detailParser)
-                } else if detailParser.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else if !detailParser.hasMore {
-                    HStack {
-                        Spacer()
-                        Text(NoMoreDataTitle.commentList)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                        Spacer()
+        GeometryReader { proxy in
+            // 在双栏分屏模式下，右侧外层容器已自动适配了右侧安全边距和底部避让，避免重复内缩导致详情过窄
+            let safeTrailing: CGFloat = isDualColumn ? 0 : GKDisplayMetrics.safeTabBarTrailingInset(
+                geometryTrailing: proxy.safeAreaInsets.trailing
+            )
+            let safeBottom: CGFloat = isDualColumn ? 0 : GKDisplayMetrics.safeTabBarBottomInset(
+                geometryBottom: proxy.safeAreaInsets.bottom
+            )
+            
+            ScrollView {
+                LazyVStack {
+                    if let detail = detailParser.postDetail {
+                        PostDetailContent(detail: detail, postId: postId, detailParser: detailParser)
+                    } else if detailParser.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else if !detailParser.hasMore {
+                        HStack {
+                            Spacer()
+                            Text(NoMoreDataTitle.commentList)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .listRowSeparator(.hidden)
+                        .padding(.vertical, 12)
                     }
-                    .listRowSeparator(.hidden)
-                    .padding(.vertical, 12)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, safeBottom)
             }
+            .padding(.trailing, safeTrailing)
         }
         .refreshable {
             detailParser.loadNews(postId: currentPostId)
@@ -122,7 +136,7 @@ struct PostDetailView: View {
             SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {
                 
             }
-            .presentationDetents([.height(isiPad ? screenHeight: screenHeight/2), .medium, .large])
+            .presentationDetents([.height(isPadOrWideScreen ? screenHeight : screenHeight/2), .medium, .large])
             .presentationDragIndicator(.visible)
         }
         .onChange(of: showComentView) { isPresented in

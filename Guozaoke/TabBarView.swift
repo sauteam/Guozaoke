@@ -38,19 +38,22 @@ struct TabBarView: View {
     let items = ["首页", "节点", "通知", "我的"]
         
     var body: some View {
-        ZStack {
-            Group {
-                if isiPad {
-                    TabContentView(tab: $tab)
-                } else {
-                    if showTabBar {
+        GeometryReader { proxy in
+            let isDual = GKDisplayMetrics.isDualColumnDisplay(
+                size: proxy.size,
+                horizontalSizeClass: horizontalSizeClass
+            )
+            ZStack {
+                Group {
+                    if isiPad || isDual || showTabBar {
                         TabContentView(tab: $tab)
                     }
                 }
+                
+                // 全局评论输入弹框
+                GlobalCommentInputView()
             }
-            
-            // 全局评论输入弹框
-            GlobalCommentInputView()
+            .environment(\.isGKDualColumn, isDual)
         }
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}
@@ -77,13 +80,13 @@ struct TabBarView: View {
     }
     
     static func hideTabBar() {
-        if isiPhone {
+        if isiPhone && !GKDisplayMetrics.isDuoDevice {
             UITabBar.appearance().isHidden = true
         }
     }
 
     static func showTabBar() {
-        if isiPhone {
+        if isiPhone && !GKDisplayMetrics.isDuoDevice {
             UITabBar.appearance().isHidden = false
         }
     }

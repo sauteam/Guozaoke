@@ -65,10 +65,11 @@ struct ReviewGuideView: View {
                 .padding(.horizontal)
             }
             .padding(24)
+            .frame(maxWidth: GKDisplayMetrics.floatingPanelWidth)
             .background(Color(.systemBackground))
             .cornerRadius(20)
             .shadow(radius: 10)
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 24)
         }
         .onAppear {
             isAnimating = true

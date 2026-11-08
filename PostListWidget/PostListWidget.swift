@@ -96,15 +96,21 @@ struct PostListWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            SmallWidgetView(posts: entry.posts, postType: entry.postType)
-        case .systemMedium:
-            MediumWidgetView(posts: entry.posts, postType: entry.postType)
-        case .systemLarge:
-            LargeWidgetView(posts: entry.posts, postType: entry.postType)
-        default:
-            SmallWidgetView(posts: entry.posts, postType: entry.postType)
+        if #available(iOS 27.0, *), family == .systemExtraLargePortrait {
+            ExtraLargePortraitWidgetView(posts: entry.posts, postType: entry.postType)
+        } else {
+            switch family {
+            case .systemSmall:
+                SmallWidgetView(posts: entry.posts, postType: entry.postType)
+            case .systemMedium:
+                MediumWidgetView(posts: entry.posts, postType: entry.postType)
+            case .systemLarge:
+                LargeWidgetView(posts: entry.posts, postType: entry.postType)
+            case .systemExtraLarge:
+                ExtraLargeWidgetView(posts: entry.posts, postType: entry.postType)
+            default:
+                SmallWidgetView(posts: entry.posts, postType: entry.postType)
+            }
         }
     }
 }
@@ -278,112 +284,335 @@ struct MediumWidgetView: View {
     }
 }
 
-// MARK: - Large Widget View
-struct LargeWidgetView: View {
-    let posts: [PostWidgetItem]
-    let postType: PostListType
-    @State private var isVIP = false
-    
-    init(posts: [PostWidgetItem], postType: PostListType) {
-        self.posts = posts
-        self.postType = postType
-        self._isVIP = State(initialValue: VIPManager.shared.isVIP)
-    }
-    
-    private var displayPosts: [PostWidgetItem] {
-        let maxCount = min(8, posts.count)
-        return Array(posts.prefix(maxCount))
-    }
+// MARK: - Reusable Widget Post Row View
+struct WidgetPostRowView: View {
+    let index: Int
+    let post: PostWidgetItem
+    var isCompact: Bool = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // 标题栏
-            HStack {
-                Text(postType.rawValue)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(4)
-//                if isVIP {
-//                    Image(systemName: "crown.fill")
-//                        .foregroundColor(.yellow)
-//                        .font(.system(size: 11))
-//                }
-//                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 4)
-            
-            // 帖子列表 - 根据数据量显示最多10条
-            if displayPosts.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "newspaper")
-                        .font(.system(size: 24))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                LazyVStack(spacing: 4) {
-                    ForEach(Array(displayPosts.enumerated()), id: \.offset) { index, post in
-                        Link(destination: {
-                            if let postUrl = post.url, !postUrl.isEmpty {
-                                let encodedUrl = postUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? postUrl
-                                return URL(string: "\(guozaokeSchemeText):///t?id=\(encodedUrl)") ?? URL(string: "\(guozaokeSchemeText)://")!
-                            } else {
-                                return URL(string: "\(guozaokeSchemeText)://")!
-                            }
-                        }()) {
-                            HStack(spacing: 10) {
-                                // 序号
-                                Text("\(index + 1)")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.blue)
-                                    .frame(width: 18, alignment: .center)
-                                
-                                // 帖子信息
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(post.title)
-                                        .font(.system(size: 12, weight: .medium))
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                        .foregroundColor(.primary)
-                                    
-                                    HStack {
-                                        Text(post.author)
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.secondary)
-                                        
-                                        if !post.node.isEmpty {
-                                            Text("· \(post.node)")
-                                                .font(.system(size: 10))
-                                                .foregroundColor(.secondary)
-                                        }
-                                        
-                                        if post.replyCount > 0 {
-                                            Text("· 评论\(post.replyCount)条")
-                                                .font(.system(size: 9))
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 2)
+        Link(destination: postUrl) {
+            HStack(spacing: isCompact ? 6 : 8) {
+                // 序号
+                Text("\(index + 1)")
+                    .font(.system(size: isCompact ? 10 : 11, weight: .bold))
+                    .foregroundColor(index < 3 ? .blue : .secondary)
+                    .frame(width: isCompact ? 16 : 18, alignment: .center)
+                
+                // 帖子标题与副信息
+                VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
+                    Text(post.title)
+                        .font(.system(size: isCompact ? 11 : 12, weight: .medium))
+                        .lineLimit(isCompact ? 1 : 2)
+                        .multilineTextAlignment(.leading)
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 4) {
+                        Text(post.author)
+                            .font(.system(size: isCompact ? 8 : 9))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        
+                        if !post.node.isEmpty {
+                            Text("· \(post.node)")
+                                .font(.system(size: isCompact ? 8 : 9))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
                         }
-                        .onTapGesture {
-                            // 同时保存到App Groups作为备用方案
-                            WidgetNavigationManager.shared.saveNavigationInfo(postId: post.url ?? "", postTitle: post.title)
+                        
+                        if post.replyCount > 0 {
+                            Text("· \(post.replyCount)评")
+                                .font(.system(size: isCompact ? 8 : 9))
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, isCompact ? 1 : 2)
         }
-        .padding(14)
+        .onTapGesture {
+            WidgetNavigationManager.shared.saveNavigationInfo(postId: post.url ?? "", postTitle: post.title)
+        }
+    }
+    
+    private var postUrl: URL {
+        if let postUrl = post.url, !postUrl.isEmpty {
+            let encodedUrl = postUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? postUrl
+            return URL(string: "\(guozaokeSchemeText):///t?id=\(encodedUrl)") ?? URL(string: "\(guozaokeSchemeText)://")!
+        } else {
+            return URL(string: "\(guozaokeSchemeText)://")!
+        }
     }
 }
 
+// MARK: - Large Widget View (自适应单列/双列：大屏及 Duo 展开态双列避折，外屏及小屏单列自适应)
+struct LargeWidgetView: View {
+    let posts: [PostWidgetItem]
+    let postType: PostListType
+    
+    var body: some View {
+        GeometryReader { proxy in
+            let isWide = proxy.size.width >= 360
+            
+            VStack(alignment: .leading, spacing: 6) {
+                // 标题栏
+                headerView
+                
+                if posts.isEmpty {
+                    emptyView
+                } else if isWide {
+                    // 宽屏/展开态：左右双列并排 (最多展示 10 条，避免纵向溢出)
+                    HStack(alignment: .top, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(Array(posts.prefix(5).enumerated()), id: \.offset) { index, post in
+                                WidgetPostRowView(index: index, post: post, isCompact: true)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Divider()
+                            .padding(.vertical, 2)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            if posts.count > 5 {
+                                ForEach(Array(posts.dropFirst(5).prefix(5).enumerated()), id: \.offset) { index, post in
+                                    WidgetPostRowView(index: index + 5, post: post, isCompact: true)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                } else {
+                    // 标准单列模式 (展示最多 6 条，配合 Spacer 弹性间距，彻底解决底部截断问题)
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(posts.prefix(6).enumerated()), id: \.offset) { index, post in
+                            WidgetPostRowView(index: index, post: post, isCompact: false)
+                            if index < min(posts.count, 6) - 1 {
+                                Spacer(minLength: 2)
+                            }
+                        }
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                }
+            }
+        }
+        .padding(4)
+    }
+    
+    private var headerView: some View {
+        HStack {
+            Text(postType.rawValue)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.blue)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.5)
+                .background(Color.blue.opacity(0.12))
+                .cornerRadius(4)
+            
+            Text("过早客")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            if VIPManager.shared.isVIP {
+                HStack(spacing: 2) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.yellow)
+                    Text("VIP")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.yellow)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var emptyView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "newspaper")
+                .font(.system(size: 24))
+                .foregroundColor(.secondary)
+            Text("暂无内容")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Extra Large Widget View (超大号组件：适配 Duo 展开横屏，中央预留 28pt 间距避开折痕区)
+struct ExtraLargeWidgetView: View {
+    let posts: [PostWidgetItem]
+    let postType: PostListType
+    
+    var body: some View {
+        // 中间预留 28pt 避让带，与 iPhone Duo 铰链折痕完全对齐
+        HStack(spacing: 28) {
+            // 左窗格：精选热议列表 (1 ~ 6)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.orange)
+                    Text(postType.rawValue)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("· 精选热议")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.orange.opacity(0.12))
+                .cornerRadius(6)
+                
+                if posts.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "newspaper")
+                            .font(.system(size: 24))
+                            .foregroundColor(.secondary)
+                        Text("暂无数据")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(posts.prefix(6).enumerated()), id: \.offset) { index, post in
+                            WidgetPostRowView(index: index, post: post, isCompact: false)
+                            if index < min(posts.count, 6) - 1 {
+                                Spacer(minLength: 4)
+                            }
+                        }
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            
+            // 右窗格：更多讨论列表 (7 ~ 12)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.blue)
+                    Text("近期讨论")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    if VIPManager.shared.isVIP {
+                        HStack(spacing: 2) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.yellow)
+                            Text("VIP")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.yellow)
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.blue.opacity(0.12))
+                .cornerRadius(6)
+                
+                if posts.count <= 6 {
+                    VStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 24))
+                            .foregroundColor(.secondary)
+                        Text("进入应用浏览更多内容")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(posts.dropFirst(6).prefix(6).enumerated()), id: \.offset) { index, post in
+                            WidgetPostRowView(index: index + 6, post: post, isCompact: false)
+                            if index < min(posts.count - 6, 6) - 1 {
+                                Spacer(minLength: 4)
+                            }
+                        }
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .padding(8)
+    }
+}
+
+// MARK: - Extra Large Portrait Widget View (iOS 27+ 竖向最大号/台面姿态专用：上下双区避让)
+struct ExtraLargePortraitWidgetView: View {
+    let posts: [PostWidgetItem]
+    let postType: PostListType
+    
+    var body: some View {
+        // 上下双区布局，中间留出 20pt 避开水平折痕区
+        VStack(alignment: .leading, spacing: 18) {
+            // 上半区：精选热榜
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Text(postType.rawValue)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2.5)
+                        .background(Color.blue.opacity(0.12))
+                        .cornerRadius(4)
+                    Text("精选热榜")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                
+                ForEach(Array(posts.prefix(4).enumerated()), id: \.offset) { index, post in
+                    WidgetPostRowView(index: index, post: post, isCompact: true)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            
+            // 下半区：最新动态
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("最新动态")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+                
+                ForEach(Array(posts.dropFirst(4).prefix(4).enumerated()), id: \.offset) { index, post in
+                    WidgetPostRowView(index: index + 4, post: post, isCompact: true)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .padding(6)
+    }
+}
+
+// MARK: - Widget Family Extension (支持 Duo 及 iPad 的超大号及 iOS 27+ 竖屏超大号)
+extension WidgetFamily {
+    static var allSupportedFamilies: [WidgetFamily] {
+        var families: [WidgetFamily] = [
+            .systemSmall,
+            .systemMedium,
+            .systemLarge,
+            .systemExtraLarge
+        ]
+        if #available(iOS 27.0, *) {
+            families.append(.systemExtraLargePortrait)
+        }
+        return families
+    }
+}
 
 struct PostListWidget: Widget {
     let kind: String = "PostListWidget"
@@ -395,7 +624,7 @@ struct PostListWidget: Widget {
         }
         .configurationDisplayName("过早客小组件")
         .description("最新、热门主题一览，VIP用户可选择更多类型。")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies(WidgetFamily.allSupportedFamilies)
     }
 }
 
@@ -416,6 +645,13 @@ struct PostListWidget: Widget {
 
 @available(iOS 17.0, *)
 #Preview(as: .systemLarge) {
+    PostListWidget()
+} timeline: {
+    SimpleEntry(date: .now, posts: [], postType: .latest)
+}
+
+@available(iOS 17.0, *)
+#Preview(as: .systemExtraLarge) {
     PostListWidget()
 } timeline: {
     SimpleEntry(date: .now, posts: [], postType: .latest)

@@ -104,15 +104,12 @@ struct PostFooterView: View {
                 hapticFeedback()
                 Task {
                     do {
-                        let model = await detailParser.fetchCollectionAction(link: detail.zanLink)
-                        if model?.success == 1 {
-                        } else if model?.success == 0 {
-                        }
+                        let _ = await detailParser.fetchCollectionAction(link: detail.zanLink, voted: !detailParser.isZan)
                     }
                 }
 
             } label: {
-                Text(detailParser.postDetail?.zanString ?? "感谢")
+                Text(detailParser.postDetail?.zanString ?? "赞")
             }
             .font(.caption)
             .disabled(detailParser.isZan)
@@ -240,10 +237,10 @@ struct ReplyItemView: View {
                     }
                 }
                 let number  = reply.like
-                let zanText = "赞 \(number)"
+                let zanText = reply.isLiked ? "已赞 \(number)" : "赞 \(number)"
                 Text(zanText)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(reply.isLiked ? .accentColor : .secondary)
                     .disabled(reply.isLiked)
                     .tag(reply.likeLink)
                     .onTapGesture {
@@ -253,16 +250,23 @@ struct ReplyItemView: View {
                         }
                         Task {
                             do {
-                                let model = await detailParser.fetchCollectionAction(link: reply.likeLink)
+                                let model = await detailParser.fetchCollectionAction(link: reply.likeLink, voted: true)
                                 if model?.success == 1 {
                                     DispatchQueue.main.async {
                                         reply.isLiked = true
-                                        reply.like += 1
+                                        if let newCount = model?.count {
+                                            reply.like = newCount
+                                        } else {
+                                            reply.like += 1
+                                        }
+                                        ToastView.successToast("点赞成功")
                                     }
                                 } else {
                                     if model?.message?.contains("already_voted") == true {
-                                        reply.isLiked = true
-                                        ToastView.successToast("已点赞")
+                                        DispatchQueue.main.async {
+                                            reply.isLiked = true
+                                            ToastView.successToast("已点赞")
+                                        }
                                     }
                                 }
                             }
@@ -336,7 +340,7 @@ struct BottomCommentView: View {
                     .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(8)
-                    .frame(width: screenWidth-100)
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
             }
             

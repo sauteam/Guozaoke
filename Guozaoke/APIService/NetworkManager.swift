@@ -136,13 +136,16 @@ class NetworkManager: ObservableObject {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                 "X-Requested-With": "XMLHttpRequest",
-                "Content-Type": "text/html",
                 "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0",
                 "Cookie": APIService.getStoredCookies()
             ]
 
+            if method == .post {
+                defaultHeaders.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
+            }
+
             if let headers = headers {
-                headers.forEach { defaultHeaders.add($0) }
+                headers.forEach { defaultHeaders.update($0) }
             }
             
             AF.request(
@@ -194,14 +197,25 @@ class NetworkManager: ObservableObject {
                 case .failure(let error):
                     logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
-                    var desc = "出现错误❌: " + "[\(response.response?.statusCode ?? 0)[403-重新登录试试]]"
-                    if !LoginStateChecker.isLogin {
-                        desc = needLoginTextCanDo
-                        LoginStateChecker.LoginStateHandle()
-                    }
-                    if error.responseCode == 403 {
+                    
+                    let statusCode = response.response?.statusCode ?? 0
+                    var desc = "出现错误❌: [\(statusCode)]"
+                    
+                    if statusCode == 404 {
+                        desc = "该内容不存在或已被删除 (404)"
+                    } else if statusCode == 403 {
+                        desc = "访问被拒绝或登录已过期 (403)"
+                        if !LoginStateChecker.isLogin {
+                            desc = needLoginTextCanDo
+                            LoginStateChecker.LoginStateHandle()
+                        }
                         logger("[403]重新登录处理  refreshTokenNoti \(url)")
                         NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
+                    } else if statusCode == 500 {
+                        desc = "服务器开小差了，请稍后再试 (500)"
+                    } else if !LoginStateChecker.isLogin {
+                        desc = needLoginTextCanDo
+                        LoginStateChecker.LoginStateHandle()
                     }
                     ToastView.warningToast(desc)
                 }

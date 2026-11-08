@@ -23,7 +23,19 @@ struct KFImageView: View {
     }
     
     var body: some View {
-        KFImage(URL(string: url ?? ""))
+        let cleanUrl: URL? = {
+            guard let raw = url?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+                return nil
+            }
+            if raw.hasPrefix("//") {
+                return URL(string: "https:" + raw)
+            } else if raw.hasPrefix("/") {
+                return URL(string: APIService.baseUrlString + raw)
+            }
+            return URL(string: raw)
+        }()
+        
+        KFImage(cleanUrl)
             .placeholder { progress in
                 placeholder
             }
@@ -68,6 +80,7 @@ struct OptimizedImageView: View {
     @State private var isPreviewPresented = false
     @State private var isEmoji: Bool = false
     @State private var isAnimated: Bool = false
+    @Environment(\.displayScale) private var displayScale
     
     // 检查是否为表情图片
     private func checkIsEmoji(_ urlString: String) -> Bool {
@@ -116,7 +129,7 @@ struct OptimizedImageView: View {
                         .cacheMemoryOnly()
                         .fade(duration: 0.25)
                         .forceRefresh(true)
-                        .scaleFactor(UIScreen.main.scale)
+                        .scaleFactor(displayScale)
                 } else {
                     KFImage.url(URL(string: urlString))
                         .onSuccess { result in

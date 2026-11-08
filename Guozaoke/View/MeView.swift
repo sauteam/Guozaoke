@@ -31,7 +31,7 @@ struct MeView: View {
     @State var showPurchaseView: Bool = false
     var body: some View {
         VStack() {
-            MyProfileView()
+            MyProfileView(parser: parser)
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitleStyle("我的")
@@ -58,10 +58,7 @@ struct MeView: View {
                 logger("[logout] me")
             }
 
-            if !parser.hadData {
-                if AccountState.userName.isEmpty {
-                    return
-                }
+            if !AccountState.userName.isEmpty {
                 Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl, reset: true) }
             }
         }
@@ -70,7 +67,9 @@ struct MeView: View {
             if let userInfo = notification.userInfo,
                let user = userInfo as? Dictionary<String, Any> {
                 let username  = user["userName"] as? String ?? ""
-                Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
+                if !username.isEmpty {
+                    Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
+                }
             }
 
         }
@@ -85,131 +84,183 @@ struct MeView: View {
 }
 
 struct MyProfileView: View {
-
+    @ObservedObject var parser: UserInfoParser
     @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
     @State private var currentMode: ModeTypeEnum = .system
-    //let parser: UserInfoParser
-    //@EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-        List {
-            Section {
-                HStack {
-                    NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
-                        KFImageView(AccountState.avatarUrl)
-                            .avatar(size: 60)
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(AccountState.userName)
-                                .titleFontStyle()
-                            
-                            Text("我的主页")
-                                .titleFontStyle()
-                        }
+        GeometryReader { proxy in
+            let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
+            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
+                geometryTrailing: proxy.safeAreaInsets.trailing
+            )
+            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
+                geometryBottom: proxy.safeAreaInsets.bottom
+            )
+            
+            if isDual {
+                // 折叠屏展开横屏：个人中心与系统设置双窗格
+                HStack(spacing: 0) {
+                    List {
+                        primaryProfileSections
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom, safeBottom)
+                    
+                    // 中缝避让隔离 (32pt)
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
+                        .allowsHitTesting(false)
+                    
+                    List {
+                        secondaryProfileSections
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.trailing, safeTrailing)
+                    .padding(.bottom, safeBottom)
+                }
+                .environment(\.isGKDualColumn, true)
+            } else {
+                List {
+                    primaryProfileSections
+                    secondaryProfileSections
+                }
+                .environment(\.isGKDualColumn, false)
+            }
+        }
+    }
+    
+    // MARK: - Primary Sections (账号与个人数据)
+    
+    @ViewBuilder
+    private var primaryProfileSections: some View {
+        Section {
+            HStack {
+                NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
+                    let avatarUrl = (parser.userInfo?.avatar.isEmpty == false ? parser.userInfo?.avatar : nil) ?? (AccountState.avatarUrl.isEmpty ? nil : AccountState.avatarUrl)
+                    
+                    KFImageView(
+                        avatarUrl,
+                        placeholder: AnyView(
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundColor(Color.gray.opacity(0.4))
+                        )
+                    )
+                    .avatar(size: 60)
+                    
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(AccountState.userName.isEmpty ? "我的账号" : AccountState.userName)
+                            .titleFontStyle()
+                        
+                        Text("我的主页")
+                            .titleFontStyle()
                     }
                 }
             }
+        }
+        
+        Section {
+            let username      = AccountState.userName
+            let collectionUrl = "/u/\(username)/favorites"
+            let topicUrl = "/u/\(username)/topics"
+            let replyUrl = "/u/\(username)/replies"
             
-            Section {
-                let username      = AccountState.userName
-                let collectionUrl = "/u/\(username)/favorites"
-                let topicUrl = "/u/\(username)/topics"
-                let replyUrl = "/u/\(username)/replies"
-                
-                NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
-                    ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "我的收藏")
-                }
-                
-                NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
-                    ProfileRow(icon: SFSymbol.pencilCircleFill.rawValue, title: "我的主题")
-                }
-                
-                NavigationLink(destination: MyReplyListView(linkUrl: replyUrl, linkText: "我的回复"))  {
-                    ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复")
-                }
-                
-                NavigationLink(destination: BlockListView())  {
-                    ProfileRow(icon: SFSymbol.block.rawValue, title: "屏蔽列表")
-                }
+            NavigationLink(destination: MyCollectionView(linkUrl: collectionUrl, linkText: "我的收藏")) {
+                ProfileRow(icon: SFSymbol.heartFill.rawValue, title: "我的收藏")
             }
             
-            Section {
-                
-                NavigationLink(destination: IntroductationView())  {
-                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "评论发帖")
-                }
-                
-                NavigationLink(destination: FaqView()) {
-                    ProfileRow(icon: SFSymbol.nosign.rawValue, title: "Faq")
-                }
-                
-                NavigationLink(destination: AboutView())  {
-                    ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
-                }
-                
-                NavigationLink(destination: MoreView())  {
-                    ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
-                }
+            NavigationLink(destination: MyCollectionView(linkUrl: topicUrl, linkText: "我的主题"))  {
+                ProfileRow(icon: SFSymbol.pencilCircleFill.rawValue, title: "我的主题")
             }
             
-            
-            Section {
-                
-                NavigationLink(destination: SettingNodeListView()) {
-                    ProfileRow(icon: SFSymbol.topics.rawValue, title: "节点顺序")
-                }
-                
-                NavigationLink(destination: DarkModeToggleView()) {
-                    ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
-                }
-                
-                NavigationLink(destination: FontSizePreviewView()) {
-                    ProfileRow(icon: SFSymbol.textformatSize.rawValue, title: "字体大小")
-                }
-                
-                NavigationLink(destination: SettingView()) {
-                    ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
-                }
-                
-//                NavigationLink(destination: AppIconListView()) {
-//                    ProfileRow(icon: SFSymbol.app.rawValue, title: "ICON")
-//                }
+            NavigationLink(destination: MyReplyListView(linkUrl: replyUrl, linkText: "我的回复"))  {
+                ProfileRow(icon: SFSymbol.coment.rawValue, title: "我的回复")
             }
             
-            Section {
-                
-                Button {
-                    AppInfo.toAppStore()
-                } label: {
-                    ProfileRow(icon: SFSymbol.app.rawValue, title: "最新版本")
-                }
-                
-                Button {
-                    AppInfo.toWriteReview()
-                } label: {
-                    ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
-                }
+            NavigationLink(destination: BlockListView())  {
+                ProfileRow(icon: SFSymbol.block.rawValue, title: "屏蔽列表")
+            }
+        }
+        
+        Section {
+            NavigationLink(destination: SettingNodeListView()) {
+                ProfileRow(icon: SFSymbol.topics.rawValue, title: "节点顺序")
             }
             
-            Section {
-                Button {
-                    AppInfo.appleEula.openURL()
-                } label: {
-                    ProfileRow(icon: SFSymbol.personCircle.rawValue, title: "使用条款「EULA」")
-                }
-                
-                Button {
-                    APIService.feedbackAllLink.openURL()
-                } label: {
-                    ProfileRow(icon: SFSymbol.handRaisedCircle.rawValue, title: "隐私协议")
-                }
-                
-                Button {
-                    AppInfo.guozaokeGithubUrl.openURL()
-                } label: {
-                    ProfileRow(icon: SFSymbol.share.rawValue, title: "开源地址")
-                }
+            NavigationLink(destination: DarkModeToggleView()) {
+                ProfileRow(icon: SFSymbol.moonphase.rawValue, title: "模式切换")
             }
             
+            NavigationLink(destination: FontSizePreviewView()) {
+                ProfileRow(icon: SFSymbol.textformatSize.rawValue, title: "字体大小")
+            }
+            
+            NavigationLink(destination: SettingView()) {
+                ProfileRow(icon: SFSymbol.setting.rawValue, title: "设置")
+            }
+        }
+    }
+    
+    // MARK: - Secondary Sections (帮助、关于与协议)
+    
+    @ViewBuilder
+    private var secondaryProfileSections: some View {
+        Section {
+            NavigationLink(destination: IntroductationView())  {
+                ProfileRow(icon: SFSymbol.topics.rawValue, title: "评论发帖")
+            }
+            
+            NavigationLink(destination: FaqView()) {
+                ProfileRow(icon: SFSymbol.nosign.rawValue, title: "Faq")
+            }
+            
+            NavigationLink(destination: AboutView())  {
+                ProfileRow(icon: SFSymbol.info.rawValue, title: "关于")
+            }
+            
+            NavigationLink(destination: MoreView())  {
+                ProfileRow(icon: SFSymbol.more.rawValue, title: "更多")
+            }
+        }
+        
+        Section {
+            Button {
+                AppInfo.toAppStore()
+            } label: {
+                ProfileRow(icon: SFSymbol.app.rawValue, title: "最新版本")
+            }
+            
+            Button {
+                AppInfo.toWriteReview()
+            } label: {
+                ProfileRow(icon: SFSymbol.heartCircle.rawValue, title: "给我们鼓励")
+            }
+        }
+        
+        Section {
+            Button {
+                AppInfo.appleEula.openURL()
+            } label: {
+                ProfileRow(icon: SFSymbol.personCircle.rawValue, title: "使用条款「EULA」")
+            }
+            
+            Button {
+                APIService.feedbackAllLink.openURL()
+            } label: {
+                ProfileRow(icon: SFSymbol.handRaisedCircle.rawValue, title: "隐私协议")
+            }
+            
+            Button {
+                AppInfo.guozaokeGithubUrl.openURL()
+            } label: {
+                ProfileRow(icon: SFSymbol.share.rawValue, title: "开源地址")
+            }
+        }
+        
+        if AppInfo.showBeiAnNumber {
             HStack {
                 Spacer()
                 Text(AppInfo.AppBeiAnText)

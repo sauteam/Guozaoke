@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftSoup
 import JDStatusBarNotification
+import Alamofire
 
 // MARK: - 错误定义
 enum LoginError: LocalizedError {
@@ -82,85 +83,139 @@ class LoginService: ObservableObject {
             isLoading  = false
         }
         
-        guard let url = URL(string:APIService.loginUrl ) else {
-            throw LoginError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0", forHTTPHeaderField: "User-Agent")
-        
-        let cookieHeader = APIService.getStoredCookies()
-        if !cookieHeader.isEmpty {
-            request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-        }
-        
-        // 构建请求参数
-        let parameters: [String: String] = [
+        // 构建请求参数并通过 NetworkManager 发送，确保享有自动解算防爬盾和自动带Cookie重试能力
+        let parameters: Parameters = [
             "email": email,
             "password": password,
             "_xsrf": xsrfToken
         ]
         
-        let bodyString = parameters.map { key, value in
-            "\(key)=\(value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        }.joined(separator: "&")
-        
-        request.httpBody = bodyString.data(using: .utf8)
-        
-        // 发送请求
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        // 检查响应状态
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw LoginError.invalidResponse
-        }
-        
-        // 保存登录返回的 Cookies (包括 session_id, user 等)
-        APIService.saveCookies(from: httpResponse)
+        let responseString = try await NetworkManager.shared.request(
+            APIService.loginUrl,
+            method: .post,
+            parameters: parameters
+        )
         
         // 解析响应
-        if httpResponse.statusCode == 200 {
-            // 检查是否登录成功
-            let doc = try SwiftSoup.parse(String(data: data, encoding: .utf8) ?? "")
-            
-            // 检查错误信息
-            if let errorMessage = try doc.select("ul.alert-danger li").first()?.text() {
-                throw LoginError.loginFailed(message: errorMessage)
+        let doc = try SwiftSoup.parse(responseString)
+        
+        // 检查错误信息
+        if let errorMessage = try doc.select("ul.alert-danger li").first()?.text() {
+            throw LoginError.loginFailed(message: errorMessage)
+        }
+        logger("[login] \(doc)")
+        
+        // 尝试多种选择器解析用户名和个人主页链接
+        var username = ""
+        var userLink = ""
+        var avatar = ""
+        
+        // 1. 尝试从过早客导航栏或头像菜单中提取个人主页链接 (/u/{username})
+        let userLinkCandidates = [
+            ".gzk-avatar-menu-panel a[href^='/u/']",
+            "ul.navbar-right a[href^='/u/']",
+            ".gzk-desktop-account a[href^='/u/']",
+            ".usercard a[href^='/u/']",
+            ".ui-header a[href^='/u/']",
+            "#navbar5 a[href^='/u/']"
+        ]
+        for sel in userLinkCandidates {
+            if let linkElement = try? doc.select(sel).first() {
+                let href = (try? linkElement.attr("href")) ?? ""
+                if !href.isEmpty && href != "/u/" && href != "/u/guozaoke" {
+                    userLink = href
+                    let text = (try? linkElement.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    if !text.isEmpty && text != "我的主页" && text != "个人主页" {
+                        username = text
+                    }
+                    break
+                }
             }
-            logger("[login] \(doc)")
-            let avatarElement = try doc.select(".ui-header a img").first()
-            let avatar = try avatarElement?.attr("src") ?? ""
-            let username = try doc.select(".ui-header .username").first()?.text() ?? ""
-//            // Number
-//            let numberElement = try doc.select(".user-number .number").first()
-//            let number = try numberElement?.text() ?? ""
-//            // Since
-//            let sinceElement = try doc.select(".user-number .since").first()
-//            let since = try sinceElement?.text() ?? ""
-            let idElement = try doc.select(".ui-header a").first()
-            let idLink = try idElement?.attr("href") ?? ""
+        }
+        
+        // 2. 如果找到了链接，但文本不是用户名，从 href 中提取：/u/{username} -> {username}
+        if !userLink.isEmpty && username.isEmpty {
+            username = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // 3. 兜底尝试 .ui-header .username
+        if username.isEmpty {
+            username = (try? doc.select(".ui-header .username").first()?.text()) ?? ""
+        }
+        
+        // 4. 兜底尝试从 body 的 data-gzk-viewer 属性中获取用户数字ID
+        if username.isEmpty {
+            let viewerId = (try? doc.select("body").attr("data-gzk-viewer")) ?? ""
+            if !viewerId.isEmpty && viewerId != "0" {
+                username = viewerId
+                userLink = "/u/\(viewerId)"
+            }
+        }
+        
+        // 5. 兜底尝试从 Cookie 中解析出 user 的数字ID
+        if username.isEmpty {
+            if let cookies = HTTPCookieStorage.shared.cookies {
+                for c in cookies where c.name == "user" {
+                    let rawVal = c.value.replacingOccurrences(of: "\"", with: "")
+                    let parts = rawVal.components(separatedBy: "|")
+                    if let firstPart = parts.first,
+                       let data = Data(base64Encoded: firstPart),
+                       let decodedUid = String(data: data, encoding: .utf8), !decodedUid.isEmpty {
+                        username = decodedUid
+                        userLink = "/u/\(decodedUid)"
+                        break
+                    }
+                }
+            }
+        }
+        
+        // 6. 如果登录输入的非邮箱（无 @），它本身就可能是用户名
+        if username.isEmpty && !email.contains("@") {
+            username = email
+            userLink = "/u/\(email)"
+        }
+        
+        if userLink.isEmpty && !username.isEmpty {
+            userLink = "/u/\(username)"
+        }
+        
+        // 7. 解析头像
+        let avatarCandidates = [
+            ".gzk-avatar-menu summary img",
+            ".gzk-avatar-menu img",
+            "ul.navbar-right a[href^='/u/'] img",
+            "ul.navbar-right img.avatar",
+            "#navbar5 a[href^='/u/'] img",
+            ".usercard img.avatar",
+            ".ui-header a img"
+        ]
+        for sel in avatarCandidates {
+            if let img = try? doc.select(sel).first() {
+                let src = (try? img.attr("src")) ?? ""
+                if !src.isEmpty {
+                    avatar = src
+                    break
+                }
+            }
+        }
 
-            if try doc.select("div.topic-item").count > 0 {
-                let account = AccountInfo(username: username, xsrfToken: xsrfToken, avatar: avatar, userLink: idLink)
-                DispatchQueue.main.async {
-                    AccountState.saveAccount(account)
-                    showToast()
-                    loginSuccess  = true
-                    NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":idLink, "userName": username, "avatar": avatar])
-                }
-                logger("[userInfo]\(account)")                
-                APIService.saveCookiesToAppGroups()
-                
-                Task {
-                    await updateLoginState()
-                }
-            } else {
-                throw LoginError.loginFailed(message: "登录失败")
+        let topicCount = (try? doc.select("div.topic-item").count) ?? 0
+        if !username.isEmpty || topicCount > 0 {
+            let account = AccountInfo(username: username, xsrfToken: xsrfToken, avatar: avatar, userLink: userLink)
+            DispatchQueue.main.async {
+                AccountState.saveAccount(account)
+                showToast()
+                loginSuccess  = true
+                NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":userLink, "userName": username, "avatar": avatar])
+            }
+            logger("[userInfo]\(account)")                
+            APIService.saveCookiesToAppGroups()
+            
+            Task {
+                await updateLoginState()
             }
         } else {
-            throw LoginError.httpError(statusCode: httpResponse.statusCode)
+            throw LoginError.loginFailed(message: "登录失败")
         }
         return loginSuccess
     }

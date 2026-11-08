@@ -10,10 +10,12 @@ import Combine
 import UIKit
 import SwiftUI
 
-let screenBounds = UIScreen.main.bounds
-let screenSize   = screenBounds.size
-let screenWidth  = screenSize.width
-let screenHeight = screenSize.height
+public var screenBounds: CGRect { GKDisplayMetrics.deviceScreenBounds }
+public var screenSize: CGSize   { screenBounds.size }
+public var screenWidth: CGFloat  { screenSize.width }
+public var screenHeight: CGFloat { screenSize.height }
+public var isPadOrWideScreen: Bool { isiPad || GKDisplayMetrics.isDualColumnDisplay() }
+
 
 
 /// 1.5 秒

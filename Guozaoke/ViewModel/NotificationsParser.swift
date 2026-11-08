@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSoup
 
-struct NotificationItem: Identifiable {
+struct NotificationItem: Identifiable, Equatable {
     let id = UUID()
     let username: String
     let avatarURL: String

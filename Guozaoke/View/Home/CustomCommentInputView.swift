@@ -25,93 +25,100 @@ struct CustomCommentInputView: View {
     @State private var isAnimating = false
     
     var body: some View {
-        ZStack {
-            // 半透明背景遮罩
-            Color.black.opacity(isAnimating ? 0.3 : 0.0)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    dismissView()
-                }
-                .animation(.easeInOut(duration: 0.3), value: isAnimating)
+        GeometryReader { proxy in
+            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(geometryTrailing: proxy.safeAreaInsets.trailing)
+            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(geometryBottom: proxy.safeAreaInsets.bottom)
             
-            VStack(spacing: 0) {
-                Spacer()
+            ZStack {
+                // 半透明背景遮罩
+                Color.black.opacity(isAnimating ? 0.3 : 0.0)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        dismissView()
+                    }
+                    .animation(.easeInOut(duration: 0.3), value: isAnimating)
                 
                 VStack(spacing: 0) {
-                    // 拖拽指示器
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(Color(.systemGray3))
-                        .frame(width: 36, height: 5)
-                        .padding(.top, 8)
-                        .padding(.bottom, 16)
-                        .onTapGesture {
-                            isFocused = false
-                        }
+                    Spacer()
                     
-                    HStack(spacing: 2) {
-                        ZStack(alignment: .topLeading) {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
-                                .frame(height: textEditorHeight)
-                            
-                            if content.isEmpty {
-                                Text(replyUser?.isEmpty == false ? "回复 \(replyUser ?? "")" : "写点什么...")
-                                    .foregroundColor(.secondary)
-                                    .font(.system(size: 16))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .allowsHitTesting(false)
+                    VStack(spacing: 0) {
+                        // 拖拽指示器
+                        RoundedRectangle(cornerRadius: 2.5)
+                            .fill(Color(.systemGray3))
+                            .frame(width: 36, height: 5)
+                            .padding(.top, 8)
+                            .padding(.bottom, 16)
+                            .onTapGesture {
+                                isFocused = false
                             }
-                            
-                            TextEditor(text: $content)
-                                .font(.system(size: 16))
-                                .foregroundColor(.primary)
-                                .focused($isFocused)
-                                .scrollContentBackground(.hidden)
-                                .background(Color.clear)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .frame(height: textEditorHeight - 8)
-                                .onChange(of: content) { _ in
-                                    updateTextEditorHeight()
+                        
+                        HStack(spacing: 2) {
+                            ZStack(alignment: .topLeading) {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                                    .frame(height: textEditorHeight)
+                                
+                                if content.isEmpty {
+                                    Text(replyUser?.isEmpty == false ? "回复 \(replyUser ?? "")" : "写点什么...")
+                                        .foregroundColor(.secondary)
+                                        .font(.system(size: 16))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .allowsHitTesting(false)
                                 }
-                                .onSubmit {
-                                    if contentTextValid && !isPosting {
-                                        Task {
-                                            await sendComment()
+                                
+                                TextEditor(text: $content)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.primary)
+                                    .focused($isFocused)
+                                    .scrollContentBackground(.hidden)
+                                    .background(Color.clear)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .frame(height: textEditorHeight - 8)
+                                    .onChange(of: content) { _ in
+                                        updateTextEditorHeight()
+                                    }
+                                    .onSubmit {
+                                        if contentTextValid && !isPosting {
+                                            Task {
+                                                await sendComment()
+                                            }
                                         }
                                     }
-                                }
-                        }
-                        
-                        // 发送按钮
-                        Button(action: {
-                            if contentTextValid && !isPosting {
-                                Task {
-                                    await sendComment()
-                                }
                             }
-                        }) {
-                            Image(systemName: "paperplane.fill")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(contentTextValid && !isPosting ? .blue : .gray)
-                                .frame(width: 25, height: 25)
-                                .background(
-                                    Circle()
-                                        .fill(contentTextValid && !isPosting ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
-                                )
+                            
+                            // 发送按钮
+                            Button(action: {
+                                if contentTextValid && !isPosting {
+                                    Task {
+                                        await sendComment()
+                                    }
+                                }
+                            }) {
+                                Image(systemName: "paperplane.fill")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(contentTextValid && !isPosting ? .blue : .gray)
+                                    .frame(width: 25, height: 25)
+                                    .background(
+                                        Circle()
+                                            .fill(contentTextValid && !isPosting ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
+                                    )
+                            }
+                            .disabled(!contentTextValid || isPosting)
                         }
-                        .disabled(!contentTextValid || isPosting)
+                        .padding(.horizontal, 10)
+                        .padding(.bottom, max(safeBottom, 20))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 20) // 底部留空20以适应安全区域
+                    .frame(maxWidth: GKDisplayMetrics.comfortReadableWidth)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(20, corners: [.topLeft, .topRight])
+                    .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: -5)
+                    .frame(height: textEditorHeight + 60 + max(safeBottom - 20, 0))
+                    .offset(y: isAnimating ? 0 : textEditorHeight + 100)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: isAnimating)
+                    .padding(.trailing, safeTrailing)
                 }
-                .background(Color(.systemBackground))
-                .cornerRadius(20, corners: [.topLeft, .topRight])
-                .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: -5)
-                .frame(height: textEditorHeight + 60)
-                .offset(y: isAnimating ? 0 : textEditorHeight + 100)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: isAnimating)
             }
         }
         .onAppear {
@@ -157,7 +164,8 @@ struct CustomCommentInputView: View {
         let font = UIFont.systemFont(ofSize: 16)
         let lineHeight: CGFloat = 22
         let verticalPadding: CGFloat = 8
-        let containerWidth = UIScreen.main.bounds.width - 20 - 25 - 12
+        let availableWidth = min(GKDisplayMetrics.deviceScreenBounds.width, GKDisplayMetrics.comfortReadableWidth)
+        let containerWidth = max(availableWidth - 20 - 25 - 12, 120)
         // 减去左右边距和发送按钮宽度及间距
         
         let textSize = content.size(withAttributes: [.font: font])

@@ -91,7 +91,9 @@ struct SearchListView: View {
                  }
             })
         }
-        .frame(width: screenWidth-80, height: 40, alignment: .center)
+        .frame(maxWidth: GKDisplayMetrics.comfortReadableWidth)
+        .frame(height: 40)
+        .padding(.horizontal, 20)
     }
         
     private var contentView: some View {
