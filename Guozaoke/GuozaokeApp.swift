@@ -133,8 +133,9 @@ private extension GuozaokeApp {
     func applyTabBarBackground() {
         let tabBarAppearance = UITabBarAppearance()
         tabBarAppearance.configureWithTransparentBackground()
-        tabBarAppearance.backgroundColor  = .secondarySystemBackground.withAlphaComponent(0.3)
+        tabBarAppearance.backgroundColor  = .clear
         tabBarAppearance.backgroundEffect = UIBlurEffect(style: .systemChromeMaterial)
+        UITabBar.appearance().standardAppearance = tabBarAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
     }
 

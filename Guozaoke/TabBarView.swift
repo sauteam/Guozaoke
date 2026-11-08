@@ -55,6 +55,7 @@ struct TabBarView: View {
             }
             .environment(\.isGKDualColumn, isDual)
         }
+        .ignoresSafeArea()
         .sheet(isPresented: $loginChecker.needLogin) {
             LoginView(isPresented: $loginChecker.needLogin) {}
         }

@@ -81,9 +81,11 @@ struct PostListView: View {
                     Divider()
                     postTabsView(isDual: false)
                 }
+                .ignoresSafeArea(edges: .bottom)
                 .environment(\.isGKDualColumn, false)
             }
         }
+        .ignoresSafeArea(edges: .bottom)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Button(action: {
@@ -204,6 +206,7 @@ struct PostListContentView: View {
                     Spacer()
                 }
                 .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                 .padding(.vertical, 12)
             }
             List {
@@ -221,6 +224,7 @@ struct PostListContentView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                         .onAppear {
                             if post == viewModel.posts.last {
                                 viewModel.loadMorePosts(type: type)
@@ -239,6 +243,7 @@ struct PostListContentView: View {
                                     }
                                 }
                         }
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
                 }
                 
@@ -246,6 +251,7 @@ struct PostListContentView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 } else if !viewModel.hasMore, !viewModel.posts.isEmpty {
                     HStack {
                         Spacer()
@@ -255,12 +261,14 @@ struct PostListContentView: View {
                         Spacer()
                     }
                     .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                     .padding(.vertical, 12)
                 }
             }
             .buttonStyle(.plain)
             .listStyle(.plain)
             .id(type)
+            .ignoresSafeArea(edges: .bottom)
             .refreshable {
                 viewModel.refreshPostList(type: type)
             }
