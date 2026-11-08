@@ -9,6 +9,8 @@ import SwiftUI
 
 // MARK: - 帖子列表视图
 struct PostListView: View {
+    @Environment(\.isGKDualColumn) private var isDualColumn
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var selectedTab: PostListType
     @State private var posts: [PostItem] = []
     @State private var isLoading = false
@@ -18,6 +20,10 @@ struct PostListView: View {
     @State private var selectedTopic: Node? = nil
     @State private var selectedPostId: String? = nil
     @ObservedObject var viewModel: PostListViewModel
+
+    private var isDual: Bool {
+        isDualColumn || GKDisplayMetrics.isDualColumnDisplay(horizontalSizeClass: horizontalSizeClass)
+    }
 
     init(viewModel: PostListViewModel) {
         self.viewModel = viewModel
@@ -30,9 +36,7 @@ struct PostListView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            
+        Group {
             if isDual {
                 // 折叠屏展开横屏：Master-Detail 双窗格模式 (List-Detail Pattern)
                 HStack(spacing: 0) {
@@ -73,7 +77,6 @@ struct PostListView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.trailing, 10)
                 }
-                .environment(\.isGKDualColumn, true)
             } else {
                 // 竖屏单列常规导航流
                 VStack(spacing: 0) {
@@ -81,11 +84,8 @@ struct PostListView: View {
                     Divider()
                     postTabsView(isDual: false)
                 }
-                .ignoresSafeArea(edges: .bottom)
-                .environment(\.isGKDualColumn, false)
             }
         }
-        .ignoresSafeArea(edges: .bottom)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Button(action: {
@@ -151,6 +151,7 @@ struct PostListView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.vertical, 4)
                 .onChange(of: selectedTab) { newValue in
                     withAnimation {
                         proxy.scrollTo(newValue, anchor: .center)
