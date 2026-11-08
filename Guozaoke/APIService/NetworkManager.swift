@@ -9,6 +9,7 @@ import SwiftUI
 import Alamofire
 import SwiftSoup
 import JDStatusBarNotification
+import JavaScriptCore
 
 // MARK: - 网络请求管理器
 class NetworkManager: ObservableObject {
@@ -21,11 +22,103 @@ class NetworkManager: ObservableObject {
     static let shared = NetworkManager()
     private init() {}
     
+    // MARK: - 防爬挑战处理 (阿里云 ESA / WAF)
+    
+    /// 判断是否命中阿里云 ESA 防爬 JS 挑战
+    private func isAntiBotChallenge(html: String, response: HTTPURLResponse?) -> Bool {
+        if html.contains("acw_sc__v2") && html.contains("arg1") {
+            return true
+        }
+        if let headers = response?.allHeaderFields as? [String: Any],
+           let errorHeader = headers["x-tengine-error"] as? String,
+           errorHeader.contains("denied by http_custom") {
+            return true
+        }
+        return false
+    }
+    
+    /// 利用 JavaScriptCore 执行防爬 JS 脚本，计算出 acw_sc__v2 Cookie
+    private func solveAntiBotChallenge(html: String) -> String? {
+        guard let context = JSContext() else { return nil }
+        
+        context.exceptionHandler = { _, exp in
+            logger("[AntiBot] JS执行异常: \(String(describing: exp))")
+        }
+        
+        let shim = """
+        var cookieResult = "";
+        var document = {
+            location: {
+                reload: function() {}
+            }
+        };
+        Object.defineProperty(document, "cookie", {
+            set: function(val) {
+                cookieResult = val;
+            },
+            get: function() {
+                return cookieResult;
+            }
+        });
+        """
+        context.evaluateScript(shim)
+        
+        var jsCode = html
+        if let scriptStart = html.range(of: "<script>"),
+           let scriptEnd = html.range(of: "</script>") {
+            jsCode = String(html[scriptStart.upperBound..<scriptEnd.lowerBound])
+        } else {
+            jsCode = jsCode
+                .replacingOccurrences(of: "<html><script>", with: "")
+                .replacingOccurrences(of: "</script></html>", with: "")
+        }
+        
+        context.evaluateScript(jsCode)
+        
+        if let cookieValue = context.objectForKeyedSubscript("cookieResult")?.toString(), !cookieValue.isEmpty {
+            for part in cookieValue.components(separatedBy: ";") {
+                let trimmed = part.trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("acw_sc__v2=") {
+                    return String(trimmed.dropFirst("acw_sc__v2=".count))
+                }
+            }
+        }
+        return nil
+    }
+    
+    /// 保存从响应头返回的 Cookies (如 acw_tc, cdn_sec_tc 等)
+    private func saveCookiesFromResponse(_ response: HTTPURLResponse?) {
+        guard let httpResponse = response, let responseUrl = httpResponse.url else { return }
+        let headerFields = httpResponse.allHeaderFields as? [String: String] ?? [:]
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: responseUrl)
+        for cookie in cookies {
+            HTTPCookieStorage.shared.setCookie(cookie)
+        }
+    }
+    
+    /// 将解算出的 acw_sc__v2 存入 HTTPCookieStorage
+    private func saveAntiBotCookie(value: String) {
+        let domains = ["www.guozaoke.com", ".guozaoke.com"]
+        for domain in domains {
+            let cookieProperties: [HTTPCookiePropertyKey: Any] = [
+                .domain: domain,
+                .path: "/",
+                .name: "acw_sc__v2",
+                .value: value,
+                .expires: Date(timeIntervalSinceNow: 7200) // 2小时有效期
+            ]
+            if let cookie = HTTPCookie(properties: cookieProperties) {
+                HTTPCookieStorage.shared.setCookie(cookie)
+            }
+        }
+    }
+    
     func request(
         _ url: String,
         method: HTTPMethod = .get,
         parameters: Parameters? = nil,
-        headers: HTTPHeaders? = nil
+        headers: HTTPHeaders? = nil,
+        retryCount: Int = 0
     ) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             var allUrl = url
@@ -59,10 +152,44 @@ class NetworkManager: ObservableObject {
                 headers: defaultHeaders
             )
             .validate()
-            .responseString { response in
+            .responseString { [weak self] response in
+                guard let self = self else { return }
+                
+                // 保存响应头中的所有 Cookies (包括 acw_tc 等)
+                self.saveCookiesFromResponse(response.response)
+                
                 switch response.result {
                 case .success(let string):
-                    //logger("[request][success]  \(parameters ?? [:]) \(headers ?? [:]) \(string) \(response)")
+                    // 检查是否命中阿里云 ESA 防爬挑战
+                    if self.isAntiBotChallenge(html: string, response: response.response) {
+                        logger("[AntiBot] 命中阿里云ESA防爬挑战，准备解算 acw_sc__v2...")
+                        if let solvedValue = self.solveAntiBotChallenge(html: string) {
+                            logger("[AntiBot] 成功解算 acw_sc__v2: \(solvedValue)")
+                            self.saveAntiBotCookie(value: solvedValue)
+                            APIService.saveCookiesToAppGroups()
+                            
+                            if retryCount < 2 {
+                                logger("[AntiBot] 携带新Cookie自动重试请求: \(url) (重试次数: \(retryCount + 1))")
+                                Task {
+                                    do {
+                                        let retryResult = try await self.request(
+                                            url,
+                                            method: method,
+                                            parameters: parameters,
+                                            headers: headers,
+                                            retryCount: retryCount + 1
+                                        )
+                                        continuation.resume(returning: retryResult)
+                                    } catch {
+                                        continuation.resume(throwing: error)
+                                    }
+                                }
+                                return
+                            }
+                        } else {
+                            logger("[AntiBot] 解算失败")
+                        }
+                    }
                     continuation.resume(returning: string)
                 case .failure(let error):
                     logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")

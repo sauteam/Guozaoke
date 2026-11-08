@@ -232,7 +232,7 @@ class PostDetailParser: ObservableObject {
         }
     }
     
-    private func parsePostDetail(doc: Document) throws -> PostDetail {
+    private func parsePostDetail(doc: SwiftSoup.Document) throws -> PostDetail {
         // 1. 解析帖子基本信息
         let topicDetail = try doc.select("div.topic-detail").first()
         guard let topicDetail = topicDetail else { throw ParseError.noContent }
@@ -352,7 +352,7 @@ class PostDetailParser: ObservableObject {
         )
     }
     
-    private func parseReplies(doc: Document, node: String) throws -> [Reply] {
+    private func parseReplies(doc: SwiftSoup.Document, node: String) throws -> [Reply] {
         let replyItems = try doc.select("div.reply-item")
         return try replyItems.map { item -> Reply in
             let replyAuthor = ReplyAuthor(
@@ -424,7 +424,7 @@ class PostDetailParser: ObservableObject {
     }
     
     // 解析分页信息
-    func parsePagination(doc: Document) throws {
+    func parsePagination(doc: SwiftSoup.Document) throws {
         
         // 获取当前页码
         let activePageElement = try doc.select("ul.pagination li.active a").first()

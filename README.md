@@ -8,13 +8,13 @@
 
 #### ![过早客](screenshot/0308guozaokeinfo.png)
 
-[过早客Android](https://github.com/mzlogin/guanggoo-android/releases)
+[过早客Android-mzlogin](https://github.com/mzlogin/guanggoo-android/releases)
 
 #### 介绍
 
 [guozaoke.com](https://guozaoke.com)
 
-[接口参考](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
+[接口参考-mzlogin](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
 
 #### TODO
 

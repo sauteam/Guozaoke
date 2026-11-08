@@ -353,7 +353,7 @@ class UserInfoParser: ObservableObject {
 
     }
 
-    private func parseUserInfo(doc: Document) throws -> UserInfo {
+    private func parseUserInfo(doc: SwiftSoup.Document) throws -> UserInfo {
         // Avatar
         let avatarElement = try doc.select(".ui-header a img").first()
         let avatar = try avatarElement?.attr("src") ?? ""
@@ -431,7 +431,7 @@ class UserInfoParser: ObservableObject {
         return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topicLink: topicsLink, replyLink: repliesLink, favoritesLink: favoritesLink, topicCount: topicsCount.int, replyCount: repliesCount.int, favoritesCount: favoritesCount.int, reputationNumber: reputation, topics: topics, replies: replies, blockUser: blockUser)
     }
 
-    private func parseReply(doc: Document) throws -> [MyReply] {
+    private func parseReply(doc: SwiftSoup.Document) throws -> [MyReply] {
         let topics = try doc.select("div.reply-item")
         
         return try topics.map { element in
@@ -446,7 +446,7 @@ class UserInfoParser: ObservableObject {
     }
     
     // 解析帖子列表
-    private func parseTopics(doc: Document, isTopic: Bool) throws -> [PostItem] {
+    private func parseTopics(doc: SwiftSoup.Document, isTopic: Bool) throws -> [PostItem] {
         let topics = try doc.select("div.topic-item")
         return try topics.map { element in
             PostItem(
@@ -465,7 +465,7 @@ class UserInfoParser: ObservableObject {
     }
     
     // 解析分页信息
-    private func parsePagination(doc: Document) throws {
+    private func parsePagination(doc: SwiftSoup.Document) throws {
         if let lastPage = try doc.select("ul.pagination li:nth-last-child(2) a").first() {
             totalPages = Int(try lastPage.text()) ?? 1
         }

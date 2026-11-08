@@ -153,22 +153,12 @@ struct APIService {
 
     // 将响应中的 Cookies 保存到 HTTPCookieStorage
     static func saveCookies(from response: HTTPURLResponse) {
-        if let cookies = response.allHeaderFields["Set-Cookie"] as? String {
-            let cookieArray = cookies.split(separator: ";")
-            for cookie in cookieArray {
-                let cookieProperties: [HTTPCookiePropertyKey: Any] = [
-                    .domain: "www.guozaoke.com",
-                    .path: "/",
-                    .name: "session_id", // 或者使用从 cookie 字符串中解析出的名称
-                    .value: cookie,
-                    .secure: "TRUE",
-                    .expires: NSDate(timeIntervalSinceNow: 31536000)
-                ]
-                
-                if let cookie = HTTPCookie(properties: cookieProperties) {
-                    HTTPCookieStorage.shared.setCookie(cookie)
-                    logger("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
-                }
+        if let responseUrl = response.url {
+            let headerFields = response.allHeaderFields as? [String: String] ?? [:]
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: responseUrl)
+            for cookie in cookies {
+                HTTPCookieStorage.shared.setCookie(cookie)
+                logger("[cookies]Saved Cookie: \(cookie.name) = \(cookie.value)")
             }
             saveCookiesToAppGroups()
         }
@@ -280,15 +270,17 @@ extension APIService {
     
     // 获取存储的 Cookies 并格式化为请求头
     static func getStoredCookies() -> String {
-        var cookieHeader = ""
+        var cookieDict: [String: String] = [:]
         
         if let cookies = HTTPCookieStorage.shared.cookies {
             for cookie in cookies {
                 if cookie.domain.contains("guozaoke.com") {
-                    cookieHeader += "\(cookie.name)=\(cookie.value); "
+                    cookieDict[cookie.name] = cookie.value
                 }
             }
         }
+        
+        var cookieHeader = cookieDict.map { "\($0.key)=\($0.value)" }.joined(separator: "; ")
         
         // 如果从HTTPCookieStorage获取不到Cookie，尝试从App Groups读取
         if cookieHeader.isEmpty {

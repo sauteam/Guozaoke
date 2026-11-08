@@ -336,7 +336,7 @@ class PostListParser: ObservableObject {
 }
 
 private extension PostListParser {
-    func parseNotification(doc: Document) throws {
+    func parseNotification(doc: SwiftSoup.Document) throws {
         let notificationLinks = try doc.select("a[href*='notifications']")
         if !notificationLinks.isEmpty() {
             let titleText = try notificationLinks.first()?.attr("title") ?? ""
@@ -371,7 +371,7 @@ private extension PostListParser {
     }
         
     // 解析导航栏
-    func parseNavbar(doc: Document) throws -> [NavItem] {
+    func parseNavbar(doc: SwiftSoup.Document) throws -> [NavItem] {
         let navItems = try doc.select("#navbar5 ul.nav.navbar-nav.navbar-left li")
         return try navItems.map { element in
             let link     = try element.select("a").first()
@@ -386,7 +386,7 @@ private extension PostListParser {
     }
     
     /// 节点信息
-    func parseNodes(doc: Document) throws -> [NodeItem] {
+    func parseNodes(doc: SwiftSoup.Document) throws -> [NodeItem] {
 
         var statusList: [CommunityStatus] = []
 
@@ -446,7 +446,7 @@ private extension PostListParser {
     
     
     // 解析帖子列表
-    func parseTopics(doc: Document) throws -> [PostItem] {
+    func parseTopics(doc: SwiftSoup.Document) throws -> [PostItem] {
         let topics = try doc.select("div.topic-item")
         
         if self.nodeInfo == nil {
@@ -485,7 +485,7 @@ private extension PostListParser {
     }
     
     // 今日最热
-    func hotTodayTopic(doc: Document) throws -> [HotTodayTopic] {
+    func hotTodayTopic(doc: SwiftSoup.Document) throws -> [HotTodayTopic] {
         let topicElements = try doc.select("div.cell")
         return try topicElements.map { element in
             HotTodayTopic(
@@ -498,7 +498,7 @@ private extension PostListParser {
     }
     
     // 解析分页信息
-    func parsePagination(doc: Document) throws {
+    func parsePagination(doc: SwiftSoup.Document) throws {
         if let lastPage = try doc.select("ul.pagination li:nth-last-child(2) a").first() {
             totalPages = Int(try lastPage.text()) ?? 1
         }

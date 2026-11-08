@@ -91,6 +91,11 @@ class LoginService: ObservableObject {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0", forHTTPHeaderField: "User-Agent")
         
+        let cookieHeader = APIService.getStoredCookies()
+        if !cookieHeader.isEmpty {
+            request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+        }
+        
         // 构建请求参数
         let parameters: [String: String] = [
             "email": email,
@@ -111,6 +116,9 @@ class LoginService: ObservableObject {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw LoginError.invalidResponse
         }
+        
+        // 保存登录返回的 Cookies (包括 session_id, user 等)
+        APIService.saveCookies(from: httpResponse)
         
         // 解析响应
         if httpResponse.statusCode == 200 {
