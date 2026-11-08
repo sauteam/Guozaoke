@@ -11,7 +11,7 @@ import StoreKit
 let purchaseInfo = """
 过早客还有很多功能需要完善，仅有部分个性设置需要内购或打赏才可使用，基本不影响使用，感谢支持！
 
-如果您觉得过早客App很有意义，您可以考虑赞助，有利于我们积极更新和维护，不断提高产品体验。
+如果你觉得过早客App很有意义，可以考打赏。无论你在哪里都可以关注武汉发展，是滴，湖北伢念家！
 """
 
 
@@ -32,20 +32,13 @@ struct InAppPurchaseView: View {
         NavigationView {
             GeometryReader { proxy in
                 let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-                let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                    geometryTrailing: proxy.safeAreaInsets.trailing
-                )
-                let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                    geometryBottom: proxy.safeAreaInsets.bottom
-                )
                 
                 if isDual {
                     // 横屏/展开态：左边描述文案，右边展示商品列表和购买
                     HStack(spacing: 0) {
-                        // 左窗格：品牌图标与描述说明
+                        // 左窗格：品牌图标与描述说明 (底部无安全边距限制)
                         descriptionView
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding(.bottom, safeBottom)
                         
                         // 物理中缝避让隔离带 (32pt)
                         Rectangle()
@@ -53,7 +46,7 @@ struct InAppPurchaseView: View {
                             .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
                             .allowsHitTesting(false)
                         
-                        // 右窗格：仅展示商品列表与购买按钮 (不重复展示描述)
+                        // 右窗格：仅展示商品列表与购买按钮 (右侧间距TabBar仅保留10pt，充盈饱满)
                         VStack(spacing: 0) {
                             productOnlyListView
                             
@@ -64,14 +57,13 @@ struct InAppPurchaseView: View {
                             }
                             
                             purchaseButton
-                                .padding(.bottom, safeBottom)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.trailing, safeTrailing)
+                        .padding(.trailing, 10)
                     }
                     .environment(\.isGKDualColumn, true)
                 } else {
-                    // 竖屏单列常规流：顶部描述 + 下方商品列表与购买
+                    // 竖屏单列常规流：顶部统一图标与描述 + 下方商品列表与购买
                     VStack(spacing: 0) {
                         productListView
                         
@@ -178,13 +170,27 @@ struct InAppPurchaseView: View {
         .buttonStyle(.plain)
     }
     
-    // MARK: - 竖屏列表视图 (保留顶部描述文案)
+    // MARK: - 竖屏列表视图 (展示统一的图标、标题与一致描述)
     @ViewBuilder
     private var productListView: some View {
         List {
-            Text(purchaseInfo)
-                .titleFontStyle()
-                .padding()
+            VStack(spacing: 12) {
+                Image(systemName: purchaseAppState.isPurchased ? "checkmark.seal.fill" : "heart.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundColor(.blue)
+                    .padding(.top, 8)
+                
+                Text(purchaseInfo)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 6)
+            }
+            .frame(maxWidth: .infinity)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
 
             ForEach(storeManager.products.sorted(by: productSortOrder), id: \.self) { product in
                 productRow(for: product)

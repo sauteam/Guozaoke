@@ -94,9 +94,10 @@ class NetworkManager: ObservableObject {
         for cookie in cookies {
             HTTPCookieStorage.shared.setCookie(cookie)
         }
+        APIService.saveCookiesToAppGroups()
     }
     
-    /// 将解算出的 acw_sc__v2 存入 HTTPCookieStorage
+    /// 将解算出的 acw_sc__v2 存入 HTTPCookieStorage 并同步至 App Groups
     private func saveAntiBotCookie(value: String) {
         let domains = ["www.guozaoke.com", ".guozaoke.com"]
         for domain in domains {
@@ -111,6 +112,7 @@ class NetworkManager: ObservableObject {
                 HTTPCookieStorage.shared.setCookie(cookie)
             }
         }
+        APIService.saveCookiesToAppGroups()
     }
     
     func request(
@@ -121,9 +123,10 @@ class NetworkManager: ObservableObject {
         retryCount: Int = 0
     ) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
-            var allUrl = url
-            if !allUrl.hasPrefix(APIService.baseUrlString) {
-                allUrl = APIService.baseUrlString + url
+            var allUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !allUrl.hasPrefix("http://") && !allUrl.hasPrefix("https://") {
+                let path = allUrl.hasPrefix("/") ? allUrl : "/" + allUrl
+                allUrl = APIService.baseUrlString + path
             }
             logger("[request] \(url) allUrl \(allUrl)")
             guard let validURL = URL(string: allUrl) else {
@@ -142,6 +145,11 @@ class NetworkManager: ObservableObject {
 
             if method == .post {
                 defaultHeaders.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
+                defaultHeaders.add(name: "Origin", value: APIService.baseUrlString)
+                let token = AccountState.token()
+                if !token.isEmpty {
+                    defaultHeaders.add(name: "X-Xsrftoken", value: token)
+                }
             }
 
             if let headers = headers {

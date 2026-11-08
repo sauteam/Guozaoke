@@ -16,10 +16,7 @@
 
 [接口参考-mzlogin](https://github.com/mzlogin/guanggoo-android/blob/master/docs/guanggoo-api.md)
 
-#### 更新记录与回溯
-
-详细的版本迭代日志、网络与反爬 (WAF) 突破、用户等级与在线状态展示、iPhone Duo 双屏适配以及核心模块回溯指南，请查看文档：
-* 📖 **[查看详细更新记录与代码回溯 (docs/README.md)](docs/README.md)**
+[查看详细更新记录与代码回溯 (docs/README.md)](docs/README.md)
 
 #### TODO
 

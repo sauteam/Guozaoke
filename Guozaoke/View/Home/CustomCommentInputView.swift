@@ -26,8 +26,9 @@ struct CustomCommentInputView: View {
     
     var body: some View {
         GeometryReader { proxy in
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(geometryTrailing: proxy.safeAreaInsets.trailing)
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(geometryBottom: proxy.safeAreaInsets.bottom)
+            let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
+            let safeTrailing: CGFloat = isDual ? 10 : 0
+            let safeBottom = proxy.safeAreaInsets.bottom
             
             ZStack {
                 // 半透明背景遮罩

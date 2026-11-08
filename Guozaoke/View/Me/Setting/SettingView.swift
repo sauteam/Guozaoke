@@ -28,12 +28,6 @@ struct SettingView: View {
     var body: some View {
         GeometryReader { proxy in
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
             
             if isDual {
                 // 折叠屏展开横屏：偏好设置与账号管理双窗格 (Dual Pane Settings)
@@ -42,9 +36,9 @@ struct SettingView: View {
                     Form {
                         preferencesSection
                     }
+                    .scrollContentBackground(.hidden)
                     .listStyle(InsetGroupedListStyle())
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.bottom, safeBottom)
                     
                     // 中缝避让隔离 (32pt)
                     Rectangle()
@@ -52,14 +46,14 @@ struct SettingView: View {
                         .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
                         .allowsHitTesting(false)
                     
-                    // 右窗格：账号管理与安全
+                    // 右窗格：账号管理与安全 (右边距TabBar仅保留10pt，充盈饱满不空旷)
                     Form {
                         accountSection
                     }
+                    .scrollContentBackground(.hidden)
                     .listStyle(InsetGroupedListStyle())
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.trailing, safeTrailing)
-                    .padding(.bottom, safeBottom)
+                    .padding(.trailing, 10)
                 }
                 .environment(\.isGKDualColumn, true)
             } else {
@@ -67,10 +61,12 @@ struct SettingView: View {
                     preferencesSection
                     accountSection
                 }
+                .scrollContentBackground(.hidden)
                 .listStyle(InsetGroupedListStyle())
                 .environment(\.isGKDualColumn, false)
             }
         }
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .tabbarToolBar()
         .sheet(item: $presentedSheet) { sheetType in
             switch sheetType {

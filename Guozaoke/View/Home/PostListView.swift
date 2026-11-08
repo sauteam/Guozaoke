@@ -32,12 +32,6 @@ struct PostListView: View {
     var body: some View {
         GeometryReader { proxy in
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
             
             if isDual {
                 // 折叠屏展开横屏：Master-Detail 双窗格模式 (List-Detail Pattern)
@@ -49,7 +43,6 @@ struct PostListView: View {
                         postTabsView(isDual: true)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.bottom, safeBottom)
                     
                     // 物理铰链避让区 (32pt 避让带)
                     Rectangle()
@@ -57,7 +50,7 @@ struct PostListView: View {
                         .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
                         .allowsHitTesting(false)
                     
-                    // 右窗格：选中主题详情与交互 (直接对齐右侧安全距离，确保详情获得充足阅读宽度)
+                    // 右窗格：选中主题详情与交互 (右边距TabBar仅保留10pt，充盈饱满不空旷)
                     ZStack {
                         if let postId = selectedPostId, !postId.isEmpty {
                             PostDetailView(postId: postId)
@@ -78,8 +71,7 @@ struct PostListView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.trailing, safeTrailing)
-                    .padding(.bottom, safeBottom)
+                    .padding(.trailing, 10)
                 }
                 .environment(\.isGKDualColumn, true)
             } else {

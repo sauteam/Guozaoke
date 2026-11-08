@@ -1,5 +1,6 @@
 import Foundation
 import SwiftSoup
+import JavaScriptCore
 
 // MARK: - Widget Post Parser
 class WidgetPostParser {
@@ -67,14 +68,90 @@ class WidgetPostParser {
 }
 
 class WidgetAPIService {
-    static let baseURL = "https://guozaoke.com"
+    static let baseURL = "https://www.guozaoke.com"
     
-    static func fetchPosts(for type: PostListType) async throws -> [PostWidgetItem] {
-        let urlString = buildURL(for: type)
+    // MARK: - 防爬挑战处理 (阿里云 ESA / WAF)
+    private static func isAntiBotChallenge(html: String) -> Bool {
+        return html.contains("acw_sc__v2") && html.contains("arg1")
+    }
+    
+    private static func solveAntiBotChallenge(html: String) -> String? {
+        guard let context = JSContext() else { return nil }
         
-        if WidgetPostParser.isDebugEnabled {
-            //logger("[Widget] 开始获取\(type.rawValue)帖子，URL: \(urlString)")
+        context.exceptionHandler = { _, exp in
+            logger("[Widget AntiBot] JS执行异常: \(String(describing: exp))")
         }
+        
+        let shim = """
+        var cookieResult = "";
+        var document = {
+            location: {
+                reload: function() {}
+            }
+        };
+        Object.defineProperty(document, "cookie", {
+            set: function(val) {
+                cookieResult = val;
+            },
+            get: function() {
+                return cookieResult;
+            }
+        });
+        """
+        context.evaluateScript(shim)
+        
+        var jsCode = html
+        if let scriptStart = html.range(of: "<script>"),
+           let scriptEnd = html.range(of: "</script>") {
+            jsCode = String(html[scriptStart.upperBound..<scriptEnd.lowerBound])
+        } else {
+            jsCode = jsCode
+                .replacingOccurrences(of: "<html><script>", with: "")
+                .replacingOccurrences(of: "</script></html>", with: "")
+        }
+        
+        context.evaluateScript(jsCode)
+        
+        if let cookieValue = context.objectForKeyedSubscript("cookieResult")?.toString(), !cookieValue.isEmpty {
+            for part in cookieValue.components(separatedBy: ";") {
+                let trimmed = part.trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("acw_sc__v2=") {
+                    return String(trimmed.dropFirst("acw_sc__v2=".count))
+                }
+            }
+        }
+        return nil
+    }
+    
+    private static func saveAntiBotCookieToAppGroups(value: String, response: HTTPURLResponse?) {
+        guard let userDefaults = UserDefaults(suiteName: guozaokeGroup) else { return }
+        var cookieDict: [String: String] = [:]
+        if let existing = userDefaults.string(forKey: "stored_cookies") {
+            for item in existing.components(separatedBy: "; ") {
+                let parts = item.components(separatedBy: "=")
+                if parts.count >= 2 {
+                    let key = parts[0].trimmingCharacters(in: .whitespaces)
+                    let val = parts.dropFirst().joined(separator: "=").trimmingCharacters(in: .whitespaces)
+                    cookieDict[key] = val
+                }
+            }
+        }
+        if let httpResponse = response, let responseUrl = httpResponse.url {
+            let headerFields = httpResponse.allHeaderFields as? [String: String] ?? [:]
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: responseUrl)
+            for c in cookies {
+                cookieDict[c.name] = c.value
+            }
+        }
+        cookieDict["acw_sc__v2"] = value
+        let combined = cookieDict.map { "\($0.key)=\($0.value)" }.joined(separator: "; ")
+        userDefaults.set(combined, forKey: "stored_cookies")
+        userDefaults.synchronize()
+        logger("[Widget] 已更新App Groups防爬Cookie: \(combined)")
+    }
+    
+    static func fetchPosts(for type: PostListType, retryCount: Int = 0) async throws -> [PostWidgetItem] {
+        let urlString = buildURL(for: type)
         
         guard let url = URL(string: urlString) else {
             throw NSError(domain: "WidgetError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(urlString)"])
@@ -93,13 +170,14 @@ class WidgetAPIService {
             }
         } else {
             if WidgetPostParser.isDebugEnabled {
-                logger("[Widget] 未找到Cookie，可能需要登录")
+                logger("[Widget] 未找到Cookie，使用公开模式请求")
             }
         }
         
         let (data, response) = try await URLSession.shared.data(for: request)
+        let httpResponse = response as? HTTPURLResponse
         
-        if let httpResponse = response as? HTTPURLResponse {
+        if let httpResponse = httpResponse {
             if WidgetPostParser.isDebugEnabled {
                 logger("[Widget] HTTP状态码: \(httpResponse.statusCode)")
             }
@@ -112,8 +190,16 @@ class WidgetAPIService {
             throw NSError(domain: "WidgetError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to decode HTML"])
         }
         
-        if WidgetPostParser.isDebugEnabled {
-            //logger("[Widget] HTML数据长度: \(html.count) 字符 HTML预览: \(html)")
+        // 检查防爬验证
+        if isAntiBotChallenge(html: html) {
+            logger("[Widget] 命中阿里云ESA防爬挑战，准备解算 acw_sc__v2...")
+            if let solvedValue = solveAntiBotChallenge(html: html) {
+                logger("[Widget] 成功解算 acw_sc__v2: \(solvedValue)")
+                saveAntiBotCookieToAppGroups(value: solvedValue, response: httpResponse)
+                if retryCount < 2 {
+                    return try await fetchPosts(for: type, retryCount: retryCount + 1)
+                }
+            }
         }
         
         let posts = WidgetPostParser.parsePostsFromHTML(html)

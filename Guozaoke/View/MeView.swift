@@ -91,12 +91,6 @@ struct MyProfileView: View {
     var body: some View {
         GeometryReader { proxy in
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
             
             if isDual {
                 // 折叠屏展开横屏：个人中心与系统设置双窗格
@@ -104,8 +98,8 @@ struct MyProfileView: View {
                     List {
                         primaryProfileSections
                     }
+                    .scrollContentBackground(.hidden)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.bottom, safeBottom)
                     
                     // 中缝避让隔离 (32pt)
                     Rectangle()
@@ -116,9 +110,9 @@ struct MyProfileView: View {
                     List {
                         secondaryProfileSections
                     }
+                    .scrollContentBackground(.hidden)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.trailing, safeTrailing)
-                    .padding(.bottom, safeBottom)
+                    .padding(.trailing, 10)
                 }
                 .environment(\.isGKDualColumn, true)
             } else {
@@ -129,6 +123,7 @@ struct MyProfileView: View {
                 .environment(\.isGKDualColumn, false)
             }
         }
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
     }
     
     // MARK: - Primary Sections (账号与个人数据)

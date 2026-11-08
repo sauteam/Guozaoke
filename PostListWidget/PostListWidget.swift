@@ -656,3 +656,10 @@ struct PostListWidget: Widget {
 } timeline: {
     SimpleEntry(date: .now, posts: [], postType: .latest)
 }
+
+@available(iOS 27.0, *)
+#Preview(as: .systemExtraLargePortrait) {
+    PostListWidget()
+} timeline: {
+    SimpleEntry(date: .now, posts: [], postType: .latest)
+}

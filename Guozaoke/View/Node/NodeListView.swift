@@ -19,12 +19,6 @@ struct NodeListView: View {
     var body: some View {
         GeometryReader { proxy in
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
             
             if isDual {
                 // 折叠屏展开横屏：Master-Detail 双窗格
@@ -32,7 +26,6 @@ struct NodeListView: View {
                     // 左窗格：热议与节点列表
                     nodeContentList(isDual: true)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.bottom, safeBottom)
                     
                     // 中缝避让隔离 (32pt)
                     Rectangle()
@@ -40,7 +33,7 @@ struct NodeListView: View {
                         .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
                         .allowsHitTesting(false)
                     
-                    // 右窗格：选中主题或节点详情 (直接对齐右侧安全边距)
+                    // 右窗格：选中主题或节点详情 (右边距TabBar仅保留10pt，充盈饱满不空旷)
                     ZStack {
                         if let topicLink = selectedTopicLink, !topicLink.isEmpty {
                             PostDetailView(postId: topicLink)
@@ -64,8 +57,7 @@ struct NodeListView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.trailing, safeTrailing)
-                    .padding(.bottom, safeBottom)
+                    .padding(.trailing, 10)
                 }
                 .environment(\.isGKDualColumn, true)
             } else {

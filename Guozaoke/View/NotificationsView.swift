@@ -17,19 +17,12 @@ struct NotificationsView: View {
     var body: some View {
         GeometryReader { proxy in
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
-            let safeTrailing = GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom = GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
             
             if isDual {
                 // 折叠屏展开横屏：Master-Detail 双窗格
                 HStack(spacing: 0) {
                     notificationListContent(isDual: true)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.bottom, safeBottom)
                     
                     // 中缝避让隔离 (32pt)
                     Rectangle()
@@ -37,7 +30,7 @@ struct NotificationsView: View {
                         .frame(width: GKDisplayMetrics.hingeExclusionRadius * 2)
                         .allowsHitTesting(false)
                     
-                    // 右窗格：选中通知所对应的主题详情 (直接对齐右侧安全边距)
+                    // 右窗格：选中通知所对应的主题详情 (右边距TabBar仅保留10pt，充盈饱满不空旷)
                     ZStack {
                         if let topicLink = selectedTopicLink, !topicLink.isEmpty {
                             PostDetailView(postId: topicLink)
@@ -58,8 +51,7 @@ struct NotificationsView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.trailing, safeTrailing)
-                    .padding(.bottom, safeBottom)
+                    .padding(.trailing, 10)
                 }
                 .environment(\.isGKDualColumn, true)
             } else {
@@ -197,21 +189,12 @@ struct NotificationRowView: View {
         HStack {
             KFImageView(notification.avatarURL)
                 .avatar()
-            .onTapGesture {
-                isUserAvatarViewActive = true
-            }
-            .overlay {
-                NavigationStack {
-                     VStack {
-                         Button("跳转到用户信息") {
-                             isUserAvatarViewActive = true
-                         }
-                     }
-                     .navigationDestination(isPresented: $isUserAvatarViewActive) {
-                         UserInfoView(userId: notification.username)
-                     }
-                }.hidden()
-            }
+                .onTapGesture {
+                    isUserAvatarViewActive = true
+                }
+                .navigationDestination(isPresented: $isUserAvatarViewActive) {
+                    UserInfoView(userId: notification.username)
+                }
             
             VStack(alignment: .leading) {
                 HStack {

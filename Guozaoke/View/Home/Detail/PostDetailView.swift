@@ -24,13 +24,9 @@ struct PostDetailView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // 在双栏分屏模式下，右侧外层容器已自动适配了右侧安全边距和底部避让，避免重复内缩导致详情过窄
-            let safeTrailing: CGFloat = isDualColumn ? 0 : GKDisplayMetrics.safeTabBarTrailingInset(
-                geometryTrailing: proxy.safeAreaInsets.trailing
-            )
-            let safeBottom: CGFloat = isDualColumn ? 0 : GKDisplayMetrics.safeTabBarBottomInset(
-                geometryBottom: proxy.safeAreaInsets.bottom
-            )
+            // 在双栏分屏模式下，右侧外层容器已自动适配了右侧安全边距和底部避让，避免重复内缩导致详情过窄；不展开竖屏时，与右边安全区域保留 8pt 舒适边距 (5~10pt)
+            let safeTrailing: CGFloat = isDualColumn ? 0 : 8
+            let safeBottom: CGFloat = isDualColumn ? 0 : proxy.safeAreaInsets.bottom
             
             ScrollView {
                 LazyVStack {

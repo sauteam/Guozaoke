@@ -129,6 +129,7 @@ class PostListParser: ObservableObject {
     // MARK: - Widget Data Update
     private func updateWidgetData() {        
         syncVIPStatusToWidget()
+        syncPostsToWidget()
         triggerWidgetRefresh()
     }
     
@@ -139,6 +140,48 @@ class PostListParser: ObservableObject {
             userDefaults.set(isVIP, forKey: "is_vip_user")
             userDefaults.set(AppInfo.appVersion, forKey: "app_version")
             // Sync VIP status to Widget
+        }
+    }
+    
+    private func syncPostsToWidget() {
+        guard let userDefaults = UserDefaults(suiteName: guozaokeGroup) else { return }
+        
+        struct WidgetPostExport: Codable {
+            let id: String
+            let title: String
+            let author: String
+            let timeAgo: String
+            let replyCount: Int
+            let node: String
+            let url: String?
+        }
+        
+        let exportPosts = self.posts.prefix(20).map { post in
+            WidgetPostExport(
+                id: post.id.uuidString,
+                title: post.title,
+                author: post.author,
+                timeAgo: post.time,
+                replyCount: post.replyCount,
+                node: post.node,
+                url: post.link
+            )
+        }
+        
+        do {
+            let data = try JSONEncoder().encode(exportPosts)
+            let typeKey = currentType?.rawValue ?? "最新"
+            userDefaults.set(data, forKey: "posts_\(typeKey)")
+            userDefaults.set(Date(), forKey: "posts_\(typeKey)_timestamp")
+            
+            if currentType == nil || currentType == .latest || currentType == .hot {
+                userDefaults.set(data, forKey: "latest_posts")
+                userDefaults.set(Date(), forKey: "last_update")
+            }
+            userDefaults.synchronize()
+            logger("[PostListParser] 成功同步 \(exportPosts.count) 条帖子至 Widget App Groups (分类: \(typeKey))")
+        } catch {
+            logger("[PostListParser] 同步 Widget 数据失败: \(error)")
         }
     }
     
@@ -458,8 +501,9 @@ private extension PostListParser {
             // 解析板块名称
             let boardName = try doc.select("span.bread-nav").text()
             // 解析关注按钮
-            let followLink = try doc.select("span.label-success a").attr("href")
-            let followText = try doc.select("span.label-success a").text()
+            let followElement = try doc.select("span.label-success a, .gzk-profile-follow a, a[href^='/f/']").first()
+            let followLink = try followElement?.attr("href") ?? ""
+            let followText = try followElement?.text() ?? (try doc.select("span.label-success, .gzk-profile-follow").text())
             // 解析板块简介
             let description = try doc.select("span.f14").text()
             self.nodeInfo = NodeInfo(title: boardName, link: urlHeader ?? "", followText: followText, followLink: followLink, description: description, creatLink: createTopicLink)
@@ -470,19 +514,60 @@ private extension PostListParser {
         }
         
         return try topics.map { element in
-            PostItem(
+            // 准确提取纯用户名，多重兜底保证必定能获取到正确的用户ID
+            var authorName = try element.select("span.username a[href^='/u/'] strong").first()?.text() ?? ""
+            if authorName.isEmpty {
+                authorName = try element.select("span.username a[href^='/u/']").first()?.text() ?? ""
+            }
+            if authorName.isEmpty {
+                authorName = try element.select("span.username a").first()?.text() ?? ""
+            }
+            if authorName.isEmpty {
+                // 从头像包装链接 <a href="/u/username"><img class="avatar"></a> 提取真实用户ID
+                if let userLink = try element.select("a[href^='/u/']").first()?.attr("href") {
+                    authorName = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            if authorName.isEmpty {
+                authorName = try element.select("span.username").text()
+            }
+            if let range = authorName.range(of: "Lv.", options: .caseInsensitive) {
+                authorName = String(authorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            authorName = authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            var lastReply = try element.select("span.last-reply-username a strong").first()?.text() ?? ""
+            if lastReply.isEmpty {
+                lastReply = try element.select("span.last-reply-username a").first()?.text() ?? ""
+            }
+            if lastReply.isEmpty {
+                if let link = try element.select("span.last-reply-username a").first()?.attr("href") {
+                    lastReply = link.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            lastReply = lastReply.trimmingCharacters(in: .whitespacesAndNewlines)
+            let lastReplyUser = lastReply.isEmpty ? nil : lastReply
+            
+            let level = try element.select(".gzk-credit-level").first()?.text()
+            let isOnline = try !(element.select(".gzk-online").isEmpty)
+            let displayName = try element.select(".gzk-visible-identity bdi, a.gzk-display-name bdi").first()?.text()
+
+            return PostItem(
                 title: try element.select("h3.title a").text(),
                 link: try element.select("h3.title a").attr("href"),
-                author: try element.select("span.username a").text(),
+                author: authorName,
                 avatar: try element.select("img.avatar").attr("src"),
                 node: try element.select("span.node a").text(),
                 nodeUrl: try element.select("span.node a").attr("href"),
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
-                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(),
+                lastReplyUser: lastReplyUser,
                 rowEnum: rowEnum,
                 postType: try element.select("i.icon-bookmark-empty").last() == nil ? .none: .elite,
-                bookmark: try element.select("h3.title a i").first()?.attr("title") ?? ""
+                bookmark: try element.select("h3.title a i").first()?.attr("title") ?? "",
+                isOnline: isOnline,
+                level: level,
+                displayName: displayName
             )
         }
     }

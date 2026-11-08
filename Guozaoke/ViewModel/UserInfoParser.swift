@@ -47,7 +47,7 @@ struct UserInfo {
         if followText.isEmpty == true {
             return "+关注"
         }
-        return followText == "取消关注" ? "取消关注" : "+关注"
+        return followText.contains("取消") ? "取消关注" : "+关注"
     }
 }
 
@@ -253,7 +253,7 @@ class UserInfoParser: ObservableObject {
         return ""
     }
             
-    func followUserAction(_ userId: String?) async -> (Bool, String)? {
+    func followUserAction(_ targetUrl: String?) async -> (Bool, String)? {
         if !LoginStateChecker.isLogin {
             runInMain {
                 LoginStateChecker.LoginStateHandle()
@@ -262,32 +262,39 @@ class UserInfoParser: ObservableObject {
             return (false, "")
         }
         
-        guard let userId else {
+        guard let targetUrl = targetUrl, !targetUrl.isEmpty else {
             return (false, "")
         }
         
         do {
-            let html = try await NetworkManager.shared.get(userId)
+            let html = try await NetworkManager.shared.get(targetUrl)
             let doc = try SwiftSoup.parse(html)
-            // Follow Link
-            let followElement = try doc.select(".label.label-success a").first()
-            let followLink = try followElement?.attr("href") ?? ""
+            
+            // 提取更新后的关注按钮元素
+            let followElement = try doc.select(".gzk-profile-follow a, .label.label-success a, a[href^='/f/user/'], a[href^='/f/']").first()
+            let newFollowLink = try followElement?.attr("href") ?? ""
+            var newFollowText = try followElement?.text() ?? ""
+            if newFollowText.isEmpty {
+                newFollowText = try doc.select(".gzk-profile-follow, .label.label-success").text()
+            }
             
             let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
 
-            let followText = try doc.select(".label.label-success").text()
-            logger("followText \(followText) followLink\(followLink)")
-            var success = false
-            if followText != userInfo?.followText {
-                success = true
-                await MainActor .run {
-                    userInfo?.followText = followText
-                    userInfo?.followLink = followLink
+            logger("followUserAction result: text=\(newFollowText) link=\(newFollowLink)")
+            
+            await MainActor.run {
+                if !newFollowText.isEmpty {
+                    self.userInfo?.followText = newFollowText
+                } else if let curText = self.userInfo?.followText {
+                    self.userInfo?.followText = curText.contains("取消") ? "+关注" : "取消关注"
+                }
+                if !newFollowLink.isEmpty {
+                    self.userInfo?.followLink = newFollowLink
                 }
             }
-            return (success, html)
+            return (true, html)
         } catch {
-            logger("请求失败: \(error.localizedDescription)")
+            logger("关注请求失败: \(error.localizedDescription)")
         }
         return nil
     }
@@ -412,12 +419,20 @@ class UserInfoParser: ObservableObject {
         let sinceElement = try doc.select(".user-number .since").first()
         let since = try sinceElement?.text() ?? ""
 
-        // Follow Link
-        let followElement = try doc.select(".label.label-success a").first()
-        let followLink = try followElement?.attr("href") ?? ""
-        
-        let followText = try doc.select(".label.label-success").text()
-        logger("followText \(followText) followLink\(followLink)")
+        // Follow Link - 支持新旧版各种选择器
+        let followElement = try doc.select(".gzk-profile-follow a, .label.label-success a, a[href^='/f/user/'], a[href^='/f/']").first()
+        var followLink = try followElement?.attr("href") ?? ""
+        var followText = try followElement?.text() ?? ""
+        if followText.isEmpty {
+            followText = try doc.select(".gzk-profile-follow, .label.label-success").text()
+        }
+        if followLink.isEmpty && !username.isEmpty {
+            followLink = "/f/user/\(username)"
+        }
+        if followText.isEmpty {
+            followText = "+关注"
+        }
+        logger("followText \(followText) followLink \(followLink)")
         let idElement = try doc.select("dl:has(dt:contains(ID)) dd").first()
         let id = try idElement?.text() ?? ""
         // Nickname
@@ -443,8 +458,13 @@ class UserInfoParser: ObservableObject {
         }
         
         var profile:[String] = []
+        let hasLevel = (level != nil && !level!.isEmpty)
         // 打印解析结果
         for (key, value) in parsedData {
+            // 如果已展示等级（等级中已包含信用等级和具体信用分），避免重复展示独立的“信用”
+            if hasLevel && (key == "信用" || key.contains("信用")) {
+                continue
+            }
             logger("[userInfo]\(key): \(value)")
             profile.append("\(key): \(value)")
         }
@@ -475,7 +495,10 @@ class UserInfoParser: ObservableObject {
         let favoritesLink = try doc.select(".status-favorite strong a").attr("href")
         let reputation = try doc.select(".status-reputation strong").text()
 
-        profile.insert("信用:\(reputation)", at: 0)
+        // 仅在未成功解析出等级时兜底展示独立的信用行，避免重复
+        if !hasLevel && !reputation.isEmpty {
+            profile.insert("信用: \(reputation)", at: 0)
+        }
 
         var blockText: String = "屏蔽此账号"
         var blockLink: String = ""
@@ -548,17 +571,57 @@ class UserInfoParser: ObservableObject {
     private func parseTopics(doc: SwiftSoup.Document, isTopic: Bool) throws -> [PostItem] {
         let topics = try doc.select("div.topic-item")
         return try topics.map { element in
-            PostItem(
+            var authorName = try element.select("span.username a[href^='/u/'] strong").first()?.text() ?? ""
+            if authorName.isEmpty {
+                authorName = try element.select("span.username a[href^='/u/']").first()?.text() ?? ""
+            }
+            if authorName.isEmpty {
+                authorName = try element.select("span.username a").first()?.text() ?? ""
+            }
+            if authorName.isEmpty {
+                if let userLink = try element.select("a[href^='/u/']").first()?.attr("href") {
+                    authorName = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            if authorName.isEmpty {
+                authorName = try element.select("span.username").text()
+            }
+            if let range = authorName.range(of: "Lv.", options: .caseInsensitive) {
+                authorName = String(authorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            authorName = authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            var lastReply = try element.select("span.last-reply-username a strong").first()?.text() ?? ""
+            if lastReply.isEmpty {
+                lastReply = try element.select("span.last-reply-username a").first()?.text() ?? ""
+            }
+            if lastReply.isEmpty {
+                if let link = try element.select("span.last-reply-username a").first()?.attr("href") {
+                    lastReply = link.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            lastReply = lastReply.trimmingCharacters(in: .whitespacesAndNewlines)
+            let lastReplyUser = lastReply.isEmpty ? nil : lastReply
+            
+            let level = try element.select(".gzk-credit-level").first()?.text()
+            let isOnline = try !(element.select(".gzk-online").isEmpty)
+            let displayName = try element.select(".gzk-visible-identity bdi, a.gzk-display-name bdi").first()?.text()
+
+            return PostItem(
                 title: try element.select("h3.title a").text(),
                 link: try element.select("h3.title a").attr("href"),
-                author: try element.select("span.username a").text(),
+                author: authorName,
                 avatar: try element.select("img.avatar").attr("src"),
                 node: try element.select("span.node a").text(),
                 nodeUrl: try element.select("span.node a").attr("href"),
                 time: try element.select("span.last-touched").text(),
                 replyCount: Int(try element.select("div.count a").text()) ?? 0,
-                lastReplyUser: try element.select("span.last-reply-username a strong").first()?.text(), rowEnum: rowEnum,
-                bookmark: try element.select("h3.title a i").first()?.attr("title") ?? ""
+                lastReplyUser: lastReplyUser,
+                rowEnum: rowEnum,
+                bookmark: try element.select("h3.title a i").first()?.attr("title") ?? "",
+                isOnline: isOnline,
+                level: level,
+                displayName: displayName
             )
         }
     }

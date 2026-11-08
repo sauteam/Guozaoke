@@ -139,6 +139,23 @@ struct AccountState {
     }
     
     static func token() -> String {
+        // 1. 优先从当前 HTTPCookieStorage 中获取最新的 _xsrf
+        if let cookieToken = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "_xsrf" })?.value,
+           !cookieToken.isEmpty {
+            return cookieToken
+        }
+        // 2. 其次从 App Groups 共享存储中提取 _xsrf
+        if let userDefaults = UserDefaults(suiteName: guozaokeGroup),
+           let storedCookies = userDefaults.string(forKey: "stored_cookies") {
+            let pairs = storedCookies.components(separatedBy: ";")
+            for pair in pairs {
+                let parts = pair.trimmingCharacters(in: .whitespaces).components(separatedBy: "=")
+                if parts.count >= 2 && parts[0] == "_xsrf" && !parts[1].isEmpty {
+                    return parts[1]
+                }
+            }
+        }
+        // 3. 兜底使用持久化存储的 xsrfToken
         return getAccount()?.xsrfToken ?? ""
     }
     

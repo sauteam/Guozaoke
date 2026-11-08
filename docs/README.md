@@ -12,6 +12,8 @@
   - [3. 个人主页与详情页 404 修复](#3-个人主页与详情页-404-修复)
   - [4. iPhone Duo 双屏与折叠屏适配](#4-iphone-duo-双屏与折叠屏适配)
   - [5. 桌面小组件 (Widget) 交互强化](#5-桌面小组件-widget-交互强化)
+  - [6. 关注功能修复与全场景列表头像用户ID解析强化](#6-关注功能修复与全场景列表头像用户id解析强化)
+  - [7. 点赞 403 修复与信用等级展示去重](#7-点赞-403-修复与信用等级展示去重)
 - [历史发布版本记录](#历史发布版本记录)
 - [核心架构与代码回溯指引](#核心架构与代码回溯指引)
 
@@ -71,6 +73,41 @@
 * **主要涉及文件**：
   * `PostListWidget/PostListWidget.swift`
   * `Guozaoke/ViewModel/PostListParser.swift`
+
+### 6. 关注功能修复与全场景列表头像用户ID解析强化
+* **关注失效根因与修复**：
+  * 网页改版后，个人主页关注按钮从旧版的 `.label.label-success` 升级为 `.gzk-profile-follow a`（或 `a[href^='/f/user/']`），原选择器返回 `nil` 导致 `followLink` 为空，点击无反应。
+  * 修复：适配 `.gzk-profile-follow a, .label.label-success a, a[href^='/f/user/']` 选择器，并增加 `/f/user/\(username)` 强保底逻辑；同时完善 `NetworkManager` 对 `/f/` 开头的相对路径补全。
+  * **关注去冗余刷新**：关注/取关成功后仅局部更新按钮文字状态（`followText` / `followLink`）与成功 Toast，去除了多余的 `fetchUserInfoAndData(..., reset: true)` 全量重载，避免主题列表闪烁与重置。
+* **列表头像进入个人主页无法获取信息根因与修复**：
+  * 原帖子列表解析器（`PostListParser` 和 `UserInfoParser`）仅通过 `element.select("span.username a").text()` 读取作者，在新版网页中遇到结构变动或内嵌微标时提取为空，导致传入 `UserInfoView` 的用户 ID 丢失。
+  * 修复：在首页列表、节点列表、回复列表以及通知列表中，增加多层级用户名精准提取机制，优先以包裹头像的 `<a href="/u/{username}"><img class="avatar"></a>` 兜底；清洗所有前缀 `/u/`、后缀 `Lv.` 与空白；并在 `UserInfoView` 中增加全局 ID 安全转换与容错刷新。
+  * 修复消息通知页（`NotificationsView`）头像被隐藏嵌套 `NavigationStack` 遮罩导致无法跳转的问题。
+* **主要涉及文件**：
+  * `Guozaoke/ViewModel/UserInfoParser.swift`
+  * `Guozaoke/ViewModel/PostListParser.swift`
+  * `Guozaoke/ViewModel/PostDetailParser.swift`
+  * `Guozaoke/ViewModel/NotificationsParser.swift`
+  * `Guozaoke/View/UserInfoView.swift`
+  * `Guozaoke/View/NotificationsView.swift`
+  * `Guozaoke/APIService/NetworkManager.swift`
+
+### 7. 点赞 403 修复与信用等级展示去重
+* **点赞 403 根因与修复**：
+  * **根因 1（CSRF Token 失效）**：Tornado 框架对 POST 请求进行严格的 CSRF 检验（比对 POST 表单 `_xsrf` 与 HTTP Cookie `_xsrf`）。原代码优先读取登录持久化的静态 `AccountState.token()`，未优先读取实时 Cookie，导致 Cookie 刷新后因 Token 不一致被服务端直接拦截为 403。
+  * **根因 2（缺少同源防跨站请求头）**：过早客受 Tengine/WAF 保护，敏感操作 POST 校验必须携带 `Origin: https://www.guozaoke.com`、`Referer` 以及 `X-Xsrftoken`。
+  * **修复**：
+    * `AccountState.token()` 改为优先从当前的 `HTTPCookieStorage` / App Groups 共享 Cookie 中动态获取最新 `_xsrf`。
+    * `NetworkManager.swift` 为所有 POST 请求默认补齐 `Origin: https://www.guozaoke.com` 和 `X-Xsrftoken`。
+    * `PostDetailParser.swift` 点赞与回复点赞补全精准 `Referer`（对应帖子详情链接）、`X-Requested-With: XMLHttpRequest` 以及 `data-id` / `data-reply-id` 的 fallback 路由。
+* **个人主页信用与等级展示去重**：
+  * 个人主页资料选项卡中，原逻辑既插入了 `等级: Lv.3（信用等级 Lv.3；信用 1262）`，又在首行插入了 `信用: 1262`，导致顶部重复出现两条信用数据。
+  * 修复：当解析到等级（等级中已包含详细信用说明）时，自动跳过单独的“信用”行，保留统一、规整的等级信用呈现。
+* **主要涉及文件**：
+  * `Guozaoke/Manager/AccountState.swift`
+  * `Guozaoke/APIService/NetworkManager.swift`
+  * `Guozaoke/ViewModel/PostDetailParser.swift`
+  * `Guozaoke/ViewModel/UserInfoParser.swift`
 
 ---
 

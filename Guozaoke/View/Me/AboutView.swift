@@ -51,7 +51,7 @@ struct AboutView: View {
                     }
                 }
 
-            Text("\(AppInfo.appName) V\(AppInfo.appVersion) Build \(AppInfo.buildNumber)")
+            Text("\(AppInfo.appName) \(AppInfo.appVersion)(build \(AppInfo.buildNumber))")
                 .titleFontStyle(weight: .thin)
                 .padding()
                 .foregroundColor(Color.primary)

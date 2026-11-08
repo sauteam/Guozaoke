@@ -55,7 +55,17 @@ class NotificationsParser: ObservableObject {
             var newNotifications: [NotificationItem] = []
             
             for item in notificationItems {
-                let username = try item.select(".title a").first()?.text() ?? "未知用户"
+                var username = try item.select(".title a[href^='/u/']").first()?.text() ?? ""
+                if username.isEmpty {
+                    if let href = try item.select("a[href^='/u/']").first()?.attr("href") {
+                        username = href.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+                if username.isEmpty {
+                    username = try item.select(".title a").first()?.text() ?? "未知用户"
+                }
+                username = username.trimmingCharacters(in: .whitespacesAndNewlines)
+                
                 let avatarURL = try item.select(".avatar").attr("src")
                 let topicTitle = try item.select(".title a[href^='/t/']").text()
                 let topicLink = try item.select(".title a[href^='/t/']").attr("href")

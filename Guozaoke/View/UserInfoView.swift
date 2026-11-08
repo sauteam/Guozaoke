@@ -18,11 +18,19 @@ struct UserInfoView: View {
 
     private var resolvedUserId: String {
         var trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty || trimmed == "/u/" {
-            return AccountState.userName
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            if let lastComp = trimmed.split(separator: "/").last {
+                trimmed = String(lastComp)
+            }
+        }
+        if trimmed.hasPrefix("/u/") {
+            trimmed = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         if let range = trimmed.range(of: "Lv.", options: .caseInsensitive) {
             trimmed = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if trimmed.isEmpty || trimmed == "/u/" {
+            return AccountState.userName
         }
         return trimmed
     }
@@ -102,12 +110,12 @@ struct UserInfoView: View {
         }
     }
     
-    private func profileUrl(_ userId: String) -> String {
-        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty || trimmed == "/u/" {
+    private func profileUrl(_ customId: String? = nil) -> String {
+        let cleanId = (customId != nil && !customId!.isEmpty) ? customId! : resolvedUserId
+        if cleanId.isEmpty {
             return AccountState.userName.userProfileUrl
         }
-        return trimmed.userProfileUrl
+        return cleanId.userProfileUrl
     }
     
     private func userInfoHeader(_ userInfo: UserInfo) -> some View {
@@ -157,9 +165,11 @@ struct UserInfoView: View {
                 logger("关注按钮点击")
                 Task {
                     do {
-                        let (success, _) = await parser.followUserAction(userInfo.followLink) ?? (false, nil)
+                        let followUrl = userInfo.followLink.isEmpty ? "/f/user/\(userInfo.username)" : userInfo.followLink
+                        let (success, _) = await parser.followUserAction(followUrl) ?? (false, nil)
                         if success {
-                            await parser.fetchUserInfoAndData(profileUrl(resolvedUserId))
+                            let isFollowed = parser.userInfo?.followTextChange == "取消关注"
+                            ToastView.successToast(isFollowed ? "关注成功" : "已取消关注")
                         }
                     }
                 }
@@ -168,7 +178,7 @@ struct UserInfoView: View {
                     .font(.headline)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.blue)
+                    .background(userInfo.followTextChange == "取消关注" ? Color.gray.opacity(0.6) : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(16)
             }
@@ -256,7 +266,7 @@ struct UserInfoView: View {
         .buttonStyle(.plain)
         .listStyle(.plain)
         .refreshable {
-            Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: true) }
+            Task { await parser.fetchUserInfoAndData(profileUrl(resolvedUserId), reset: true) }
         }
     }
     
@@ -288,10 +298,10 @@ struct UserInfoView: View {
                 NavigationLink {
                     PostDetailView(postId: post.titleLink)
                 } label: {
-                    MyReplyRowView(myReply: post, userId: userId)
+                    MyReplyRowView(myReply: post, userId: resolvedUserId)
                         .onAppear {
                             if post == parser.replies.last {
-                                Task { await parser.fetchUserInfoAndData(profileUrl(userId), reset: false) }
+                                Task { await parser.fetchUserInfoAndData(profileUrl(resolvedUserId), reset: false) }
                             }
                         }
                 }
@@ -317,7 +327,7 @@ struct UserInfoView: View {
         .buttonStyle(.plain)
         .listStyle(.plain)
         .refreshable {
-            Task { await parser.fetchUserInfoAndData(userId.userProfileUrl, reset: true) }
+            Task { await parser.fetchUserInfoAndData(profileUrl(resolvedUserId), reset: true) }
         }
     }
     
@@ -345,19 +355,19 @@ struct UserInfoView: View {
     private func profileMenu() -> some View {
         Menu {
             Button {
-                profileUrl(userId).copyToClipboard()
+                profileUrl(resolvedUserId).copyToClipboard()
             } label: {
                 Label("拷贝个人主页", systemImage: .copy)
             }
-            if AccountState.isSelf(userName: userId) {
+            if AccountState.isSelf(userName: resolvedUserId) {
                 Button {
-                    userId.userProfileUrl.openURL()
+                    resolvedUserId.userProfileUrl.openURL()
                 } label: {
                     Label("网页查看主页", systemImage: .safari)
                 }
             } else {
                 Button {
-                    userId.userProfileUrl.openURL()
+                    resolvedUserId.userProfileUrl.openURL()
                 } label: {
                     Label("网页查看主页", systemImage: .safari)
                 }

@@ -339,7 +339,19 @@ class PostDetailParser: ObservableObject {
         let hits = try topicDetail.select("span.hits").text()
         let zan = try topicDetail.select("span.up_vote").text()
         let collections = try topicDetail.select("span.favorited").text()
-        let zanLinke = try topicDetail.select("a.J_topicVote").attr(ghref)
+        var zanLinke = try topicDetail.select("a.J_topicVote").attr(ghref)
+        if zanLinke.isEmpty || zanLinke == "javascript:;" || zanLinke == "#" {
+            if let topicId = try? topicDetail.select("a.J_topicVote").attr("data-id"), !topicId.isEmpty {
+                zanLinke = "/vote?topic_id=\(topicId)"
+            } else if let topicId = try? topicDetail.select("a.J_topicVote").attr("data-topic-id"), !topicId.isEmpty {
+                zanLinke = "/vote?topic_id=\(topicId)"
+            } else if let id = self.postId ?? self.postDetail?.detailId, !id.isEmpty {
+                let cleanId = id.components(separatedBy: "#").first?.replacingOccurrences(of: "/t/", with: "").components(separatedBy: "?").first ?? ""
+                if !cleanId.isEmpty {
+                    zanLinke = "/vote?topic_id=\(cleanId)"
+                }
+            }
+        }
         let collectionsLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
         var zanString = try topicDetail.select("a.J_topicVote").text()
         let collectionString = try topicDetail.select("a.J_topicFavorite").text()
@@ -388,6 +400,14 @@ class PostDetailParser: ObservableObject {
         return try replyItems.map { item -> Reply in
             var replyAuthorName = try item.select("a.reply-username span.username").first()?.text() ?? ""
             if replyAuthorName.isEmpty {
+                replyAuthorName = try item.select("a.gzk-display-name").first()?.attr("data-username") ?? ""
+            }
+            if replyAuthorName.isEmpty {
+                if let avatarHref = try item.select("a:has(img.avatar)").first()?.attr("href") {
+                    replyAuthorName = avatarHref.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            if replyAuthorName.isEmpty {
                 replyAuthorName = try item.select(spanUsername).text()
             }
             if replyAuthorName.isEmpty {
@@ -398,6 +418,7 @@ class PostDetailParser: ObservableObject {
             if let range = replyAuthorName.range(of: "Lv.", options: .caseInsensitive) {
                 replyAuthorName = String(replyAuthorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
             }
+            replyAuthorName = replyAuthorName.trimmingCharacters(in: .whitespacesAndNewlines)
             
             let replyLevel = try item.select(".gzk-credit-level").first()?.text()
             let replyIsOnline = try !(item.select(".gzk-online").isEmpty)
@@ -459,7 +480,14 @@ class PostDetailParser: ObservableObject {
             let zanNumber  = likeCount.replacingOccurrences(of: "赞 ", with: "").replacingOccurrences(of: "已赞 ", with: "")
             let replyZanNumber = Int(zanNumber) ?? 0
             let likeVoteElement = try item.select("a.J_replyVote").first()
-            let likeLink = try likeVoteElement?.attr("href")
+            var likeLink = try likeVoteElement?.attr("href") ?? ""
+            if likeLink.isEmpty || likeLink == "javascript:;" || likeLink == "#" {
+                if let replyId = try? likeVoteElement?.attr("data-id"), !replyId.isEmpty {
+                    likeLink = "/replyVote?reply_id=\(replyId)"
+                } else if let replyId = try? likeVoteElement?.attr("data-reply-id"), !replyId.isEmpty {
+                    likeLink = "/replyVote?reply_id=\(replyId)"
+                }
+            }
             let isVoted = try likeVoteElement?.attr("data-voted") == "1"
             return Reply(
                 floor: floor,
@@ -471,7 +499,7 @@ class PostDetailParser: ObservableObject {
                 location: location,
                 like: replyZanNumber,
                 isLiked: isVoted,
-                likeLink: likeLink ?? ""
+                likeLink: likeLink
             )
         }
     }
@@ -514,26 +542,38 @@ class PostDetailParser: ObservableObject {
         
         do {
             let response: String
-            let isVoteAction = link.contains("vote?topic_id") || link.contains("replyVote")
+            let isVoteAction = link.contains("vote?topic_id") || link.contains("replyVote") || link.contains("/vote")
             
             if isVoteAction {
                 // 点赞接口遵循官方 topic-votes-20261029.js 规范：必须为 POST，参数带 voted 与 _xsrf
-                var token = AccountState.token()
-                if token.isEmpty {
-                    token = HTTPCookieStorage.shared.cookies?.first(where: { $0.name == "_xsrf" })?.value ?? ""
-                }
+                let token = AccountState.token()
                 let parameters: [String: Any] = [
                     "voted": voted ? "1" : "0",
                     "_xsrf": token
                 ]
+                
+                // 构造精准的 Referer（例如 https://www.guozaoke.com/t/134472）
+                var referer = APIService.baseUrlString
+                if let pid = self.postId ?? self.postDetail?.detailId, !pid.isEmpty {
+                    let cleanId = pid.components(separatedBy: "#").first ?? pid
+                    let path = cleanId.hasPrefix("/") ? cleanId : "/\(cleanId)"
+                    referer = APIService.baseUrlString + path
+                }
+                
                 let headers: HTTPHeaders = [
-                    "Accept": "application/json",
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Accept": "application/json, text/javascript, */*; q=0.01",
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Origin": APIService.baseUrlString,
+                    "Referer": referer,
+                    "X-Xsrftoken": token
                 ]
                 response = try await NetworkManager.shared.post(link, parameters: parameters, headers: headers)
             } else {
                 let headers: HTTPHeaders = [
-                    "Accept": "application/json"
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Referer": APIService.baseUrlString
                 ]
                 response = try await NetworkManager.shared.get(link, headers: headers)
             }
