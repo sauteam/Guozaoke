@@ -42,7 +42,21 @@ struct PostDetailContent: View, Equatable {
 
         VStack(alignment: .leading, spacing: 16) {
             let replay = detail.replies.last
-            let post = PostItem(title: detail.title, link: postId, author: detail.author.name, avatar: detail.author.avatar, node: detail.author.node, nodeUrl: detail.nodeUrl, time: detail.author.joinDate ?? "", replyCount: detail.replies.count, lastReplyUser: replay?.author.name, rowEnum: .detailRow)
+            let post = PostItem(
+                title: detail.title,
+                link: postId,
+                author: detail.author.name,
+                avatar: detail.author.avatar,
+                node: detail.author.node,
+                nodeUrl: detail.nodeUrl,
+                time: detail.author.joinDate ?? "",
+                replyCount: detail.replies.count,
+                lastReplyUser: replay?.author.name,
+                rowEnum: .detailRow,
+                isOnline: detail.author.isOnline,
+                level: detail.author.level,
+                displayName: detail.author.displayName
+            )
 
             PostRowView(post: post)
                 .padding(.horizontal)
@@ -195,24 +209,48 @@ struct ReplyItemView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                KFImageView(reply.author.avatar)
-                    .avatar()
-                    .onTapGesture {
-                        isAvatarInfoViewActive = true
+                ZStack(alignment: .bottomTrailing) {
+                    KFImageView(reply.author.avatar)
+                        .avatar()
+                    
+                    if reply.author.isOnline {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 9, height: 9)
+                            .overlay(Circle().stroke(Color(UIColor.systemBackground), lineWidth: 1.5))
+                            .offset(x: 1, y: 1)
                     }
-                    .navigationDestination(isPresented: $isAvatarInfoViewActive) {
-                        UserInfoView(userId: reply.author.name)
-                    }
+                }
+                .onTapGesture {
+                    isAvatarInfoViewActive = true
+                }
+                .navigationDestination(isPresented: $isAvatarInfoViewActive) {
+                    UserInfoView(userId: reply.author.name)
+                }
                 VStack {
-                    Text(reply.author.name)
-                        .usernameFontStyle()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .onTapGesture {
-                            isUserNameInfoViewActive = true
+                    HStack(spacing: 4) {
+                        Text(reply.author.name)
+                            .usernameFontStyle()
+                        
+                        if let level = reply.author.level, !level.isEmpty {
+                            Text(level)
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 3)
+                                .padding(.vertical, 1)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 2.5)
+                                        .stroke(Color.secondary.opacity(0.5), lineWidth: 0.7)
+                                )
                         }
-                        .navigationDestination(isPresented: $isUserNameInfoViewActive, destination: {
-                            UserInfoView(userId: reply.author.name)
-                        })
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .onTapGesture {
+                        isUserNameInfoViewActive = true
+                    }
+                    .navigationDestination(isPresented: $isUserNameInfoViewActive, destination: {
+                        UserInfoView(userId: reply.author.name)
+                    })
                     HStack {
                         Text(reply.time)
                             .font(.caption)

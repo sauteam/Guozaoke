@@ -23,18 +23,28 @@ struct PostRowView: View {
                 let profile     = post.rowEnum == .profileRow
                 let nodeInfo    = post.rowEnum == .nodeInfo
                 
-                KFImageView(post.avatar)
-                    .avatar()
-                    .disabled(post.rowEnum == .profileRow)
-                    .onTapGesture {
-                        logger("点击 \(profile) isMe \(AccountState.isSelf(userName: post.author))")
-                        if !profile {
-                            isUserAvatarViewActive = true
-                        }
+                ZStack(alignment: .bottomTrailing) {
+                    KFImageView(post.avatar)
+                        .avatar()
+                    
+                    if post.isOnline {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 10, height: 10)
+                            .overlay(Circle().stroke(Color(UIColor.systemBackground), lineWidth: 1.5))
+                            .offset(x: 1, y: 1)
                     }
-                    .navigationDestination(isPresented: $isUserAvatarViewActive, destination: {
-                        UserInfoView(userId: post.author)
-                    })                
+                }
+                .disabled(post.rowEnum == .profileRow)
+                .onTapGesture {
+                    logger("点击 \(profile) isMe \(AccountState.isSelf(userName: post.author))")
+                    if !profile {
+                        isUserAvatarViewActive = true
+                    }
+                }
+                .navigationDestination(isPresented: $isUserAvatarViewActive, destination: {
+                    UserInfoView(userId: post.author)
+                })                
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         //let content = post.title + (post.postType == .elite ? Text(Image(systemName: SFSymbol.bookmark.rawValue)) : Text(""))
@@ -55,9 +65,23 @@ struct PostRowView: View {
                         }
                     }
                     HStack {
-                        Text(post.author)
-                            .usernameFontStyle()
-                            .lineLimit(1)
+                        HStack(spacing: 4) {
+                            Text(post.author)
+                                .usernameFontStyle()
+                                .lineLimit(1)
+                            
+                            if let level = post.level, !level.isEmpty {
+                                Text(level)
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 3)
+                                    .padding(.vertical, 1)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 2.5)
+                                            .stroke(Color.secondary.opacity(0.5), lineWidth: 0.7)
+                                    )
+                            }
+                        }
 //                            .onTapGesture {
 //                                logger("点击 \(post.author) \(post.nodeUrl)")
 //                                if !profile {

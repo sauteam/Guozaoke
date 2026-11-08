@@ -17,9 +17,12 @@ struct UserInfoView: View {
     @State private var showMyReplyView = false
 
     private var resolvedUserId: String {
-        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty || trimmed == "/u/" {
             return AccountState.userName
+        }
+        if let range = trimmed.range(of: "Lv.", options: .caseInsensitive) {
+            trimmed = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return trimmed
     }
@@ -109,12 +112,32 @@ struct UserInfoView: View {
     
     private func userInfoHeader(_ userInfo: UserInfo) -> some View {
         VStack(spacing: 10) {
-            KFImageView(userInfo.avatar)
-                .avatar(size: 60)
+            ZStack(alignment: .bottomTrailing) {
+                KFImageView(userInfo.avatar)
+                    .avatar(size: 60)
+                
+                if userInfo.isOnline {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 14, height: 14)
+                        .overlay(Circle().stroke(Color(UIColor.systemBackground), lineWidth: 2))
+                        .offset(x: 2, y: 2)
+                }
+            }
             let isMe = AccountState.isSelf(userName: userInfo.username)
-            HStack {
+            HStack(spacing: 6) {
                 Text(userInfo.username)
                     .subTitleFontStyle()
+                
+                if let level = userInfo.level, !level.isEmpty {
+                    Text(level)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.12))
+                        .cornerRadius(4)
+                }
             }
             if !isMe {
                 followButton(userInfo)

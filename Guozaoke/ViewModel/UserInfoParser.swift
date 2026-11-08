@@ -35,6 +35,14 @@ struct UserInfo {
     let replies: [MyReply]
     var blockUser: Bool = false
     
+    var level: String? = nil
+    var levelTitle: String? = nil
+    var isOnline: Bool = false
+    var gender: String? = nil
+    var generation: String? = nil
+    var signature: String? = nil
+    var displayName: String? = nil
+    
     var followTextChange: String {
         if followText.isEmpty == true {
             return "+关注"
@@ -378,7 +386,25 @@ class UserInfoParser: ObservableObject {
         // Avatar
         let avatarElement = try doc.select(".ui-header a img").first()
         let avatar = try avatarElement?.attr("src") ?? ""
-        let username = try doc.select(".ui-header .username").first()?.text() ?? ""
+        var username = try doc.select(".ui-header .username").first()?.text() ?? ""
+        if username.isEmpty {
+            if let href = try doc.select(".ui-header a[href^='/u/']").first()?.attr("href") {
+                username = href.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        if let range = username.range(of: "Lv.", options: .caseInsensitive) {
+            username = String(username[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Level & Online & Demographics
+        let level = try doc.select(".gzk-credit-level").first()?.text()
+        let levelTitle = try doc.select(".gzk-credit-level").first()?.attr("title")
+        let isOnline = try !(doc.select(".gzk-online").isEmpty)
+        let gender = try doc.select(".gzk-profile-gender").first()?.attr("title")
+        let generation = try doc.select(".gzk-profile-generation").first()?.text()
+        let signature = try doc.select(".gzk-card-signature").first()?.text()
+        let displayName = try doc.select(".gzk-card-display a.gzk-display-name bdi").first()?.text()
+        
         // Number
         let numberElement = try doc.select(".user-number .number").first()
         let number = try numberElement?.text() ?? ""
@@ -395,24 +421,26 @@ class UserInfoParser: ObservableObject {
         let idElement = try doc.select("dl:has(dt:contains(ID)) dd").first()
         let id = try idElement?.text() ?? ""
         // Nickname
-        let nicknameElement = try doc.select("dl:has(dt:contains(昵称)) dd").text()
+        var nicknameElement = try doc.select("dl:has(dt:contains(昵称)) dd").text()
+        if nicknameElement.isEmpty, let dName = displayName, !dName.isEmpty {
+            nicknameElement = dName
+        }
         // Email
         let emailElement = try doc.select("dl:has(dt:contains(Email)) dd").first()
         let email = try emailElement?.text() ?? ""
         
-        
         let dls = try doc.select("dl")
         var parsedData: [String: String] = [:]
         for dl in dls {
-                let key = try dl.select("dt").text()
-                let valueElement = try dl.select("dd")
-                var value = try valueElement.text()
-                // 如果 `dd` 里面包含 `<a>` 链接，则取 `href`
-                if let link = try? valueElement.select("a").attr("href"), !link.isEmpty {
-                    value = link
-                }
-                parsedData[key] = value
+            let key = try dl.select("dt").text()
+            let valueElement = try dl.select("dd")
+            var value = try valueElement.text()
+            // 如果 `dd` 里面包含 `<a>` 链接，则取 `href`
+            if let link = try? valueElement.select("a").attr("href"), !link.isEmpty {
+                value = link
             }
+            parsedData[key] = value
+        }
         
         var profile:[String] = []
         // 打印解析结果
@@ -421,6 +449,23 @@ class UserInfoParser: ObservableObject {
             profile.append("\(key): \(value)")
         }
         
+        // 把等级、在线状态等加入资料中
+        if let lvl = level, !lvl.isEmpty {
+            let desc = (levelTitle != nil && levelTitle?.isEmpty == false) ? "\(lvl)（\(levelTitle!)）" : lvl
+            profile.insert("等级: \(desc)", at: 0)
+        }
+        if isOnline {
+            profile.insert("状态: 在线 🟢", at: 0)
+        }
+        if let gen = generation, !gen.isEmpty {
+            profile.append("年代: \(gen)")
+        }
+        if let g = gender, !g.isEmpty {
+            profile.append("性别: \(g)")
+        }
+        if let sig = signature, !sig.isEmpty {
+            profile.append("签名: \(sig)")
+        }
         
         let topicsCount = try doc.select(".status-topic strong a").text()
         let topicsLink = try doc.select(".status-topic strong a").attr("href")
@@ -449,7 +494,37 @@ class UserInfoParser: ObservableObject {
             logger("链接地址: \(linkHref)")
         } 
         
-        return UserInfo(avatar: avatar, username: username, usernameLink: id, joinDate: since, number: number, followText:followText, followLink: followLink, nickname: nicknameElement, email: email, blockText: blockText, blockLink: blockLink, profileInfo: profile, topicLink: topicsLink, replyLink: repliesLink, favoritesLink: favoritesLink, topicCount: topicsCount.int, replyCount: repliesCount.int, favoritesCount: favoritesCount.int, reputationNumber: reputation, topics: topics, replies: replies, blockUser: blockUser)
+        return UserInfo(
+            avatar: avatar,
+            username: username,
+            usernameLink: id,
+            joinDate: since,
+            number: number,
+            followText: followText,
+            followLink: followLink,
+            nickname: nicknameElement,
+            email: email,
+            blockText: blockText,
+            blockLink: blockLink,
+            profileInfo: profile,
+            topicLink: topicsLink,
+            replyLink: repliesLink,
+            favoritesLink: favoritesLink,
+            topicCount: topicsCount.int,
+            replyCount: repliesCount.int,
+            favoritesCount: favoritesCount.int,
+            reputationNumber: reputation,
+            topics: topics,
+            replies: replies,
+            blockUser: blockUser,
+            level: level,
+            levelTitle: levelTitle,
+            isOnline: isOnline,
+            gender: gender,
+            generation: generation,
+            signature: signature,
+            displayName: displayName
+        )
     }
 
     private func parseReply(doc: SwiftSoup.Document) throws -> [MyReply] {

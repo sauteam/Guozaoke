@@ -58,6 +58,9 @@ struct Author: Identifiable {
     let node: String
     let nodeUrl: String
     let joinDate: String?
+    var level: String? = nil
+    var isOnline: Bool = false
+    var displayName: String? = nil
 }
 
 struct ReplyAuthor: Identifiable, Equatable {
@@ -67,7 +70,9 @@ struct ReplyAuthor: Identifiable, Equatable {
     let replyTime: String?
     let floor: String?
     let replyTo: String?
-    //let like: String?
+    var level: String? = nil
+    var isOnline: Bool = false
+    var displayName: String? = nil
 }
 
 
@@ -245,13 +250,35 @@ class PostDetailParser: ObservableObject {
         let authorBox = try topicDetail.select("div.ui-header").first()
         let node = try authorBox?.select("span.node").text() ?? ""
         let nodeUrl = try authorBox?.select("span.node a").attr(ghref) ?? ""
+        
+        // 准确提取纯用户名，避免把后面的等级(Lv.3)混进名字导致个人主页404
+        var authorName = try authorBox?.select("span.username a[href^='/u/'] strong").first()?.text() ?? ""
+        if authorName.isEmpty {
+            if let userLink = try authorBox?.select("a[href^='/u/']").first()?.attr("href") {
+                authorName = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        if authorName.isEmpty {
+            authorName = try authorBox?.select("span.username").text() ?? ""
+        }
+        if let range = authorName.range(of: "Lv.", options: .caseInsensitive) {
+            authorName = String(authorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        let level = try authorBox?.select(".gzk-credit-level").first()?.text()
+        let isOnline = try !(authorBox?.select(".gzk-online").isEmpty ?? true)
+        let displayName = try authorBox?.select(".gzk-visible-identity bdi").first()?.text()
+        
         let author = Author(
-            name: try authorBox?.select("span.username").text() ?? "",
-            nameUrl: try authorBox?.select("span.username a").attr(ghref) ?? "",
+            name: authorName,
+            nameUrl: try authorBox?.select("a[href^='/u/']").first()?.attr(ghref) ?? "/u/\(authorName)",
             avatar: try authorBox?.select("img.avatar").attr(gsrc) ?? "",
             node: node,
             nodeUrl: nodeUrl,
-            joinDate: try authorBox?.select("span.created-time").text() ?? ""
+            joinDate: try authorBox?.select("span.created-time").text() ?? "",
+            level: level,
+            isOnline: isOnline,
+            displayName: displayName
         )
         
         // 4. 解析帖子元数据
@@ -359,12 +386,32 @@ class PostDetailParser: ObservableObject {
     private func parseReplies(doc: SwiftSoup.Document, node: String) throws -> [Reply] {
         let replyItems = try doc.select("div.reply-item")
         return try replyItems.map { item -> Reply in
+            var replyAuthorName = try item.select("a.reply-username span.username").first()?.text() ?? ""
+            if replyAuthorName.isEmpty {
+                replyAuthorName = try item.select(spanUsername).text()
+            }
+            if replyAuthorName.isEmpty {
+                if let link = try item.select("a[href^='/u/']").first()?.attr("href") {
+                    replyAuthorName = link.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            if let range = replyAuthorName.range(of: "Lv.", options: .caseInsensitive) {
+                replyAuthorName = String(replyAuthorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            let replyLevel = try item.select(".gzk-credit-level").first()?.text()
+            let replyIsOnline = try !(item.select(".gzk-online").isEmpty)
+            let replyDisplayName = try item.select("a.gzk-display-name bdi").first()?.text()
+            
             let replyAuthor = ReplyAuthor(
-                name: try item.select(spanUsername).text(),
+                name: replyAuthorName,
                 avatar: try item.select(imgAvatar).attr(gsrc),
                 replyTime: try item.select(spanTime).text(),
                 floor: try item.select("span.floor").first()?.text(),
-                replyTo: try item.select(spanTime).text()
+                replyTo: try item.select(spanTime).text(),
+                level: replyLevel,
+                isOnline: replyIsOnline,
+                displayName: replyDisplayName
             )
             
             // 2. 解析回复内容

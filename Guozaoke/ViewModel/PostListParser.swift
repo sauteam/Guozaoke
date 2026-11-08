@@ -35,6 +35,9 @@ struct PostItem: Identifiable,Equatable {
     var rowEnum: PostItemEnum  = .homeRow
     var postType: PostTypeEnum = .none
     var bookmark: String = ""
+    var isOnline: Bool = false
+    var level: String? = nil
+    var displayName: String? = nil
     
     var isJHTopic: Bool {
         return bookmark == "精华主题"
