@@ -22,7 +22,8 @@ struct PostDetailView: View {
     @State private var currentPostId: String = ""
     @Environment(\.isGKDualColumn) private var isDualColumn
     @State private var showTitleInNavBar = false
-    @State private var showJumpPageDialog = false
+    @State private var targetJumpPage: Int? = nil
+    @State private var targetJumpFloor: Int? = nil
     @State private var showJumpFloorAlert = false
     @State private var jumpFloorInput = ""
     @State private var highlightedFloor: Int? = nil
@@ -50,8 +51,12 @@ struct PostDetailView: View {
                                 detail: detail,
                                 postId: postId,
                                 detailParser: detailParser,
-                                onJumpPageTap: {
-                                    showJumpPageDialog = true
+                                onJumpToPage: { page in
+                                    jumpToCommentPage(page, scrollProxy: scrollProxy)
+                                },
+                                onJumpFloorTap: {
+                                    jumpFloorInput = ""
+                                    showJumpFloorAlert = true
                                 },
                                 onReturnFirstPage: {
                                     jumpToCommentPage(1, scrollProxy: scrollProxy)
@@ -83,17 +88,17 @@ struct PostDetailView: View {
                     .padding(.bottom, safeBottom)
                 }
                 .coordinateSpace(name: "detailScroll")
-                .confirmationDialog("选择要跳转的评论页码", isPresented: $showJumpPageDialog, titleVisibility: .visible) {
-                    ForEach(1...detailParser.totalPages, id: \.self) { page in
-                        Button("第 \(page) 页\(page == detailParser.activeCommentPage ? " (当前)" : "")") {
-                            jumpToCommentPage(page, scrollProxy: scrollProxy)
-                        }
+                .onChange(of: targetJumpPage) { newPage in
+                    if let page = newPage {
+                        jumpToCommentPage(page, scrollProxy: scrollProxy)
+                        targetJumpPage = nil
                     }
-                    Button("定位到具体楼层...") {
-                        jumpFloorInput = ""
-                        showJumpFloorAlert = true
+                }
+                .onChange(of: targetJumpFloor) { newFloor in
+                    if let floor = newFloor {
+                        jumpToFloor(floor, scrollProxy: scrollProxy)
+                        targetJumpFloor = nil
                     }
-                    Button("取消", role: .cancel) {}
                 }
                 .alert("定位到具体楼层", isPresented: $showJumpFloorAlert) {
                     TextField("请输入楼层号 (如 18)", text: $jumpFloorInput)
@@ -157,8 +162,18 @@ struct PostDetailView: View {
                 let userIsMe = AccountState.isSelf(userName: detailParser.postDetail?.author.name ?? "")
                 Menu {
                     if detailParser.totalPages > 1 {
-                        Button {
-                            showJumpPageDialog = true
+                        Menu {
+                            ForEach(1...detailParser.totalPages, id: \.self) { page in
+                                Button {
+                                    targetJumpPage = page
+                                } label: {
+                                    if page == detailParser.activeCommentPage {
+                                        Label("第 \(page) 页 (当前)", systemImage: "checkmark")
+                                    } else {
+                                        Text("第 \(page) 页")
+                                    }
+                                }
+                            }
                         } label: {
                             Label("选择评论页码 (共\(detailParser.totalPages)页)", systemImage: "arrow.up.and.down.circle")
                         }

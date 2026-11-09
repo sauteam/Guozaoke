@@ -31,7 +31,8 @@ struct PostDetailContent: View, Equatable {
     let detail: PostDetail
     let postId: String
     @ObservedObject var detailParser: PostDetailParser
-    var onJumpPageTap: (() -> Void)? = nil
+    var onJumpToPage: ((Int) -> Void)? = nil
+    var onJumpFloorTap: (() -> Void)? = nil
     var onReturnFirstPage: (() -> Void)? = nil
     var highlightedFloor: Int? = nil
     @State private var showUserInfo = false
@@ -95,7 +96,8 @@ struct PostDetailContent: View, Equatable {
                 ReplyListView(
                     detailParser: detailParser,
                     highlightedFloor: highlightedFloor,
-                    onJumpTap: onJumpPageTap,
+                    onJumpToPage: onJumpToPage,
+                    onJumpFloorTap: onJumpFloorTap,
                     onReturnFirstPage: onReturnFirstPage
                 )
                 .padding(.horizontal)
@@ -190,7 +192,8 @@ struct PostFooterView: View {
 struct ReplyListView: View {
     @ObservedObject var detailParser: PostDetailParser
     var highlightedFloor: Int? = nil
-    var onJumpTap: (() -> Void)? = nil
+    var onJumpToPage: ((Int) -> Void)? = nil
+    var onJumpFloorTap: (() -> Void)? = nil
     var onReturnFirstPage: (() -> Void)? = nil
     
     var body: some View {
@@ -212,15 +215,31 @@ struct ReplyListView: View {
             Spacer()
             
             if detailParser.totalPages > 1 {
-                Button {
-                    onJumpTap?()
+                Menu {
+                    ForEach(1...detailParser.totalPages, id: \.self) { page in
+                        Button {
+                            onJumpToPage?(page)
+                        } label: {
+                            if page == detailParser.activeCommentPage {
+                                Label("第 \(page) 页 (当前)", systemImage: "checkmark")
+                            } else {
+                                Text("第 \(page) 页")
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    Button {
+                        onJumpFloorTap?()
+                    } label: {
+                        Label("定位到具体楼层...", systemImage: "number")
+                    }
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "number.circle.fill")
-                            .font(.system(size: 13))
                         Text("第 \(detailParser.activeCommentPage)/\(detailParser.totalPages) 页")
                             .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.up.chevron.down")
+                        Image(systemName: "chevron.down")
                             .font(.system(size: 10, weight: .semibold))
                     }
                     .foregroundColor(.accentColor)
@@ -229,13 +248,12 @@ struct ReplyListView: View {
                     .background(Color.accentColor.opacity(0.12))
                     .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
             }
         }
         
         if detailParser.activeCommentPage > 1 {
             HStack {
-                Label("当前定位在第 \(detailParser.activeCommentPage) 页评论", systemImage: "arrow.turn.down.right")
+                Label("当前定位在第 \(detailParser.activeCommentPage) 页评论", systemImage: "mappin.circle.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
