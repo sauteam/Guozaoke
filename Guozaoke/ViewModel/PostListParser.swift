@@ -574,15 +574,42 @@ private extension PostListParser {
     
     // 今日最热
     func hotTodayTopic(doc: SwiftSoup.Document) throws -> [HotTodayTopic] {
-        let topicElements = try doc.select("div.cell")
-        return try topicElements.map { element in
-            HotTodayTopic(
-                title: try element.select("span.hot_topic_title a").first()?.text() ?? "未知标题",
-                link: try element.select("span.hot_topic_title a").first()?.attr("href") ?? "#",
-                user: try element.select("a[href^=/u/]").first()?.attr("href").replacingOccurrences(of: "/u/", with: "") ?? "未知用户",
-                avatar: try element.select("img.avatar").first()?.attr("src") ?? ""
-            )
+        var topicElements = try doc.select("div.hot-topics div.cell")
+        if topicElements.isEmpty {
+            topicElements = try doc.select("div.cell:has(span.hot_topic_title)")
         }
+        
+        var results: [HotTodayTopic] = []
+        for element in topicElements {
+            guard let titleElem = try element.select("span.hot_topic_title a").first() else {
+                continue
+            }
+            let title = try titleElem.text().trimmingCharacters(in: .whitespacesAndNewlines)
+            let link = try titleElem.attr("href").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !title.isEmpty, !link.isEmpty else { continue }
+            
+            // 提取用户真实 ID（优先从头像链接提取 /u/ 后面的真实用户名/ID）
+            var user = ""
+            if let userHref = try element.select("a[href^='/u/'], a[href*='/u/']").first()?.attr("href") {
+                let cleanHref = userHref.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                user = cleanHref.components(separatedBy: CharacterSet(charactersIn: "?#/")).first ?? ""
+            }
+            if user.isEmpty {
+                if let textUser = try element.select("a[href^='/u/']").first()?.text() {
+                    user = textUser.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+            
+            let avatar = try element.select("img.avatar").first()?.attr("src") ?? ""
+            
+            results.append(HotTodayTopic(
+                title: title,
+                link: link,
+                user: user,
+                avatar: avatar
+            ))
+        }
+        return results
     }
     
     // 解析分页信息

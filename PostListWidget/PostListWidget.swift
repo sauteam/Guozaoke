@@ -598,19 +598,14 @@ struct ExtraLargePortraitWidgetView: View {
     }
 }
 
-// MARK: - Widget Family Extension (支持 Duo 及 iPad 的超大号及 iOS 27+ 竖屏超大号)
+// MARK: - Widget Family Extension (支持常见小、中、大号组件，暂时屏蔽超大号组件)
 extension WidgetFamily {
     static var allSupportedFamilies: [WidgetFamily] {
-        var families: [WidgetFamily] = [
+        return [
             .systemSmall,
             .systemMedium,
-            .systemLarge,
-            .systemExtraLarge
+            .systemLarge
         ]
-        if #available(iOS 27.0, *) {
-            families.append(.systemExtraLargePortrait)
-        }
-        return families
     }
 }
 

@@ -65,7 +65,7 @@ struct MemberItemView: View {
                     ForEach(data.member) { member in
                         VStack {
                             KFImageView(member.avatar)
-                                .avatar(size: 50)
+                                .avatar(size: 40)
                                 .scaledToFit()
                             Text(member.username)
                                 .font(.caption)

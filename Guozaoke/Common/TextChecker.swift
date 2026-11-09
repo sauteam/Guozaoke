@@ -4,7 +4,7 @@ import Foundation
 enum PatternEnum: String {
     case link    = "(https?://[\\w\\d./-]+)"
     case email   = "(\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b)"
-    case atUser  = #"(?<!mailto:|\w)@(\w+)"#
+    case atUser  = #"(?<!mailto:|\w|/|:)@([a-zA-Z0-9_\u4e00-\u9fa5\-]+)"#
     case tagText = "#([^#]+)#"
     case phoneNumber   = "(1[3-9]\\d{9})"
     case uid           = "uid=(\\d+)"

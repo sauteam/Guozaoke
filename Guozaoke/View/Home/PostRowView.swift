@@ -66,7 +66,7 @@ struct PostRowView: View {
                     }
                     HStack {
                         HStack(spacing: 4) {
-                            Text(post.author)
+                            Text(post.displayName?.isEmpty == false ? post.displayName! : post.author)
                                 .usernameFontStyle()
                                 .lineLimit(1)
                             

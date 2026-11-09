@@ -65,6 +65,7 @@ struct SendPostView: View {
                             .subTitleFontStyle()
                     }
                 }
+                .pickerStyle(DefaultPickerStyle())
                 
                 if viewModel.isLoading {
                     ProgressView()
@@ -74,7 +75,7 @@ struct SendPostView: View {
                 Button(action: {
                     hapticFeedback()
                     if title.trim().isEmpty || content.trim().isEmpty {
-                        ToastView.warningToast("输入内容")
+                        ToastView.warningToast("请输入标题和内容")
                         return
                     }
                     
@@ -82,24 +83,29 @@ struct SendPostView: View {
                         await sendPost()
                     }
                 }) {
-                     if isPosting {
-                        ProgressView()
+                    if isPosting {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
                     } else {
+                        let canSubmit = !title.trim().isEmpty && !content.trim().isEmpty
                         Text("发布新主题")
                             .frame(maxWidth: .infinity, minHeight: 44)
-                            .background(Color.blue)
+                            .background(canSubmit ? Color.blue : Color.blue.opacity(0.5))
                             .foregroundColor(.white)
                             .cornerRadius(10)
-                            .listRowBackground(Color.clear)
                             .subTitleFontStyle()
-                            .hapticOnTap()
+                            .contentShape(Rectangle())
                     }
                 }
-                .disabled(isPosting || title.isEmpty || content.isEmpty)
-                .pickerStyle(DefaultPickerStyle())
-                .buttonStyle(.plain)
-                .listStyle(.plain)
+                .disabled(isPosting)
+                .buttonStyle(.borderless)
+                .listRowBackground(Color.clear)
             }
+            .listStyle(.plain)
             .listRowBackground(Color.clear)
             .onAppear() {
                 if !viewModel.hadNodeItemData {

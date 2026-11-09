@@ -49,7 +49,7 @@ struct KFImageView: View {
 
 // MARK: - 扩展
 extension KFImageView {
-    func avatar(size: CGFloat = 40) -> some View {
+    func avatar(size: CGFloat = 30) -> some View {
         self.frame(width: size, height: size)
             //.clipShape(Circle())
             .cornerRadius(8)

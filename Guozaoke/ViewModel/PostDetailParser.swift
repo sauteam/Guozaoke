@@ -336,9 +336,19 @@ class PostDetailParser: ObservableObject {
         }
         
         // 8. 解析统计信息
-        let hits = try topicDetail.select("span.hits").text()
-        let zan = try topicDetail.select("span.up_vote").text()
-        let collections = try topicDetail.select("span.favorited").text()
+        let hits = try (topicDetail.select("span.hits").first()?.text()) ?? (doc.select("span.hits").first()?.text()) ?? ""
+        
+        // 注意：过早客网页改版后，.up_vote 与 .favorited 位于回复区域顶部的 .gzk-topic-stats 容器内，不在 topicDetail 内
+        var zan = try doc.select(".gzk-topic-stats .up_vote, span.up_vote").first()?.text() ?? ""
+        if zan.isEmpty {
+            zan = try topicDetail.select("span.up_vote").text()
+        }
+        
+        var collections = try doc.select(".gzk-topic-stats .favorited, span.favorited").first()?.text() ?? ""
+        if collections.isEmpty {
+            collections = try topicDetail.select("span.favorited").text()
+        }
+        
         var zanLinke = try topicDetail.select("a.J_topicVote").attr(ghref)
         if zanLinke.isEmpty || zanLinke == "javascript:;" || zanLinke == "#" {
             if let topicId = try? topicDetail.select("a.J_topicVote").attr("data-id"), !topicId.isEmpty {
@@ -353,22 +363,45 @@ class PostDetailParser: ObservableObject {
             }
         }
         let collectionsLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
-        var zanString = try topicDetail.select("a.J_topicVote").text()
+        let topicVoteElem = try topicDetail.select("a.J_topicVote").first()
+        var zanString = try topicVoteElem?.text() ?? ""
         let collectionString = try topicDetail.select("a.J_topicFavorite").text()
-        //let shareLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
-        if collectionString != "加入收藏" {
+        if collectionString != "加入收藏" && !collectionString.isEmpty {
             isCollection = true
         }
-        let topicVotedAttr = try topicDetail.select("a.J_topicVote").attr("data-voted")
-        if topicVotedAttr == "1" || zanString.contains("已赞") || zanString.contains("感谢已表示") {
+        let topicVotedAttr = try topicVoteElem?.attr("data-voted") ?? ""
+        let ariaPressed = try topicVoteElem?.attr("aria-pressed") ?? ""
+        let voteTitle = try topicVoteElem?.attr("title") ?? ""
+        if topicVotedAttr == "1" || ariaPressed == "true" || voteTitle == "取消点赞" || zanString.contains("已赞") || zanString.contains("感谢已表示") {
             isZan = true
             zanString = "已赞"
         } else {
             isZan = false
             zanString = "赞"
         }
-        let zanNumber = Int(zan.split(separator: " ").first ?? "0") ?? 0
-        let colNumber = Int(collections.split(separator: " ").first ?? "0") ?? 0
+        
+        // 提取点赞与收藏数量（优先使用数字提取，避免字符或空格分隔导致解析为 0）
+        var zanNumber = 0
+        if let countAttr = try? topicVoteElem?.attr("data-count"), let cnt = Int(countAttr) {
+            zanNumber = cnt
+        } else {
+            let zanDigits = zan.filter { $0.isNumber }
+            zanNumber = Int(zanDigits) ?? 0
+        }
+        if isZan && zanNumber == 0 {
+            zanNumber = 1
+        }
+        
+        var colNumber = 0
+        if let countAttr = try? topicDetail.select("a.J_topicFavorite").first()?.attr("data-count"), let cnt = Int(countAttr) {
+            colNumber = cnt
+        } else {
+            let colDigits = collections.filter { $0.isNumber }
+            colNumber = Int(colDigits) ?? 0
+        }
+        
+        let hitDigits = hits.filter { $0.isNumber }
+        let hitsNumber = Int(hitDigits) ?? 0
         // 9. 解析回复列表
         let replies = try parseReplies(doc: doc, node: node)
         self.replies.append(contentsOf: replies)
@@ -620,6 +653,8 @@ class PostDetailParser: ObservableObject {
                                     self.postDetail?.zans = count
                                 } else if self.isZan {
                                     self.postDetail?.zans += 1
+                                } else if !self.isZan && (self.postDetail?.zans ?? 0) > 0 {
+                                    self.postDetail?.zans -= 1
                                 }
                                 self.postDetail?.zanString = self.isZan ? "已赞" : "赞"
                                 ToastView.successToast(self.isZan ? "点赞成功" : "已取消点赞")

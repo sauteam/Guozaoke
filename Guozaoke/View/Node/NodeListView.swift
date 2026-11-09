@@ -116,44 +116,57 @@ struct NodeListView: View {
                     .padding(.horizontal, 10)
                 ForEach(viewModel.hotTodayTopic) { item in
                     if isDual {
-                        Button {
-                            selectedTopicLink = item.link
-                            selectedNode = nil
-                        } label: {
-                            HStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            Button {
+                                username = item.user
+                                showUserInfo = true
+                            } label: {
                                 KFImageView(item.avatar)
                                     .avatar()
-                                    .onTapGesture {
-                                        username = item.user
-                                        showUserInfo.toggle()
-                                    }
-                                
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Button {
+                                selectedTopicLink = item.link
+                                selectedNode = nil
+                            } label: {
                                 Text(item.title)
                                     .greedyWidth(.leading)
                                     .titleFontStyle()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
                             }
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 4)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(selectedTopicLink == item.link ? Color.blue.opacity(0.12) : Color.clear)
-                            )
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(selectedTopicLink == item.link ? Color.blue.opacity(0.12) : Color.clear)
+                        )
                     } else {
                         HStack(spacing: 12) {
-                            KFImageView(item.avatar)
-                                .avatar()
-                                .onTapGesture {
-                                    username = item.user
-                                    showUserInfo.toggle()
-                                }
+                            Button {
+                                username = item.user
+                                showUserInfo = true
+                            } label: {
+                                KFImageView(item.avatar)
+                                    .avatar()
+                            }
+                            .buttonStyle(.plain)
                             
-                            Text(item.title)
-                                .greedyWidth(.leading)
-                                .titleFontStyle()
+                            NavigationLink {
+                                PostDetailView(postId: item.link)
+                            } label: {
+                                Text(item.title)
+                                    .greedyWidth(.leading)
+                                    .titleFontStyle()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .to { PostDetailView(postId: item.link) }
+                        .padding(.vertical, 2)
                     }
                 }
                 

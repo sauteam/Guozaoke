@@ -18,6 +18,9 @@ struct UserInfoView: View {
 
     private var resolvedUserId: String {
         var trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("@") {
+            trimmed = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
             if let lastComp = trimmed.split(separator: "/").last {
                 trimmed = String(lastComp)
@@ -26,6 +29,7 @@ struct UserInfoView: View {
         if trimmed.hasPrefix("/u/") {
             trimmed = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        trimmed = trimmed.components(separatedBy: CharacterSet(charactersIn: "?#/")).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? trimmed
         if let range = trimmed.range(of: "Lv.", options: .caseInsensitive) {
             trimmed = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
@@ -122,7 +126,7 @@ struct UserInfoView: View {
         VStack(spacing: 10) {
             ZStack(alignment: .bottomTrailing) {
                 KFImageView(userInfo.avatar)
-                    .avatar(size: 60)
+                    .avatar(size: 50)
                 
                 if userInfo.isOnline {
                     Circle()

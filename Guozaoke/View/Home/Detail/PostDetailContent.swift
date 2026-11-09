@@ -229,7 +229,7 @@ struct ReplyItemView: View {
                 }
                 VStack {
                     HStack(spacing: 4) {
-                        Text(reply.author.name)
+                        Text(reply.author.displayName?.isEmpty == false ? reply.author.displayName! : reply.author.name)
                             .usernameFontStyle()
                         
                         if let level = reply.author.level, !level.isEmpty {

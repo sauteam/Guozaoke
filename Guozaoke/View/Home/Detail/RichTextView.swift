@@ -96,7 +96,21 @@ struct RichTextView: View {
         switch url.scheme {
         case "https", "http":
             let urlString = url.absoluteString
-            if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
+            if urlString.contains("/u/") {
+                if let range = urlString.range(of: "/u/") {
+                    let afterU = String(urlString[range.upperBound...])
+                    let cleanUserId = afterU.components(separatedBy: CharacterSet(charactersIn: "?#/ \t\n\"'")).first ?? ""
+                    if !cleanUserId.isEmpty {
+                        linkUserId = cleanUserId
+                        logger("[at] RichText /u/ userId \(linkUserId)")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            showUserInfo = true
+                        }
+                        onUserTap?(cleanUserId)
+                        return
+                    }
+                }
+            } else if urlString.contains(APIService.baseUrlString), urlString.contains("/t/") {
                 topicId = urlString.replacingOccurrences(of: APIService.baseUrlString, with: "")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showTopicInfo = true

@@ -29,6 +29,8 @@ struct CustomCommentInputView: View {
             let isDual = GKDisplayMetrics.isDualColumnDisplay(size: proxy.size)
             let safeTrailing: CGFloat = isDual ? 10 : 0
             let safeBottom = proxy.safeAreaInsets.bottom
+            // 键盘弹起时输入框紧贴键盘（8pt），未弹起时避让底部安全区域
+            let bottomPadding: CGFloat = isFocused ? 8 : max(safeBottom, 12)
             
             ZStack {
                 // 半透明背景遮罩
@@ -48,7 +50,7 @@ struct CustomCommentInputView: View {
                             .fill(Color(.systemGray3))
                             .frame(width: 36, height: 5)
                             .padding(.top, 8)
-                            .padding(.bottom, 16)
+                            .padding(.bottom, 10)
                             .onTapGesture {
                                 isFocused = false
                             }
@@ -109,13 +111,12 @@ struct CustomCommentInputView: View {
                             .disabled(!contentTextValid || isPosting)
                         }
                         .padding(.horizontal, 10)
-                        .padding(.bottom, max(safeBottom, 20))
+                        .padding(.bottom, bottomPadding)
                     }
                     .frame(maxWidth: GKDisplayMetrics.comfortReadableWidth)
                     .background(Color(.systemBackground))
                     .cornerRadius(20, corners: [.topLeft, .topRight])
                     .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: -5)
-                    .frame(height: textEditorHeight + 60 + max(safeBottom - 20, 0))
                     .offset(y: isAnimating ? 0 : textEditorHeight + 100)
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: isAnimating)
                     .padding(.trailing, safeTrailing)
