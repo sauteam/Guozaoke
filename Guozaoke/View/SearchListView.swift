@@ -124,11 +124,14 @@ struct SearchListView: View {
             .background(Color(uiColor: .secondarySystemBackground))
             .cornerRadius(10)
             
+            // 后续如有需要可放开展示独立搜索按钮
+            /*
             Button("搜索") {
                 performSearch()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.regular)
+            */
         }
         .frame(maxWidth: GKDisplayMetrics.comfortReadableWidth)
         .padding(.horizontal, 16)
@@ -259,6 +262,14 @@ struct SearchListView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollDismissesKeyboard(.immediately)
+                .simultaneousGesture(
+                    DragGesture().onChanged { _ in
+                        if isFocused {
+                            isFocused = false
+                        }
+                    }
+                )
             } else if !searchQuery.isEmpty && !viewModel.isLoading {
                 VStack(spacing: 12) {
                     Spacer()

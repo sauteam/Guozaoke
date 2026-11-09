@@ -10,7 +10,7 @@ import SwiftSoup
 import Alamofire
 
 // MARK: - 帖子详情模型
-struct PostDetail: Identifiable {
+struct PostDetail: Identifiable, Sendable {
     let id : String
     let title: String
     var detailId: String?
@@ -50,7 +50,7 @@ struct PostDetail: Identifiable {
     var collectionString: String
 }
 
-struct Author: Identifiable {
+struct Author: Identifiable, Sendable {
     let id = UUID()
     let name: String
     let nameUrl:String
@@ -63,7 +63,7 @@ struct Author: Identifiable {
     var displayName: String? = nil
 }
 
-struct ReplyAuthor: Identifiable, Equatable {
+struct ReplyAuthor: Identifiable, Equatable, Sendable {
     let id = UUID()
     let name: String
     let avatar: String
@@ -76,7 +76,7 @@ struct ReplyAuthor: Identifiable, Equatable {
 }
 
 
-struct PostImage: Identifiable, Equatable {
+struct PostImage: Identifiable, Equatable, Sendable {
     let id = UUID()
     let url: String
     let alt: String
@@ -84,14 +84,14 @@ struct PostImage: Identifiable, Equatable {
     let height: Int
 }
 
-struct PostLink: Identifiable, Equatable {
+struct PostLink: Identifiable, Equatable, Sendable {
     let id = UUID()
     let url: String
     let text: String
     let isExternal: Bool
 }
 
-struct Reply: Identifiable, Equatable {
+struct Reply: Identifiable, Equatable, Sendable {
     let id = UUID()
     let floor: String
     let author: ReplyAuthor
@@ -103,10 +103,15 @@ struct Reply: Identifiable, Equatable {
     var like: Int
     var isLiked: Bool = false
     let likeLink: String
+    
+    var floorNumber: Int {
+        let digits = floor.filter { $0.isNumber }
+        return Int(digits) ?? 0
+    }
 }
 
 /// 相关主题
-struct RelatedTopics: Identifiable {
+struct RelatedTopics: Identifiable, Sendable {
     let id = UUID()
     let username: String
     let avatar: String
@@ -120,6 +125,53 @@ struct RelatedTopics: Identifiable {
         link = String(firstItem)
         //link = String(firstItem.replacing("/t/", with: ""))
         return link
+    }
+}
+
+// MARK: - 帖子详情内存高速缓存（实现 0 毫秒秒开体验）
+final class PostDetailMemoryCache: @unchecked Sendable {
+    struct CachedTopic: Sendable {
+        let detail: PostDetail
+        let replies: [Reply]
+        let relatedTopics: [RelatedTopics]
+        let totalPages: Int
+        let hasMore: Bool
+        let isZan: Bool
+        let isCollection: Bool
+        let resolvedPostId: String?
+    }
+    
+    static let shared = PostDetailMemoryCache()
+    private var cache: [String: (data: CachedTopic, timestamp: Date)] = [:]
+    private let lock = NSLock()
+    private let maxCount = 20
+    
+    private func normalizeKey(_ key: String) -> String {
+        return key.components(separatedBy: "#").first?.replacingOccurrences(of: "/t/", with: "").components(separatedBy: "?").first ?? key
+    }
+    
+    func get(id: String) -> CachedTopic? {
+        lock.lock()
+        defer { lock.unlock() }
+        let key = normalizeKey(id)
+        guard let item = cache[key] else { return nil }
+        // 缓存 10 分钟有效
+        if Date().timeIntervalSince(item.timestamp) > 600 {
+            cache.removeValue(forKey: key)
+            return nil
+        }
+        return item.data
+    }
+    
+    func set(id: String, data: CachedTopic) {
+        lock.lock()
+        defer { lock.unlock() }
+        let key = normalizeKey(id)
+        guard !key.isEmpty else { return }
+        if cache.count >= maxCount {
+            cache.removeAll()
+        }
+        cache[key] = (data, Date())
     }
 }
 
@@ -141,6 +193,8 @@ class PostDetailParser: ObservableObject {
     @Published var hasMore = true
     @Published var currentPage = 1
     @Published var totalPages  = 1
+    @Published var activeCommentPage = 1
+    @Published var isJumpingPage = false
     @Published var postId: String?
     
     @Published var isCollection = false
@@ -166,6 +220,19 @@ class PostDetailParser: ObservableObject {
 //        return isCollection ? SFSymbol.heartSlashFill.body : SFSymbol.heartFill.body
 //    }
     
+    var estimatedPageSize: Int {
+        if let first = replies.first?.floorNumber, let last = replies.last?.floorNumber, last > first {
+            let diff = last - first + 1
+            if diff >= 20 {
+                return diff
+            }
+        }
+        if replies.count >= 20 {
+            return replies.count
+        }
+        return 100 // 官方默认每页 100 条回复
+    }
+    
     func loadMore() {
         if !self.hasMore {
             return
@@ -175,7 +242,51 @@ class PostDetailParser: ObservableObject {
     
     func loadNews(postId: String) {
         currentPage = 1
+        activeCommentPage = 1
         loadPostDetail(id: postId)
+    }
+    
+    /// 跳转到指定评论页码并加载该页评论数据
+    func jumpToPage(_ page: Int, postId: String, completion: (() -> Void)? = nil) {
+        let targetPage = max(1, min(page, totalPages))
+        let effectiveId = containsReplys(postId.isEmpty ? (self.postId ?? "") : postId)
+        guard !effectiveId.isEmpty else { return }
+        self.postId = effectiveId
+        let urlString = effectiveId.postDetailUrl + "?p=\(targetPage)"
+        guard let url = URL(string: urlString) else { return }
+        
+        isJumpingPage = true
+        activeCommentPage = targetPage
+        
+        Task.detached(priority: .userInitiated) {
+            do {
+                let html = try await NetworkManager.shared.get(url.absoluteString)
+                let doc = try SwiftSoup.parse(html)
+                let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                let result = try Self.parseTopicPage(doc: doc, currentPostId: effectiveId)
+                
+                await MainActor.run {
+                    guard self != nil else { return }
+                    self.isJumpingPage = false
+                    self.replies = result.replies
+                    self.activeCommentPage = targetPage
+                    self.currentPage = targetPage + 1
+                    self.totalPages = result.totalPages
+                    self.hasMore = self.currentPage <= self.totalPages
+                    self.postDetail = result.detail
+                    if let realId = result.resolvedPostId, !realId.isEmpty {
+                        self.postId = realId
+                    }
+                    completion?()
+                }
+            } catch {
+                await MainActor.run {
+                    guard self != nil else { return }
+                    self.isJumpingPage = false
+                    self.error = error.localizedDescription
+                }
+            }
+        }
     }
     private func containsReplys(_ id: String) -> String {
         var url = id
@@ -188,9 +299,27 @@ class PostDetailParser: ObservableObject {
     }
     private func loadPostDetail(id: String) {
         postId = containsReplys(id)
+        let targetId = postId ?? id
         
-        guard !isLoading || postId == "0"  else { return }
-        isLoading = true
+        // 如果是第 1 页，且命中内存高速缓存，优先 0 毫秒即时渲染已有内容
+        if currentPage == 1, let cached = PostDetailMemoryCache.shared.get(id: targetId) {
+            self.postDetail = cached.detail
+            self.replies = cached.replies
+            self.relatedTopics = cached.relatedTopics
+            self.totalPages = cached.totalPages
+            self.hasMore = cached.hasMore
+            self.isZan = cached.isZan
+            self.isCollection = cached.isCollection
+            self.activeCommentPage = 1
+            if let realId = cached.resolvedPostId {
+                self.postId = realId
+            }
+            logger("[DetailCache] 命中帖子详情内存缓存，秒开呈现: \(targetId)")
+        }
+        
+        guard !isLoading || postId == "0" else { return }
+        isLoading = (postDetail == nil)
+        
         let isReplySearch = postId?.contains("/search/reply/") == true
         let footerUrl = isReplySearch ? "" : "?p=\(currentPage)"
         let urlString = (postId?.postDetailUrl ?? "") + footerUrl
@@ -202,32 +331,55 @@ class PostDetailParser: ObservableObject {
             return
         }
         
-        Task {
+        let page = currentPage
+        let currentTargetId = targetId
+        
+        Task.detached(priority: .userInitiated) {
             do {
                 let html = try await NetworkManager.shared.get(url.absoluteString)
+                let doc = try SwiftSoup.parse(html)
+                let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
+                
+                let result = try Self.parseTopicPage(doc: doc, currentPostId: currentTargetId)
                 
                 await MainActor.run {
                     guard self != nil else { return }
                     defer { self.isLoading = false }
                     
-                    do {
-                        let doc = try SwiftSoup.parse(html)
-                        if self.currentPage == 1 || !self.hasMore {
-                            self.postDetail = nil
-                            self.replies.removeAll()
-                        }
-                        self.relatedTopics.removeAll()
-                        // 检查登录状态
-                        let _ = try LoginStateChecker.shared.htmlCheckUserState(doc: doc)
-                        
-                        try self.parsePagination(doc: doc)
-                        self.currentPage += 1
-                        self.postDetail = try self.parsePostDetail(doc: doc)
-                        self.hasMore = self.currentPage <= self.totalPages
-                        logger("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
-                    } catch {
-                        self.error = error.localizedDescription
+                    if let realId = result.resolvedPostId, !realId.isEmpty {
+                        self.postId = realId
                     }
+                    self.isZan = result.isZan
+                    self.isCollection = result.isCollection
+                    self.totalPages = result.totalPages
+                    self.relatedTopics = result.relatedTopics
+                    
+                    if page == 1 {
+                        self.replies = result.replies
+                        self.activeCommentPage = 1
+                    } else {
+                        self.replies.append(contentsOf: result.replies)
+                    }
+                    self.currentPage = page + 1
+                    self.postDetail = result.detail
+                    self.hasMore = self.currentPage <= self.totalPages
+                    
+                    // 写入内存缓存供下次秒开
+                    if page == 1 {
+                        let cacheKey = self.postId ?? currentTargetId
+                        let cacheItem = PostDetailMemoryCache.CachedTopic(
+                            detail: result.detail,
+                            replies: self.replies,
+                            relatedTopics: self.relatedTopics,
+                            totalPages: self.totalPages,
+                            hasMore: self.hasMore,
+                            isZan: self.isZan,
+                            isCollection: self.isCollection,
+                            resolvedPostId: self.postId
+                        )
+                        PostDetailMemoryCache.shared.set(id: cacheKey, data: cacheItem)
+                    }
+                    logger("currentPage \(self.currentPage) totalPages \(self.totalPages) \(self.hasMore)")
                 }
             } catch {
                 await MainActor.run {
@@ -239,7 +391,18 @@ class PostDetailParser: ObservableObject {
         }
     }
     
-    private func parsePostDetail(doc: SwiftSoup.Document) throws -> PostDetail {
+    // MARK: - 静态独立页面解析函数（运行在后台线程，彻底解放主线程）
+    struct TopicPageParseResult: Sendable {
+        let detail: PostDetail
+        let replies: [Reply]
+        let relatedTopics: [RelatedTopics]
+        let totalPages: Int
+        let isZan: Bool
+        let isCollection: Bool
+        let resolvedPostId: String?
+    }
+    
+    private static func parseTopicPage(doc: SwiftSoup.Document, currentPostId: String?) throws -> TopicPageParseResult {
         // 1. 解析帖子基本信息
         let topicDetail = try doc.select("div.topic-detail").first()
         guard let topicDetail = topicDetail else { throw ParseError.noContent }
@@ -252,7 +415,6 @@ class PostDetailParser: ObservableObject {
         let node = try authorBox?.select("span.node").text() ?? ""
         let nodeUrl = try authorBox?.select("span.node a").attr(ghref) ?? ""
         
-        // 准确提取纯用户名，避免把后面的等级(Lv.3)混进名字导致个人主页404
         var authorName = try authorBox?.select("span.username a[href^='/u/'] strong").first()?.text() ?? ""
         if authorName.isEmpty {
             if let userLink = try authorBox?.select("a[href^='/u/']").first()?.attr("href") {
@@ -289,28 +451,20 @@ class PostDetailParser: ObservableObject {
         
         // 5. 解析帖子内容 纯文字
         let contentBox = try topicDetail.select("div.ui-content").first()
-        let contentHtml   = try contentBox?.html() ?? ""
-        let topicContent  = try contentBox?.select("div").text() ?? ""
-//        let result = TextChecker.checkText(content)
-//        if result.hasEmail || result.hasTag || result.hasMention || result.hasLink {
-//            topicContent = try contentBox?.html() ?? ""
-//        } else {
-//            topicContent = content
-//        }
-        logger("[content] \(contentHtml)")
+        let contentHtml = try contentBox?.html() ?? ""
+        let topicContent = try contentBox?.select("div").text() ?? ""
         
         // 6. 解析帖子中的图片
         let images = try contentBox?.select("img").compactMap { img -> PostImage? in
             let src = try img.attr("src")
-            // 过滤表情图片
             if src.contains("static/images/emoji") {
                 return nil
             }
             return PostImage(
                 url: src,
                 alt: try img.attr("alt"),
-                width: 0,//try? Int(img.attr("width")) ?? 0,
-                height: 0//try? Int(img.attr("height")) ?? 0
+                width: 0,
+                height: 0
             )
         } ?? []
         
@@ -324,29 +478,30 @@ class PostDetailParser: ObservableObject {
             )
         } ?? []
         
-        
+        var relatedTopics: [RelatedTopics] = []
         let cells = try doc.select("div.cell")
         for cell in cells {
             let username = try cell.select("td:nth-child(1) a").text()
-            let avatarUrl  = try cell.select("img.avatar").attr("src")
+            let avatarUrl = try cell.select("img.avatar").attr("src")
             let userLink = try cell.select("td:nth-child(1) a").attr("href")
-            let topicLink  = try cell.select("span.hot_topic_title a").attr("href")
+            let topicLink = try cell.select("span.hot_topic_title a").attr("href")
             let topicTitle = try cell.select("span.hot_topic_title a").text()
             let relatedTopic = RelatedTopics(username: username, avatar: avatarUrl, userLink: userLink, topicTitle: topicTitle, topicLink: topicLink)
             relatedTopics.append(relatedTopic)
         }
         
-        // 校准真实数字 postId（例如从 /search/reply/{id} 重定向或非标准链接进入时，通过 canonical 规范链接提取）
+        // 校准真实数字 postId
+        var resolvedPostId: String? = nil
         if let canonical = try? doc.select("link[rel=canonical]").attr("href"),
            let candidate = canonical.components(separatedBy: "/t/").last?.components(separatedBy: "?").first?.components(separatedBy: "#").first,
            !candidate.isEmpty, candidate.allCharactersAreDigits {
-            self.postId = candidate
+            resolvedPostId = candidate
         }
-
+        
+        let effectivePostId = resolvedPostId ?? currentPostId
+        
         // 8. 解析统计信息
         let hits = try (topicDetail.select("span.hits").first()?.text()) ?? (doc.select("span.hits").first()?.text()) ?? ""
-        
-        // 注意：过早客网页改版后，.up_vote 与 .favorited 位于回复区域顶部的 .gzk-topic-stats 容器内，不在 topicDetail 内
         var zan = try doc.select(".gzk-topic-stats .up_vote, span.up_vote").first()?.text() ?? ""
         if zan.isEmpty {
             zan = try topicDetail.select("span.up_vote").text()
@@ -363,32 +518,30 @@ class PostDetailParser: ObservableObject {
                 zanLinke = "/vote?topic_id=\(topicId)"
             } else if let topicId = try? topicDetail.select("a.J_topicVote").attr("data-topic-id"), !topicId.isEmpty {
                 zanLinke = "/vote?topic_id=\(topicId)"
-            } else if let id = self.postId ?? self.postDetail?.detailId, !id.isEmpty {
+            } else if let id = effectivePostId, !id.isEmpty {
                 let cleanId = id.components(separatedBy: "#").first?.replacingOccurrences(of: "/t/", with: "").components(separatedBy: "?").first ?? ""
                 if !cleanId.isEmpty {
                     zanLinke = "/vote?topic_id=\(cleanId)"
                 }
             }
         }
+        
         let collectionsLink = try topicDetail.select("a.J_topicFavorite").attr(ghref)
         let topicVoteElem = try topicDetail.select("a.J_topicVote").first()
         var zanString = try topicVoteElem?.text() ?? ""
         let collectionString = try topicDetail.select("a.J_topicFavorite").text()
-        if collectionString != "加入收藏" && !collectionString.isEmpty {
-            isCollection = true
-        }
+        let isCollection = (collectionString != "加入收藏" && !collectionString.isEmpty)
+        
         let topicVotedAttr = try topicVoteElem?.attr("data-voted") ?? ""
         let ariaPressed = try topicVoteElem?.attr("aria-pressed") ?? ""
         let voteTitle = try topicVoteElem?.attr("title") ?? ""
-        if topicVotedAttr == "1" || ariaPressed == "true" || voteTitle == "取消点赞" || zanString.contains("已赞") || zanString.contains("感谢已表示") {
-            isZan = true
+        let isZan = (topicVotedAttr == "1" || ariaPressed == "true" || voteTitle == "取消点赞" || zanString.contains("已赞") || zanString.contains("感谢已表示"))
+        if isZan {
             zanString = "已赞"
         } else {
-            isZan = false
             zanString = "赞"
         }
         
-        // 提取点赞与收藏数量（优先使用数字提取，避免字符或空格分隔导致解析为 0）
         var zanNumber = 0
         if let countAttr = try? topicVoteElem?.attr("data-count"), let cnt = Int(countAttr) {
             zanNumber = cnt
@@ -408,15 +561,14 @@ class PostDetailParser: ObservableObject {
             colNumber = Int(colDigits) ?? 0
         }
         
-        let hitDigits = hits.filter { $0.isNumber }
-        let hitsNumber = Int(hitDigits) ?? 0
-        // 9. 解析回复列表
-        let replies = try parseReplies(doc: doc, node: node)
-        self.replies.append(contentsOf: replies)
-        return PostDetail(
-            id: postId ?? "",
+        // 9. 解析回复列表与分页
+        let replies = try parseReplies(doc: doc, node: category)
+        let totalPages = try parsePagination(doc: doc)
+        
+        let detail = PostDetail(
+            id: effectivePostId ?? "",
             title: title,
-            detailId: postId,
+            detailId: effectivePostId,
             node: category,
             nodeUrl: nodeUrl,
             author: author,
@@ -434,9 +586,19 @@ class PostDetailParser: ObservableObject {
             zanString: zanString,
             collectionString: collectionString
         )
+        
+        return TopicPageParseResult(
+            detail: detail,
+            replies: replies,
+            relatedTopics: relatedTopics,
+            totalPages: totalPages,
+            isZan: isZan,
+            isCollection: isCollection,
+            resolvedPostId: resolvedPostId
+        )
     }
     
-    private func parseReplies(doc: SwiftSoup.Document, node: String) throws -> [Reply] {
+    private static func parseReplies(doc: SwiftSoup.Document, node: String) throws -> [Reply] {
         let replyItems = try doc.select("div.reply-item")
         return try replyItems.map { item -> Reply in
             var replyAuthorName = try item.select("a.reply-username span.username").first()?.text() ?? ""
@@ -478,7 +640,6 @@ class PostDetailParser: ObservableObject {
             
             // 2. 解析回复内容
             let contentBox = try item.select("span.content").first()
-            //let content = try contentBox?.html() ?? ""
             let content = try contentBox?.text() ?? ""
             // 3. 解析回复中的图片
             let images = try contentBox?.select("img").compactMap { img -> PostImage? in
@@ -489,8 +650,8 @@ class PostDetailParser: ObservableObject {
                 return PostImage(
                     url: src,
                     alt: try img.attr("alt"),
-                    width: 0,//try? Int(img.attr("width")) ?? 0,
-                    height: 0//try? Int(img.attr("height")) ?? 0
+                    width: 0,
+                    height: 0
                 )
             } ?? []
             
@@ -508,7 +669,6 @@ class PostDetailParser: ObservableObject {
             let floor = try {
                 let text = try item.select(".floor").first()?.text() ?? "0"
                 return text
-                //return Int(text.replacingOccurrences(of: "#", with: "")) ?? 0
             }()
             
             let time = try item.select("span.time").text()
@@ -518,7 +678,7 @@ class PostDetailParser: ObservableObject {
                 let text = try item.select(".floor").last()?.text() ?? "0"
                 return text
             }()
-            let zanNumber  = likeCount.replacingOccurrences(of: "赞 ", with: "").replacingOccurrences(of: "已赞 ", with: "")
+            let zanNumber = likeCount.replacingOccurrences(of: "赞 ", with: "").replacingOccurrences(of: "已赞 ", with: "")
             let replyZanNumber = Int(zanNumber) ?? 0
             let likeVoteElement = try item.select("a.J_replyVote").first()
             var likeLink = try likeVoteElement?.attr("href") ?? ""
@@ -546,35 +706,22 @@ class PostDetailParser: ObservableObject {
     }
     
     // 解析分页信息
-    func parsePagination(doc: SwiftSoup.Document) throws {
-        
-        // 获取当前页码
+    private static func parsePagination(doc: SwiftSoup.Document) throws -> Int {
         let activePageElement = try doc.select("ul.pagination li.active a").first()
         let currentPage = Int(try activePageElement?.text() ?? "1") ?? 1
         
-        // 获取上一页链接
         let previousPageElement = try doc.select("ul.pagination li:has(a):contains(上一页)").first()
         let previousPageUrl = try previousPageElement?.select("a").attr("href")
         
-        // 获取下一页链接
         let nextPageElement = try doc.select("ul.pagination li:has(a):contains(下一页)").first()
         let nextPageUrl = try nextPageElement?.select("a").attr("href")
         
-        // 获取总页数
         let pageNumbers = try doc.select("ul.pagination li a").compactMap { element -> Int? in
             return Int(try element.text())
         }.max() ?? currentPage
-        self.totalPages = pageNumbers
         logger("[html]currentPage \(currentPage) previousPageUrl \(previousPageUrl ?? "1") nextPageUrl\(nextPageUrl ?? "") pageNumbers\(pageNumbers)")
-//        if totalPages == 1 {
-//            let mobilePaginationText = try doc.select("div.pagination-wap div").text()
-//            if let range = mobilePaginationText.range(of: "/") {
-//                let totalPageText = mobilePaginationText[range.upperBound...].trimmingCharacters(in: .whitespaces)
-//                totalPages = Int(totalPageText) ?? currentPage
-//            }
-//        }
+        return pageNumbers
     }
-    
     
     func fetchCollectionAction(link: String?, voted: Bool = true) async -> BaseResponse? {
         guard let link = link, !link.isEmpty else {

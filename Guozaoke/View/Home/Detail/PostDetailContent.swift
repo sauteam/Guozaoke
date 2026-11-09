@@ -31,11 +31,18 @@ struct PostDetailContent: View, Equatable {
     let detail: PostDetail
     let postId: String
     @ObservedObject var detailParser: PostDetailParser
+    var onJumpPageTap: (() -> Void)? = nil
+    var onReturnFirstPage: (() -> Void)? = nil
+    var highlightedFloor: Int? = nil
     @State private var showUserInfo = false
     @State private var linkUserId = ""
     
     static func == (lhs: PostDetailContent, rhs: PostDetailContent) -> Bool {
-        return lhs.detail.id == rhs.detail.id
+        return lhs.detail.id == rhs.detail.id &&
+               lhs.detailParser.activeCommentPage == rhs.detailParser.activeCommentPage &&
+               lhs.detailParser.replies.count == rhs.detailParser.replies.count &&
+               lhs.detailParser.isJumpingPage == rhs.detailParser.isJumpingPage &&
+               lhs.highlightedFloor == rhs.highlightedFloor
     }
     
     var body: some View {
@@ -61,8 +68,11 @@ struct PostDetailContent: View, Equatable {
             PostRowView(post: post)
                 .padding(.horizontal)
             let detailContent = "\(detail.contentHtml)" + devContent
-            RichTextView(content: detailContent)
-                .padding(.horizontal)
+            if !detailContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                RichTextView(content: detailContent)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
             // 帖子图片
             if !detail.images.isEmpty {
                 //PostImagesView(images: detail.images)
@@ -70,13 +80,25 @@ struct PostDetailContent: View, Equatable {
             }
             
             PostFooterView(detail: detail, detailParser: detailParser, postId: postId)
+                .padding(.top, 4)
+            
+            // 评论区定位锚点
+            Color.clear
+                .frame(height: 1)
+                .id("commentSectionAnchor")
+            
             Divider()
                 .padding(.horizontal)
                 .frame(maxWidth: .infinity)
             // 回复列表
-            if !detailParser.replies.isEmpty {
-                ReplyListView(detailParser: detailParser)
-                    .padding(.horizontal)
+            if !detailParser.replies.isEmpty || detailParser.isJumpingPage {
+                ReplyListView(
+                    detailParser: detailParser,
+                    highlightedFloor: highlightedFloor,
+                    onJumpTap: onJumpPageTap,
+                    onReturnFirstPage: onReturnFirstPage
+                )
+                .padding(.horizontal)
                     
             }
         }
@@ -167,28 +189,120 @@ struct PostFooterView: View {
 // MARK: - 回复列表视图
 struct ReplyListView: View {
     @ObservedObject var detailParser: PostDetailParser
+    var highlightedFloor: Int? = nil
+    var onJumpTap: (() -> Void)? = nil
+    var onReturnFirstPage: (() -> Void)? = nil
     
     var body: some View {
-        Text("全部回复 (\(detailParser.replies.count))")
-            .titleFontStyle()
-        ForEach(detailParser.replies.indices, id: \.self) { index in
-            if index < detailParser.replies.count {
-                ReplyItemView(detailParser: detailParser, reply: $detailParser.replies[index])
+        HStack(alignment: .center) {
+            HStack(spacing: 6) {
+                Text("全部回复")
+                    .titleFontStyle()
+                if detailParser.activeCommentPage > 1 {
+                    Text("(第 \(detailParser.activeCommentPage) 页)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else if !detailParser.replies.isEmpty {
+                    Text("(\(detailParser.replies.count))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            if detailParser.totalPages > 1 {
+                Button {
+                    onJumpTap?()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "number.circle.fill")
+                            .font(.system(size: 13))
+                        Text("第 \(detailParser.activeCommentPage)/\(detailParser.totalPages) 页")
+                            .font(.system(size: 13, weight: .medium))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.accentColor.opacity(0.12))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        
+        if detailParser.activeCommentPage > 1 {
+            HStack {
+                Label("当前定位在第 \(detailParser.activeCommentPage) 页评论", systemImage: "arrow.turn.down.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Button {
+                    onReturnFirstPage?()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .font(.caption2)
+                        Text("返回第 1 页")
+                            .font(.caption.weight(.medium))
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(UIColor.secondarySystemBackground).opacity(0.7))
+            .cornerRadius(8)
+        }
+        
+        if detailParser.isJumpingPage {
+            HStack(spacing: 8) {
+                Spacer()
+                ProgressView()
+                Text("正在加载第 \(detailParser.activeCommentPage) 页评论...")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.vertical, 32)
+        } else {
+            ForEach(detailParser.replies.indices, id: \.self) { index in
+                if index < detailParser.replies.count {
+                    let replyItem = detailParser.replies[index]
+                    let floorNum = replyItem.floorNumber
+                    ReplyItemView(
+                        detailParser: detailParser,
+                        reply: $detailParser.replies[index],
+                        isHighlighted: highlightedFloor == floorNum
+                    )
+                    .id("reply_floor_\(floorNum)")
                     .onAppear {
                         if index == detailParser.replies.count - 1 {
                             detailParser.loadMore()
                         }
                     }
+                }
             }
-        }
-        if !detailParser.hasMore {
-            HStack {
-                Spacer()
-                Text(NoMoreDataTitle.homeList)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 15)
-                Spacer()
+            if detailParser.isLoading && !detailParser.replies.isEmpty {
+                HStack(spacing: 8) {
+                    Spacer()
+                    ProgressView()
+                    Text("正在加载回复...")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.vertical, 12)
+            } else if !detailParser.hasMore {
+                HStack {
+                    Spacer()
+                    Text(NoMoreDataTitle.homeList)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 15)
+                    Spacer()
+                }
             }
         }
     }
@@ -198,6 +312,7 @@ struct ReplyListView: View {
 struct ReplyItemView: View {
     @ObservedObject var detailParser: PostDetailParser
     @Binding var reply: Reply
+    var isHighlighted: Bool = false
     @State private var showActions = false
     @State private var isUserNameInfoViewActive = false
     @State private var isAvatarInfoViewActive = false
@@ -326,6 +441,12 @@ struct ReplyItemView: View {
             Divider()
                 .frame(maxWidth: .infinity)
         }
+        .padding(isHighlighted ? 8 : 0)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isHighlighted ? Color.accentColor.opacity(0.18) : Color.clear)
+        )
+        .animation(.easeInOut(duration: 0.3), value: isHighlighted)
         .sheet(isPresented: $showSafari) {
             if let url = urlToOpen {
                 SafariView(url: url)

@@ -1,10 +1,10 @@
 import MarkdownUI
 import SwiftUI
 import RichText
+
 /// 解析主题详情
 struct RichTextView: View {
     let content: String
-    //let fontSize: CGFloat = UserDefaultsKeys.fontSize16
     var onLinkTap: ((URL) -> Void)?
     var onUserTap: ((String) -> Void)?
     var onTagTap: ((String) -> Void)?
@@ -19,8 +19,9 @@ struct RichTextView: View {
 
     @State private var showSafari = false
     @State private var url: URL?
-    @State private var formattedContent: String = ""
-    @State private var isContentProcessed = false
+    @State private var formattedContent: String
+    @State private var isContentProcessed: Bool
+    @State private var contentHeight: CGFloat = 0
     
     private struct SafariState {
         var url: URL
@@ -29,9 +30,34 @@ struct RichTextView: View {
     @State private var safariState: SafariState?
     @State private var showSearchView: Bool = false
 
+    init(
+        content: String,
+        onLinkTap: ((URL) -> Void)? = nil,
+        onUserTap: ((String) -> Void)? = nil,
+        onTagTap: ((String) -> Void)? = nil,
+        onEmailTap: ((String) -> Void)? = nil,
+        onPhoneTap: ((String) -> Void)? = nil
+    ) {
+        self.content = content
+        self.onLinkTap = onLinkTap
+        self.onUserTap = onUserTap
+        self.onTagTap = onTagTap
+        self.onEmailTap = onEmailTap
+        self.onPhoneTap = onPhoneTap
+        let formatted = content.regexText(true)
+        _formattedContent = State(initialValue: formatted)
+        _isContentProcessed = State(initialValue: true)
+    }
+
     var body: some View {
-        NavigationStack {
-            if isContentProcessed {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                // 当富文本高度尚未测出时，展示带独立占位与安全间距的骨架，避免与下方“加入收藏”按钮粘连重叠
+                if contentHeight == 0 {
+                    RichTextPlaceholderView()
+                        .padding(.bottom, 14)
+                }
+                
                 RichText(html: formattedContent)
                     .lineHeight(170)
                     .colorScheme(.auto)
@@ -51,28 +77,26 @@ struct RichTextView: View {
                     .linkOpenType(.custom({ url in
                         handleLink(url)
                     }))
-                    .placeholder {
-                        ProgressView()
-                    }
-                    .transition(.easeOut)
-//                    .onOpenURL { url in
-//                        handleLink(url)
-//                    }
-                
-                    .onAppear {
-                        processContent(content)
-                    }
-            } else {
-                ProgressView()
-                    .onAppear {
-                        processContent(content)
-                    }
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(key: RichTextHeightKey.self, value: geo.size.height)
+                        }
+                    )
             }
+            .onPreferenceChange(RichTextHeightKey.self) { height in
+                if height > 0 {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        self.contentHeight = height
+                    }
+                }
+            }
+        }
+        .onChange(of: content) { newContent in
+            self.formattedContent = newContent.regexText(true)
         }
         .navigationDestination(isPresented: $showUserInfo, destination: {
             UserInfoView(userId: linkUserId)
         })
-    
         .navigationDestination(isPresented: $showTopicInfo, destination: {
             PostDetailView(postId: topicId)
         })
@@ -178,12 +202,48 @@ struct RichTextView: View {
     }
 
     private func formatContent(_ content: String) -> String {
-        //  这里添加后显示有问题 @用户导致 本身RichText 支持解析email
         return content.regexText(true)
     }
 }
 
+// MARK: - RichText 段落骨架占位（避免正文渲染过程中的高度塌陷与菊花粘连）
+struct RichTextPlaceholderView: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(UIColor.secondarySystemFill))
+                .frame(height: 16)
+                .frame(maxWidth: .infinity)
+            
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(UIColor.secondarySystemFill))
+                .frame(height: 16)
+                .frame(maxWidth: .infinity)
+            
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(UIColor.secondarySystemFill))
+                .frame(height: 16)
+                .frame(width: 220)
+        }
+        .padding(.vertical, 8)
+        .opacity(isAnimating ? 0.35 : 0.75)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+}
 
+// MARK: - 富文本高度偏好键（用于驱动真实排版占位与防遮挡）
+struct RichTextHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
 
 // MARK: - MarkdownTextView
 struct MarkdownTextView: View {
@@ -217,7 +277,6 @@ struct CopyTextView: View {
 }
 
 // MARK: - AttributedTextView
-
 struct AttributedTextView: UIViewRepresentable {
     let content: String
 
@@ -242,4 +301,3 @@ struct AttributedTextView: UIViewRepresentable {
                                        documentAttributes: nil)
     }
 }
-
