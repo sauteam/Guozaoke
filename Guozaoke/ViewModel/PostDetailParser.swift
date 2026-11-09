@@ -290,9 +290,14 @@ class PostDetailParser: ObservableObject {
     }
     private func containsReplys(_ id: String) -> String {
         var url = id
-        if url.contains("#reply") {
+        if url.contains("#") {
             if let result = url.components(separatedBy: "#").first {
-                url  = result
+                url = result
+            }
+        }
+        if url.contains("?") {
+            if let result = url.components(separatedBy: "?").first {
+                url = result
             }
         }
         return url

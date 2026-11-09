@@ -33,8 +33,13 @@ struct NotificationsView: View {
                     // 右窗格：选中通知所对应的主题详情 (右边距TabBar仅保留10pt，充盈饱满不空旷)
                     ZStack {
                         if let topicLink = selectedTopicLink, !topicLink.isEmpty {
-                            PostDetailView(postId: topicLink)
-                                .id(topicLink)
+                            let noti = viewModel.notifications.first(where: { $0.topicLink == topicLink })
+                            PostDetailView(
+                                postId: topicLink,
+                                targetUsername: noti?.username,
+                                targetReplySnippet: noti?.content
+                            )
+                            .id(topicLink)
                         } else {
                             VStack(spacing: 16) {
                                 Image(systemName: "bell.badge.fill")
@@ -223,7 +228,11 @@ struct NotificationRowView: View {
                 } else {
                     // 单栏模式下整行只有一个 NavigationLink，确保右侧仅展示一个导航箭头
                     NavigationLink {
-                        PostDetailView(postId: notification.topicLink)
+                        PostDetailView(
+                            postId: notification.topicLink,
+                            targetUsername: notification.username,
+                            targetReplySnippet: notification.content
+                        )
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(notification.topicTitle)

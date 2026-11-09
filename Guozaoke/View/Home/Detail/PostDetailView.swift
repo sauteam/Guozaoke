@@ -7,10 +7,61 @@
 
 import SwiftUI
 
+// MARK: - 目标定位模型（支持通知跳转、外链、楼层定位）
+struct PostTargetLocation: Equatable {
+    var floor: Int?
+    var page: Int?
+    var username: String?
+    var contentSnippet: String?
+    
+    static func parse(
+        from link: String,
+        targetFloor: Int? = nil,
+        targetUsername: String? = nil,
+        targetSnippet: String? = nil
+    ) -> PostTargetLocation {
+        var page: Int? = nil
+        var floor: Int? = targetFloor
+        
+        // 1. 尝试从 URL 查询参数解析页码 ?p=X 或 &p=X
+        if let pRange = link.range(of: #"[?&]p=(\d+)"#, options: .regularExpression) {
+            let pString = String(link[pRange])
+            if let digits = pString.components(separatedBy: "=").last, let p = Int(digits) {
+                page = p
+            }
+        }
+        
+        // 2. 尝试从 URL 锚点解析楼层编号 #replyX 或 #reply_X
+        if floor == nil, link.contains("#reply") {
+            let afterHash = link.components(separatedBy: "#reply").last ?? ""
+            let digits = afterHash.prefix(while: { $0.isNumber })
+            if let f = Int(digits), f > 0 {
+                floor = f
+            }
+        }
+        
+        // 3. 如果有楼层但无显式页码，且楼层较大，按每页100条估算目标页
+        if page == nil, let f = floor, f > 100 {
+            page = (f - 1) / 100 + 1
+        }
+        
+        return PostTargetLocation(
+            floor: floor,
+            page: page,
+            username: targetUsername,
+            contentSnippet: targetSnippet
+        )
+    }
+}
+
 // MARK: - 帖子详情视图
 struct PostDetailView: View {
     @StateObject private var detailParser = PostDetailParser()
-    let postId: String 
+    let postId: String
+    var targetFloor: Int? = nil
+    var targetUsername: String? = nil
+    var targetReplySnippet: String? = nil
+    
     @State private var showComentView  = false
 
     @State private var showSendView    = false
@@ -27,6 +78,7 @@ struct PostDetailView: View {
     @State private var showJumpFloorAlert = false
     @State private var jumpFloorInput = ""
     @State private var highlightedFloor: Int? = nil
+    @State private var pendingTargetLocation: PostTargetLocation? = nil
 
     var body: some View {
         GeometryReader { proxy in
@@ -99,6 +151,9 @@ struct PostDetailView: View {
                         jumpToFloor(floor, scrollProxy: scrollProxy)
                         targetJumpFloor = nil
                     }
+                }
+                .onChange(of: detailParser.replies.count) { _ in
+                    attemptScrollToTarget(scrollProxy: scrollProxy)
                 }
                 .alert("定位到具体楼层", isPresented: $showJumpFloorAlert) {
                     TextField("请输入楼层号 (如 18)", text: $jumpFloorInput)
@@ -271,6 +326,17 @@ struct PostDetailView: View {
         .onAppear() {
             logger("[PostDetailView] onAppear, postId: \(postId)")
             
+            // 解析潜在的通知/外链定位目标（支持楼层锚点、页码及回复作者定位）
+            let target = PostTargetLocation.parse(
+                from: postId,
+                targetFloor: targetFloor,
+                targetUsername: targetUsername,
+                targetSnippet: targetReplySnippet
+            )
+            if target.floor != nil || target.username != nil {
+                pendingTargetLocation = target
+            }
+            
             // 检查NavigationManager是否有新的导航请求
             if !navigationManager.postDetailId.isEmpty && navigationManager.postDetailId != postId {
                 logger("[PostDetailView] 检测到NavigationManager中的新ID，使用新ID: \(navigationManager.postDetailId)")
@@ -282,11 +348,15 @@ struct PostDetailView: View {
             } else {
                 currentPostId = postId
                 guard detailParser.postDetail == nil else { 
-                    logger("[PostDetailView] 帖子详情已存在，跳过加载")
+                    logger("[PostDetailView] 帖子详情已存在，尝试定位目标")
                     return 
                 }
                 logger("[PostDetailView] 开始加载帖子详情")
-                detailParser.loadNews(postId: postId)
+                if let target = pendingTargetLocation, let page = target.page, page > 1 {
+                    detailParser.jumpToPage(page, postId: postId)
+                } else {
+                    detailParser.loadNews(postId: postId)
+                }
             }
         }
         
@@ -380,6 +450,55 @@ struct PostDetailView: View {
                 if highlightedFloor == floor {
                     highlightedFloor = nil
                 }
+            }
+        }
+    }
+    
+    private func attemptScrollToTarget(scrollProxy: ScrollViewProxy) {
+        guard let target = pendingTargetLocation else { return }
+        guard !detailParser.replies.isEmpty else { return }
+        
+        // 1. 如果有明确楼层编号
+        if let targetFloor = target.floor {
+            if let matched = detailParser.replies.first(where: { $0.floorNumber == targetFloor }) {
+                pendingTargetLocation = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        scrollProxy.scrollTo("reply_floor_\(matched.floorNumber)", anchor: .top)
+                    }
+                    highlightFloor(matched.floorNumber)
+                }
+                return
+            }
+        }
+        
+        // 2. 如果有目标用户名，匹配作者
+        if let username = target.username, !username.isEmpty {
+            let userReplies = detailParser.replies.filter {
+                $0.author.name.lowercased() == username.lowercased() ||
+                ($0.author.displayName?.lowercased() == username.lowercased())
+            }
+            
+            let matched: Reply?
+            if let snippet = target.contentSnippet, !snippet.isEmpty {
+                let cleanSnippet = snippet.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                matched = userReplies.first(where: {
+                    !cleanSnippet.isEmpty && $0.content.contains(cleanSnippet.prefix(12))
+                }) ?? userReplies.last
+            } else {
+                matched = userReplies.last
+            }
+            
+            if let found = matched {
+                pendingTargetLocation = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        scrollProxy.scrollTo("reply_floor_\(found.floorNumber)", anchor: .top)
+                    }
+                    highlightFloor(found.floorNumber)
+                }
+                return
             }
         }
     }
