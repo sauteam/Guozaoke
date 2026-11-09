@@ -96,22 +96,34 @@ struct PostListWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        if #available(iOS 27.0, *), family == .systemExtraLargePortrait {
-            ExtraLargePortraitWidgetView(posts: entry.posts, postType: entry.postType)
-        } else {
-            switch family {
-            case .systemSmall:
-                SmallWidgetView(posts: entry.posts, postType: entry.postType)
-            case .systemMedium:
-                MediumWidgetView(posts: entry.posts, postType: entry.postType)
-            case .systemLarge:
-                LargeWidgetView(posts: entry.posts, postType: entry.postType)
-            case .systemExtraLarge:
-                ExtraLargeWidgetView(posts: entry.posts, postType: entry.postType)
-            default:
-                SmallWidgetView(posts: entry.posts, postType: entry.postType)
-            }
+        switch family {
+        case .systemSmall:
+            SmallWidgetView(posts: entry.posts, postType: entry.postType)
+        case .systemMedium:
+            MediumWidgetView(posts: entry.posts, postType: entry.postType)
+        case .systemLarge:
+            LargeWidgetView(posts: entry.posts, postType: entry.postType)
+        case .systemExtraLarge:
+            ExtraLargeWidgetView(posts: entry.posts, postType: entry.postType)
+        default:
+            SmallWidgetView(posts: entry.posts, postType: entry.postType)
         }
+//        if #available(iOS 27.0, *), family == .systemExtraLargePortrait {
+//            ExtraLargePortraitWidgetView(posts: entry.posts, postType: entry.postType)
+//        } else {
+//            switch family {
+//            case .systemSmall:
+//                SmallWidgetView(posts: entry.posts, postType: entry.postType)
+//            case .systemMedium:
+//                MediumWidgetView(posts: entry.posts, postType: entry.postType)
+//            case .systemLarge:
+//                LargeWidgetView(posts: entry.posts, postType: entry.postType)
+//            case .systemExtraLarge:
+//                ExtraLargeWidgetView(posts: entry.posts, postType: entry.postType)
+//            default:
+//                SmallWidgetView(posts: entry.posts, postType: entry.postType)
+//            }
+//        }
     }
 }
 
@@ -598,13 +610,13 @@ struct ExtraLargePortraitWidgetView: View {
     }
 }
 
-// MARK: - Widget Family Extension (支持常见小、中、大号组件，暂时屏蔽超大号组件)
+// MARK: - Widget Family Extension (仅支持小号与中号组件；大号及超大号组件先注销不展示)
 extension WidgetFamily {
     static var allSupportedFamilies: [WidgetFamily] {
         return [
             .systemSmall,
-            .systemMedium,
-            .systemLarge
+            .systemMedium
+            // .systemLarge // Duo 最大的小组件先注销掉不展示，目前布局展示不太好
         ]
     }
 }
@@ -638,6 +650,8 @@ struct PostListWidget: Widget {
     SimpleEntry(date: .now, posts: [], postType: .latest)
 }
 
+// 最大的大号及超大号组件预览暂先注释
+/*
 @available(iOS 17.0, *)
 #Preview(as: .systemLarge) {
     PostListWidget()
@@ -658,3 +672,4 @@ struct PostListWidget: Widget {
 } timeline: {
     SimpleEntry(date: .now, posts: [], postType: .latest)
 }
+*/

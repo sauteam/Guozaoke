@@ -1,3 +1,10 @@
+//
+//  SearchListView.swift
+//  Guozaoke
+//
+//  Created by scy on 2025/1/13.
+//
+
 import SwiftUI
 
 enum SearchEnum: String, CaseIterable {
@@ -15,122 +22,208 @@ struct SearchListView: View {
     @State private var searchQuery: String = ""
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isFocused: Bool
-    private let inputText = "🔍 关键字/用户名或数字号/帖子ID"
-    private let changeKeyText = "🔍 换个关键字试试"
-    @State private var selectedTab: SearchEnum  = .topicList
+    
+    @State private var selectedTab: SearchEnum = .topicList
     @State private var showUserInfo: Bool = false
     @State private var showDetailInfo: Bool = false
+    @State private var targetUserId: String = ""
+    @State private var targetPostId: String = ""
 
     init(searchQuery: String = "", selectedTab: SearchEnum = .topicList) {
-         _searchQuery = State(initialValue: searchQuery)
-         _selectedTab = State(initialValue: selectedTab)
-     }
+        _searchQuery = State(initialValue: searchQuery)
+        _selectedTab = State(initialValue: selectedTab)
+    }
+    
+    private var placeholderText: String {
+        switch selectedTab {
+        case .user:
+            return "输入用户名或成员数字号（如：1）"
+        case .topicList:
+            return "搜索主题正文或回复"
+        case .topicInfo:
+            return "输入帖子ID（如：134525）"
+        }
+    }
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 searchTextField
-                Spacer()
+                    .padding(.vertical, 8)
+                
                 contentView
-                Spacer()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitleStyle("搜索")
             .navigationBarTitleDisplayMode(.inline)
             .tabbarToolBar()
             .refreshable {
-                if selectedTab == .topicList {
-                    viewModel.searchText(self.searchQuery)
+                if selectedTab == .topicList && !searchQuery.isEmpty {
+                    viewModel.searchText(searchQuery)
                 }
             }
             .onAppear {
                 isFocused = true
-            }
-            .onDisappear {
-                isFocused = false
+                if selectedTab == .topicList && !searchQuery.isEmpty && viewModel.searchList.isEmpty {
+                    viewModel.searchText(searchQuery)
+                }
             }
             .toolbar {
                 ToolbarItemGroup(placement: .principal) {
-                    VStack {
-                        Picker("选择列表", selection: $selectedTab) {
-                            ForEach(SearchEnum.allCases, id: \.text) { type in
-                                Text(type.text)
-                                    .tag(type)
-                            }
+                    Picker("选择列表", selection: $selectedTab) {
+                        ForEach(SearchEnum.allCases, id: \.text) { type in
+                            Text(type.text)
+                                .tag(type)
                         }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .padding(.leading, 16)
-                        .padding(.trailing, 16)
                     }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal, 16)
+                    .onChange(of: selectedTab) { _ in
+                        isFocused = true
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showUserInfo) {
+                if !targetUserId.isEmpty {
+                    UserInfoView(userId: targetUserId)
+                }
+            }
+            .navigationDestination(isPresented: $showDetailInfo) {
+                if !targetPostId.isEmpty {
+                    PostDetailView(postId: targetPostId)
                 }
             }
         }
     }
     
     private var searchTextField: some View {
-        HStack {
-            TextField(inputText, text: $searchQuery, onCommit: {
-                if selectedTab == .user {
-                    showUserInfo.toggle()
-                } else if selectedTab == .topicList {
-                    viewModel.searchText(searchQuery)
-                } else if selectedTab == .topicInfo {
-                    showDetailInfo.toggle()
+        HStack(spacing: 8) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                
+                TextField(placeholderText, text: $searchQuery)
+                    .submitLabel(.search)
+                    .focused($isFocused)
+                    .onSubmit {
+                        performSearch()
+                    }
+                
+                if !searchQuery.isEmpty {
+                    Button {
+                        searchQuery = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
-            })
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .submitLabel(.search)
-            .focused($isFocused)
-            .navigationDestination(isPresented: $showDetailInfo, destination: {
-                if !searchQuery.isEmpty {
-                    PostDetailView(postId: searchQuery)
-                 }
-            })
-            .navigationDestination(isPresented: $showUserInfo, destination: {
-                if !searchQuery.isEmpty {
-                     UserInfoView(userId: searchQuery)
-                 }
-            })
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(uiColor: .secondarySystemBackground))
+            .cornerRadius(10)
+            
+            Button("搜索") {
+                performSearch()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
         }
         .frame(maxWidth: GKDisplayMetrics.comfortReadableWidth)
-        .frame(height: 40)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
     }
         
     private var contentView: some View {
         Group {
             switch selectedTab {
             case .user:
-                HStack {
-                    Text("🔍用户名或「过早客多少号成员：1」")
-                        .foregroundColor(.gray)
-                }
+                userSearchPromptView
             case .topicList:
                 topicListView
             case .topicInfo:
-                HStack {
-                    Text("🔍输入帖子ID，如：119731")
-                        .foregroundColor(.gray)
-                }
+                topicInfoPromptView
             }
         }
+    }
+    
+    private var userSearchPromptView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "person.crop.circle")
+                .font(.system(size: 48))
+                .foregroundColor(.secondary)
+            Text("输入用户名或社区号搜索用户主页")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text("例如：1（站长）或具体用户名")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.8))
+            Spacer()
+        }
+        .padding()
+    }
+    
+    private var topicInfoPromptView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundColor(.secondary)
+            Text("输入帖子ID直接进入主题详情")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text("例如：119731")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.8))
+            Spacer()
+        }
+        .padding()
     }
     
     private var topicListView: some View {
         Group {
             if viewModel.isLoading && viewModel.searchList.isEmpty {
-                ProgressView("正在搜索中...")
+                VStack(spacing: 12) {
+                    Spacer()
+                    ProgressView()
+                    Text("正在进行站内搜索...")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
             } else if !viewModel.searchList.isEmpty {
                 List {
+                    if let status = viewModel.statusText, !status.isEmpty {
+                        Section {
+                            Text(status)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
                     ForEach(viewModel.searchList) { post in
                         NavigationLink(destination: PostDetailView(postId: post.url)) {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text(post.title)
                                     .font(.headline)
-                                Text(post.description)
-                                    .font(.subheadline)
-                                    .lineLimit(3)
+                                    .foregroundColor(.primary)
+                                    .lineLimit(2)
+                                
+                                if !post.description.isEmpty {
+                                    Text(post.description)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(3)
+                                }
+                                
+                                if !post.meta.isEmpty {
+                                    Text(post.meta)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                }
                             }
-                            .padding(.vertical)
+                            .padding(.vertical, 4)
                             .onAppear {
                                 if post.id == viewModel.searchList.last?.id {
                                     viewModel.loadMore()
@@ -138,60 +231,78 @@ struct SearchListView: View {
                             }
                         }
                     }
+                    
                     if viewModel.hasMoreData {
                         HStack {
+                            Spacer()
                             ProgressView()
+                            Text("正在加载更多...")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
                             Spacer()
                         }
+                        .padding(.vertical, 8)
+                        .listRowSeparator(.hidden)
                         .onAppear {
                             viewModel.loadMore()
                         }
-                    } else {
-                        if viewModel.searchList.count > 10 {
-                            HStack {
-                                Text("已经到底了")
-                            }
-                            .listRowSeparator(.hidden)
+                    } else if viewModel.searchList.count >= 10 {
+                        HStack {
+                            Spacer()
+                            Text("已经到底了")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                            Spacer()
                         }
+                        .padding(.vertical, 8)
+                        .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
+            } else if !searchQuery.isEmpty && !viewModel.isLoading {
+                VStack(spacing: 12) {
+                    Spacer()
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    Text("未找到相关帖子")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("尝试使用更简短的关键词或换个词搜索")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding()
             } else {
-//                let tips = viewModel.errorMessage ?? (searchQuery.isEmpty ? inputText : changeKeyText)
-//                Text(tips)
-//                    .foregroundColor(.gray)
-//                    .padding()
+                VStack(spacing: 12) {
+                    Spacer()
+                    Image(systemName: "text.magnifyingglass")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    Text("输入关键词开始站内搜索")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding()
             }
         }
     }
     
     private func performSearch() {
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return }
+        isFocused = false
         switch selectedTab {
         case .user:
-            showUserInfo.toggle()
+            targetUserId = query
+            showUserInfo = true
         case .topicList:
-            viewModel.searchText(searchQuery)
+            viewModel.searchText(query)
         case .topicInfo:
-            showDetailInfo.toggle()
+            targetPostId = query
+            showDetailInfo = true
         }
     }
-    
-//    private var keywordHeader: some View {
-//        ScrollView(.horizontal, showsIndicators: false) {
-//            HStack(spacing: 10) {
-//                ForEach(viewModel.savedSearchKeywords) { keyword in
-//                    Text(keyword.keyword)
-//                        .padding(5)
-//                        .background(Color.gray.opacity(0.2))
-//                        .cornerRadius(5)
-//                        .onTapGesture {
-//                            searchQuery = keyword.keyword
-//                            viewModel.searchText(searchQuery)
-//                        }
-//                }
-//            }
-//            .padding(.horizontal)
-//        }
-//        .frame(height: 40)
-//    }
 }

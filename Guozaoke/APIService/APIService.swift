@@ -416,6 +416,15 @@ extension String {
             return tid
         }
         
+        // 站内搜索命中回复时返回 /search/reply/{id}，需保留该路径由服务端302重定向至对应帖子
+        if tid.contains("/search/reply/") {
+            if tid.hasPrefix("http://") || tid.hasPrefix("https://") {
+                return tid
+            }
+            let path = tid.hasPrefix("/") ? tid : "/" + tid
+            return base + path
+        }
+        
         if !tid.allCharactersAreDigits {
             tid = tid.extractNumericPart
         }

@@ -191,7 +191,8 @@ class PostDetailParser: ObservableObject {
         
         guard !isLoading || postId == "0"  else { return }
         isLoading = true
-        let footerUrl = "?p=\(currentPage)"
+        let isReplySearch = postId?.contains("/search/reply/") == true
+        let footerUrl = isReplySearch ? "" : "?p=\(currentPage)"
         let urlString = (postId?.postDetailUrl ?? "") + footerUrl
         logger("详情开始刷新 \(postId ?? "1111") \(urlString)")
 
@@ -335,6 +336,13 @@ class PostDetailParser: ObservableObject {
             relatedTopics.append(relatedTopic)
         }
         
+        // 校准真实数字 postId（例如从 /search/reply/{id} 重定向或非标准链接进入时，通过 canonical 规范链接提取）
+        if let canonical = try? doc.select("link[rel=canonical]").attr("href"),
+           let candidate = canonical.components(separatedBy: "/t/").last?.components(separatedBy: "?").first?.components(separatedBy: "#").first,
+           !candidate.isEmpty, candidate.allCharactersAreDigits {
+            self.postId = candidate
+        }
+
         // 8. 解析统计信息
         let hits = try (topicDetail.select("span.hits").first()?.text()) ?? (doc.select("span.hits").first()?.text()) ?? ""
         
