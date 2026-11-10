@@ -215,7 +215,7 @@ struct CustomCommentInputView: View {
         if let result = topicUrl.components(separatedBy: "#").first {
             topicUrl = result
         }
-        return topicUrl
+        return topicUrl.postDetailUrl
     }
     
     private func sendComment() async {
@@ -227,10 +227,12 @@ struct CustomCommentInputView: View {
 
         isPosting = true
         do {
-            guard getDetailId().isEmpty == false else {
+            let targetUrl = getDetailId()
+            guard !targetUrl.isEmpty else {
+                isPosting = false
                 return
             }
-            let response = try await APIService.sendComment(url: APIService.baseUrlString + getDetailId(), content: content)
+            let response = try await APIService.sendComment(url: targetUrl, content: content)
             logger("Response: \(response)")
             postSuccess = true
             sendSuccess()

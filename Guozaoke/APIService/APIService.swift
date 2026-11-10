@@ -200,7 +200,12 @@ struct APIService {
     }
     
     static func extractNumberSimple(from text: String) -> String? {
-        let components = text.split(separator: "/")
+        let clean = text.components(separatedBy: CharacterSet(charactersIn: "?#")).first ?? text
+        let digits = clean.filter { $0.isNumber }
+        if !digits.isEmpty {
+            return digits
+        }
+        let components = clean.split(separator: "/")
         if let last = components.last {
             return String(last)
         }
@@ -209,12 +214,13 @@ struct APIService {
     
     /// 发表评论
     static func sendComment(url: String, content: String) async throws -> String {
-        let tid = extractNumberSimple(from: url)
+        let cleanUrl = url.postDetailUrl
+        let tid = extractNumberSimple(from: cleanUrl) ?? cleanUrl.extractDigits()
         let parameters: Parameters = [
-            "tid": tid ?? "",
+            "tid": tid,
             "content": content
         ]
-        return try await toServer(url: url, parameters: parameters)
+        return try await toServer(url: cleanUrl, parameters: parameters)
     }
         
     /// 发布主题
@@ -407,11 +413,10 @@ extension String {
     
     /// 详情主页
     var postDetailUrl: String {
-        var tid = self
+        let tid = self.trimmingCharacters(in: .whitespacesAndNewlines)
         let t   = "/t/"
         let base  = APIService.baseUrlString
         let baseT = base + t
-        //logger("[tid][detail] tid \(tid)")
         if tid.contains(baseT) {
             return tid
         }
@@ -425,24 +430,25 @@ extension String {
             return base + path
         }
         
-        if !tid.allCharactersAreDigits {
-            tid = tid.extractNumericPart
+        // 兼容处理缺少斜杠拼接的情况（如 https://www.guozaoke.com134555）
+        var rawTid = tid
+        if rawTid.hasPrefix(base) {
+            rawTid = String(rawTid.dropFirst(base.count))
+        }
+        rawTid = rawTid.components(separatedBy: CharacterSet(charactersIn: "?#")).first ?? rawTid
+        if rawTid.hasPrefix(t) {
+            return base + rawTid
+        }
+        if rawTid.hasPrefix("/") {
+            rawTid = String(rawTid.dropFirst())
+        }
+        if rawTid.hasPrefix("t/") {
+            rawTid = String(rawTid.dropFirst(2))
         }
         
-        //logger("[tid][detail]2 tid \(tid)")
-        if !tid.contains(t) {
-            tid = t + tid
-        }
-        
-        if tid.contains(base) {
-            return tid
-        }
-        
-        if tid.hasPrefix(t) {
-            return base + tid
-        }
-        
-        return base + "/" + tid
+        let numericId = rawTid.filter { $0.isNumber }
+        let finalId = numericId.isEmpty ? rawTid : numericId
+        return baseT + finalId
     }
         
     /// /node/IT => /t/create/IT
