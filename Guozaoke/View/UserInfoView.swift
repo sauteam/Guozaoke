@@ -33,19 +33,19 @@ struct UserInfoView: View {
         if let range = trimmed.range(of: "Lv.", options: .caseInsensitive) {
             trimmed = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        if trimmed.isEmpty || trimmed == "/u/" || trimmed == "我的账号" {
+        if trimmed.isEmpty || trimmed == "/u/" || trimmed == "我的账号" || AccountState.invalidDisplayNames.contains(trimmed) {
             let uName = AccountState.userName
-            if !uName.isEmpty && uName != "/u/" {
+            if !uName.isEmpty && uName != "/u/" && AccountState.isValidDisplayName(uName) {
                 return uName
             }
             let link = AccountState.userLink
             let linkSlug = link.replacingOccurrences(of: "/u/", with: "")
                 .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !linkSlug.isEmpty && linkSlug != "/u/" && linkSlug != "guozaoke" {
+            if !linkSlug.isEmpty && linkSlug != "/u/" && linkSlug != "guozaoke" && AccountState.isValidDisplayName(linkSlug) {
                 return linkSlug
             }
-            if let cookieUser = AccountState.extractUsernameFromCookies(), !cookieUser.isEmpty {
+            if let cookieUser = AccountState.extractUsernameFromCookies(), AccountState.isValidDisplayName(cookieUser) {
                 return cookieUser
             }
             return ""

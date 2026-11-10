@@ -156,12 +156,21 @@ class LoginService: ObservableObject {
                     let slug = href.replacingOccurrences(of: "/u/", with: "")
                         .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    if !slug.isEmpty {
-                        username = slug
-                    }
                     let text = (try? linkElement.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    if !text.isEmpty && text != "我的主页" && text != "个人主页" {
-                        nickname = text
+                    let validText = AccountState.isValidDisplayName(text) ? text : ""
+                    
+                    // 若 href 中的 slug 为纯数字ID，而链接文本为字母用户名，优先以文本为准作为用户名
+                    if slug.allSatisfy({ $0.isNumber }) && AccountState.isValidDisplayName(validText) && !validText.allSatisfy({ $0.isNumber }) {
+                        username = validText
+                        nickname = validText
+                    } else if !slug.isEmpty && AccountState.isValidDisplayName(slug) {
+                        username = slug
+                        if AccountState.isValidDisplayName(validText) {
+                            nickname = validText
+                        }
+                    } else if AccountState.isValidDisplayName(validText) {
+                        username = validText
+                        nickname = validText
                     }
                     break
                 }
@@ -215,12 +224,12 @@ class LoginService: ObservableObject {
             "ul.navbar-right img.avatar",
             "#navbar5 a[href^='/u/'] img",
             ".usercard img.avatar",
-            ".ui-header a img"
+            "img.avatar"
         ]
         for sel in avatarCandidates {
             if let img = try? doc.select(sel).first() {
                 let src = (try? img.attr("src")) ?? ""
-                if !src.isEmpty {
+                if !src.isEmpty && src.contains("avatar") {
                     avatar = src
                     break
                 }
@@ -254,6 +263,13 @@ class LoginService: ObservableObject {
             }
             logger("[userInfo]\(account)")                
             APIService.saveCookiesToAppGroups()
+            
+            // 如果头像或昵称尚不完整，后台异步补全个人资料并预缓存头像
+            if finalAvatar.isEmpty || finalNickname.isEmpty {
+                Task.detached(priority: .background) {
+                    await UserInfoParser().fetchUserInfoAndData(finalUsername.userProfileUrl)
+                }
+            }
             return true
         } else {
             await MainActor.run {

@@ -404,9 +404,15 @@ extension String {
     
     /// 个人主页
     var userProfileUrl: String {
-        let uid = self
+        let uid = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        if uid.hasPrefix("http://") || uid.hasPrefix("https://") {
+            return uid
+        }
         if uid.hasPrefix("/u/") {
             return APIService.baseUrlString + uid
+        }
+        if uid.hasPrefix("/") {
+            return APIService.baseUrlString + "/u" + uid
         }
         return APIService.baseUrlString + "/u/" + uid
     }

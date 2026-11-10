@@ -525,7 +525,14 @@ private extension PostListParser {
         }
         
         return try topics.map { element in
-            // 准确提取纯用户名，多重兜底保证必定能获取到正确的用户ID
+            // 准确提取纯用户名与用于个人主页URL路由的真实 slug (如 /u/mario -> mario)
+            var authorSlug = ""
+            if let userLink = try element.select("a[href^='/u/']").first()?.attr("href") {
+                authorSlug = userLink.replacingOccurrences(of: "/u/", with: "")
+                    .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            }
+            
             var authorName = try element.select("span.username a[href^='/u/'] strong").first()?.text() ?? ""
             if authorName.isEmpty {
                 authorName = try element.select("span.username a[href^='/u/']").first()?.text() ?? ""
@@ -534,10 +541,7 @@ private extension PostListParser {
                 authorName = try element.select("span.username a").first()?.text() ?? ""
             }
             if authorName.isEmpty {
-                // 从头像包装链接 <a href="/u/username"><img class="avatar"></a> 提取真实用户ID
-                if let userLink = try element.select("a[href^='/u/']").first()?.attr("href") {
-                    authorName = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                }
+                authorName = authorSlug
             }
             if authorName.isEmpty {
                 authorName = try element.select("span.username").text()
@@ -546,6 +550,10 @@ private extension PostListParser {
                 authorName = String(authorName[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
             }
             authorName = authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            let finalAuthor = !authorSlug.isEmpty ? authorSlug : authorName
+            let parsedDisplayName = try element.select(".gzk-visible-identity bdi, a.gzk-display-name bdi").first()?.text()
+            let finalDisplayName = parsedDisplayName ?? ((authorName != finalAuthor && !authorName.isEmpty) ? authorName : nil)
             
             var lastReply = try element.select("span.last-reply-username a strong").first()?.text() ?? ""
             if lastReply.isEmpty {
@@ -561,12 +569,11 @@ private extension PostListParser {
             
             let level = try element.select(".gzk-credit-level").first()?.text()
             let isOnline = try !(element.select(".gzk-online").isEmpty)
-            let displayName = try element.select(".gzk-visible-identity bdi, a.gzk-display-name bdi").first()?.text()
 
             return PostItem(
                 title: try element.select("h3.title a").text(),
                 link: try element.select("h3.title a").attr("href"),
-                author: authorName,
+                author: finalAuthor,
                 avatar: try element.select("img.avatar").attr("src"),
                 node: try element.select("span.node a").text(),
                 nodeUrl: try element.select("span.node a").attr("href"),
@@ -578,7 +585,7 @@ private extension PostListParser {
                 bookmark: try element.select("h3.title a i").first()?.attr("title") ?? "",
                 isOnline: isOnline,
                 level: level,
-                displayName: displayName
+                displayName: finalDisplayName
             )
         }
     }

@@ -111,6 +111,18 @@ struct AccountState {
         return nil
     }
 
+    static let invalidDisplayNames: Set<String> = [
+        "主页", "我的主页", "个人主页", "设置", "退出", "登出", "登录", "注册",
+        "收藏", "我的收藏", "通知", "消息", "动态", "创作", "发帖", "管理", "node", "topic"
+    ]
+    
+    static func isValidDisplayName(_ name: String?) -> Bool {
+        guard let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return false
+        }
+        return !invalidDisplayNames.contains(trimmed)
+    }
+
     static func getAccount() -> AccountInfo? {
         do {
             if let acc = ACCOUNT, !acc.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -123,12 +135,40 @@ struct AccountState {
             
             var needsSave = false
             
+            // 自动容错修复 0：如果 nickname 是无效的菜单导航文字（如 "主页" 等），清除
+            if let nick = account.nickname, !isValidDisplayName(nick) {
+                logger("[AccountState] 自动清除无效昵称: '\(nick)'")
+                account.nickname = nil
+                needsSave = true
+            }
+            
+            // 自动容错修复 0.1：如果 username 是无效的菜单导航文字（如 "主页"），从 userLink 或 Cookie 恢复真实用户名
+            if !isValidDisplayName(account.username) {
+                var restored = false
+                if let link = account.userLink, link.contains("/u/") {
+                    let linkSlug = link.replacingOccurrences(of: "/u/", with: "")
+                        .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    if isValidDisplayName(linkSlug) {
+                        logger("[AccountState] 从 userLink 恢复 username: '\(linkSlug)'")
+                        account.username = linkSlug
+                        needsSave = true
+                        restored = true
+                    }
+                }
+                if !restored, let cookieName = extractUsernameFromCookies(), isValidDisplayName(cookieName) {
+                    logger("[AccountState] 从 Cookie 恢复 username: '\(cookieName)'")
+                    account.username = cookieName
+                    needsSave = true
+                }
+            }
+            
             // 自动容错修复 1：如果 username 带有 /u/ 前缀，清理为纯用户名
             if account.username.hasPrefix("/u/") {
                 let clean = account.username.replacingOccurrences(of: "/u/", with: "")
                     .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                if !clean.isEmpty {
+                if isValidDisplayName(clean) {
                     account.username = clean
                     needsSave = true
                 }
@@ -139,10 +179,10 @@ struct AccountState {
                 let linkSlug = link.replacingOccurrences(of: "/u/", with: "")
                     .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                if !linkSlug.isEmpty && linkSlug != "guozaoke" {
+                if isValidDisplayName(linkSlug) && linkSlug != "guozaoke" {
                     let hasNonAscii = account.username.unicodeScalars.contains { $0.value > 127 }
                     if account.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || hasNonAscii {
-                        if account.nickname == nil || account.nickname?.isEmpty == true {
+                        if (account.nickname == nil || account.nickname?.isEmpty == true) && isValidDisplayName(account.username) {
                             account.nickname = account.username
                         }
                         logger("[AccountState] 自动校正用户名: 原 '\(account.username)' -> slug '\(linkSlug)'")
@@ -154,12 +194,21 @@ struct AccountState {
             
             // 自动容错修复 3：如果历史数据中 username 为空，尝试从 Cookie 恢复
             if account.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                if let healedName = extractUsernameFromCookies(), !healedName.isEmpty {
+                if let healedName = extractUsernameFromCookies(), isValidDisplayName(healedName) {
                     logger("[AccountState] 从Cookie自动修复历史空用户名: \(healedName)")
                     account.username = healedName
                     if account.userLink == nil || account.userLink?.isEmpty == true || account.userLink == "/u/" {
                         account.userLink = "/u/\(healedName)"
                     }
+                    needsSave = true
+                }
+            }
+            
+            // 自动容错修复 4：如果 username 是纯数字（即被错存为数字ID），而 nickname 是可读文本（用户名），自动纠正
+            if account.username.allSatisfy({ $0.isNumber }) && !account.username.isEmpty {
+                if let nick = account.nickname, isValidDisplayName(nick) && !nick.allSatisfy({ $0.isNumber }) {
+                    logger("[AccountState] 自动校正：原 username 为数字ID '\(account.username)', 校正为用户名 '\(nick)'")
+                    account.username = nick
                     needsSave = true
                 }
             }
@@ -208,10 +257,13 @@ struct AccountState {
     
     static var displayName: String {
         let acc = getAccount()
-        if let nick = acc?.nickname, !nick.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if let nick = acc?.nickname, isValidDisplayName(nick) {
             return nick
         }
-        return userName
+        if isValidDisplayName(userName) {
+            return userName
+        }
+        return ""
     }
     
     static var nickname: String {
@@ -302,12 +354,12 @@ class LoginStateChecker: ObservableObject {
                         "ul.navbar-right img.avatar",
                         "#navbar5 a[href^='/u/'] img",
                         ".usercard img.avatar",
-                        ".ui-header a img"
+                        "img.avatar"
                     ]
                     for sel in avatarCandidates {
                         if let img = try? doc.select(sel).first() {
                             let src = (try? img.attr("src")) ?? ""
-                            if !src.isEmpty {
+                            if !src.isEmpty && src.contains("avatar") {
                                 var updated = account
                                 updated.avatar = src
                                 AccountState.saveAccount(updated)
@@ -337,23 +389,27 @@ class LoginStateChecker: ObservableObject {
                             let uname = href.replacingOccurrences(of: "/u/", with: "")
                                 .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
                                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                            if !uname.isEmpty {
+                            let linkText = (try? link.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                            let validText = AccountState.isValidDisplayName(linkText) ? linkText : ""
+                            
+                            // 优先采用字母用户名：若 href 中的 uname 为纯数字ID，而链接文本为真实用户名，采用真实用户名
+                            let finalName = (uname.allSatisfy({ $0.isNumber }) && AccountState.isValidDisplayName(validText) && !validText.allSatisfy({ $0.isNumber })) ? validText : uname
+                            
+                            if AccountState.isValidDisplayName(finalName) {
                                 let hasNonAscii = updated.username.unicodeScalars.contains { $0.value > 127 }
-                                if updated.username.isEmpty || hasNonAscii || updated.username.hasPrefix("/u/") {
-                                    logger("[AccountState] 页面加载时自动修复用户名: 原 '\(updated.username)' -> '\(uname)'")
-                                    updated.username = uname
+                                let isDigits = updated.username.allSatisfy { $0.isNumber }
+                                if updated.username.isEmpty || hasNonAscii || (isDigits && !finalName.allSatisfy { $0.isNumber }) || updated.username.hasPrefix("/u/") || !AccountState.isValidDisplayName(updated.username) {
+                                    logger("[AccountState] 页面加载时自动修复用户名: 原 '\(updated.username)' -> '\(finalName)'")
+                                    updated.username = finalName
                                     hasChanges = true
                                 }
                                 if updated.userLink != href {
                                     updated.userLink = href
                                     hasChanges = true
                                 }
-                                let linkText = (try? link.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                                if !linkText.isEmpty && linkText != "我的主页" && linkText != "个人主页" {
-                                    if updated.nickname != linkText {
-                                        updated.nickname = linkText
-                                        hasChanges = true
-                                    }
+                                if AccountState.isValidDisplayName(validText) && updated.nickname != validText {
+                                    updated.nickname = validText
+                                    hasChanges = true
                                 }
                                 break
                             }

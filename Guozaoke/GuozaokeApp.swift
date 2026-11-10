@@ -26,7 +26,7 @@ struct GuozaokeApp: App {
     @StateObject private var launchCounter = LaunchCounter.shared
 
     init() {
-        //UINavigationBar.appearance().tintColor = UIColor.brown
+        applyNavigationBarAppearance()
         applyTabBarBackground()
         _ = ImageCacheManager.shared
     }
@@ -72,8 +72,8 @@ struct GuozaokeApp: App {
             } else {
                 LaunchScreenView()
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            withAnimation {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
                                 isActive = true
                             }
                         }
@@ -115,9 +115,12 @@ private extension GuozaokeApp {
                         .padding()
                     
                     Text(FestivalDate.getFestivalGreeting())
-                        .font(.title)
-                        .fontWeight(.thin)
-                        .padding()
+                        .font(.title2)
+                        .fontWeight(.light)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.75)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 8)
                         .foregroundColor(Color.primary)
                 }
                 .offset(y: -30)
@@ -129,6 +132,17 @@ private extension GuozaokeApp {
         }
     }
     
+    // MARK NavigationBar Appearance
+    func applyNavigationBarAppearance() {
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithDefaultBackground()
+        navBarAppearance.shadowColor = .clear
+        navBarAppearance.shadowImage = UIImage()
+        UINavigationBar.appearance().standardAppearance = navBarAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
+        UINavigationBar.appearance().compactAppearance = navBarAppearance
+    }
+
     // MARK TabBar Appearance
     func applyTabBarBackground() {
         let tabBarAppearance = UITabBarAppearance()

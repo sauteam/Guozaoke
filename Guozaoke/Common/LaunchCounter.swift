@@ -55,7 +55,7 @@ class LaunchCounter: ObservableObject {
     
     private func canShowPurchasePrompt() -> Bool {
         let now = Date()
-        let calendar = Calendar.current
+        let _ = Calendar.current
         
         let lastPromptDate = UserDefaults.standard.object(forKey: lastPromptDateKey) as? Date
         let nextPromptDate = UserDefaults.standard.object(forKey: nextPromptDateKey) as? Date

@@ -10,14 +10,33 @@ import Foundation
 
 class FestivalDate {
     
-    
-    static func getFestivalGreeting() -> String {
-        let userName = AccountState.userName
-        var text     = "过早客欢迎您"
-        if !userName.isEmpty {
-            text = userName + " " + text
+    /// 获取当前时段问候语
+    static func getTimeGreeting(date: Date = Date()) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 5..<11:
+            return "早上好"
+        case 11..<14:
+            return "中午好"
+        case 14..<18:
+            return "下午好"
+        case 18..<24:
+            return "晚上好"
+        default:
+            return "夜深了"
         }
-        return text
+    }
+    
+    /// 启动界面问候语（按时段问候：早上好 / 中午好 / 下午好 / 晚上好 / 夜深了）
+    static func getFestivalGreeting() -> String {
+        let greetingName = AccountState.displayName
+        let timeGreeting = getTimeGreeting()
+        
+        if !greetingName.isEmpty {
+            return "\(greetingName)，\(timeGreeting)"
+        } else {
+            return "\(timeGreeting)，过早客欢迎您"
+        }
     }
     
     /// 节日或欢迎进入过早客

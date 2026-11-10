@@ -309,7 +309,7 @@ class UserInfoParser: ObservableObject {
             logger("[UserInfo] 用户名或主页路径无效，跳过加载: \(userId)")
             return
         }
-        baseUrl = userId
+        baseUrl = trimmedId.userProfileUrl
         guard !isLoading && (hasMoreData || reset) else { return }
         await MainActor.run {
             self.isLoading = true
@@ -350,14 +350,32 @@ class UserInfoParser: ObservableObject {
                     self.replies.removeAll()
                     self.userInfo = parsedUserInfo
                     
-                    // 如果拉取的是当前登录用户的个人主页，同步头像到 AccountState
-                    if AccountState.isSelf(userName: parsedUserInfo.username) || parsedUserInfo.username == AccountState.userName {
+                    // 如果拉取的是当前登录用户的个人主页，同步用户名、昵称和头像到 AccountState
+                    let isCurrentAccount = AccountState.isSelf(userName: parsedUserInfo.username)
+                        || parsedUserInfo.username == AccountState.userName
+                        || parsedUserInfo.usernameLink == AccountState.userName
+                        || (AccountState.isLogin() && (AccountState.userName.allCharactersAreDigits || AccountState.userName == parsedUserInfo.username))
+                    
+                    if isCurrentAccount {
                         if let account = AccountState.getAccount() {
                             var updated = account
+                            var changed = false
+                            if !parsedUserInfo.username.isEmpty && updated.username != parsedUserInfo.username {
+                                updated.username = parsedUserInfo.username
+                                changed = true
+                            }
+                            let nick = !parsedUserInfo.nickname.isEmpty ? parsedUserInfo.nickname : parsedUserInfo.username
+                            if !nick.isEmpty && updated.nickname != nick {
+                                updated.nickname = nick
+                                changed = true
+                            }
                             if !parsedUserInfo.avatar.isEmpty && updated.avatar != parsedUserInfo.avatar {
                                 updated.avatar = parsedUserInfo.avatar
+                                changed = true
+                            }
+                            if changed {
                                 AccountState.saveAccount(updated)
-                                logger("[UserInfoParser] 同步头像至本地账户: \(parsedUserInfo.avatar)")
+                                logger("[UserInfoParser] 同步用户名与个人信息至本地账户: username=\(updated.username), nickname=\(updated.nickname ?? "")")
                             }
                         }
                     }
