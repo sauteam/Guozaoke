@@ -117,25 +117,58 @@ struct NotificationsView: View {
             }
             
             List(viewModel.notifications) { notification in
-                NotificationRowView(
-                    notification: notification,
-                    isDual: isDual,
-                    isSelected: isDual && selectedTopicLink == notification.topicLink,
-                    onSelectTopic: {
-                        selectedTopicLink = notification.topicLink
-                    }
-                )
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                if isDual {
                     Button {
-                        showCommentView      = true
-                        selectedNotification = notification
+                        selectedTopicLink = notification.topicLink
                     } label: {
-                        SFSymbol.reply
+                        NotificationRowView(
+                            notification: notification,
+                            isDual: true,
+                            isSelected: selectedTopicLink == notification.topicLink
+                        )
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(selectedTopicLink == notification.topicLink ? Color.blue.opacity(0.12) : Color.clear)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            showCommentView      = true
+                            selectedNotification = notification
+                        } label: {
+                            SFSymbol.reply
+                        }
+                    }
+                } else {
+                    NavigationLink {
+                        PostDetailView(
+                            postId: notification.topicLink,
+                            targetUsername: notification.username,
+                            targetReplySnippet: notification.content
+                        )
+                    } label: {
+                        NotificationRowView(
+                            notification: notification,
+                            isDual: false,
+                            isSelected: false
+                        )
+                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            showCommentView      = true
+                            selectedNotification = notification
+                        } label: {
+                            SFSymbol.reply
+                        }
                     }
                 }
             }
             .padding(.vertical, 5)
-            .buttonStyle(.plain)
             .listStyle(.plain)
             .refreshable {
                 Task {
@@ -168,96 +201,64 @@ struct NotificationRowView: View {
     let notification: NotificationItem
     var isDual: Bool = false
     var isSelected: Bool = false
-    var onSelectTopic: (() -> Void)? = nil
     
     @State private var isUserAvatarViewActive = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Button {
-                isUserAvatarViewActive = true
-            } label: {
-                KFImageView(notification.avatarURL)
-                    .avatar()
-            }
-            .buttonStyle(.plain)
-            .navigationDestination(isPresented: $isUserAvatarViewActive) {
-                UserInfoView(userId: notification.userId)
-            }
+            KFImageView(notification.avatarURL)
+                .avatar()
+                .onTapGesture {
+                    isUserAvatarViewActive = true
+                }
+                .navigationDestination(isPresented: $isUserAvatarViewActive) {
+                    UserInfoView(userId: notification.userId)
+                }
             
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Button {
-                        isUserAvatarViewActive = true
-                    } label: {
-                        Text(notification.username)
-                            .font(.custom(titleFontName, size: subTitleFontSize))
-                            .fontWeight(.medium)
-                            .foregroundColor(.adaptableBlack)
-                    }
-                    .buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: 5) {
+                // 用户名与行为描述（如：xxx 回复了你的主题）
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(notification.username)
+                        .font(.custom(titleFontName, size: subTitleFontSize))
+                        .fontWeight(.medium)
+                        .foregroundColor(.adaptableBlack)
+                        .onTapGesture {
+                            isUserAvatarViewActive = true
+                        }
                     
                     Text(notification.actionText)
                         .font(.custom(titleFontName, size: subTitleFontSize))
-                        .foregroundColor(.gray)
-                    
-                    if isDual {
-                        Button {
-                            onSelectTopic?()
-                        } label: {
-                            Text(notification.topicTitle)
-                                .font(.custom(titleFontName, size: subTitleFontSize))
-                                .foregroundColor(.adaptableBlack)
-                                .lineLimit(2)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                        .foregroundColor(.secondary)
                 }
                 
-                if isDual {
-                    if !notification.content.isEmpty {
-                        Button {
-                            onSelectTopic?()
-                        } label: {
-                            HTMLContentView(content: notification.content, fontSize: subTitleFontSize)
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } else {
-                    // 单栏模式下整行只有一个 NavigationLink，确保右侧仅展示一个导航箭头
-                    NavigationLink {
-                        PostDetailView(
-                            postId: notification.topicLink,
-                            targetUsername: notification.username,
-                            targetReplySnippet: notification.content
-                        )
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(notification.topicTitle)
-                                .font(.custom(titleFontName, size: subTitleFontSize))
-                                .foregroundColor(.adaptableBlack)
-                                .lineLimit(2)
-                            
-                            if !notification.content.isEmpty {
-                                HTMLContentView(content: notification.content, fontSize: subTitleFontSize)
-                                    .foregroundColor(.gray)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
+                // 主题标题（蓝色高亮表明可点击跳转，不带任何内联箭头，撑满剩余宽度）
+                Text(notification.topicTitle)
+                    .font(.custom(titleFontName, size: subTitleFontSize))
+                    .fontWeight(.medium)
+                    .foregroundColor(.accentColor)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                // 回复内容详情
+                if !notification.content.isEmpty {
+                    HTMLContentView(content: notification.content, fontSize: subTitleFontSize)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // 仅在双窗格模式下由视图手动渲染箭头（单栏模式由外层 NavigationLink 自动在 Cell 右侧提供原生单个箭头）
+            if isDual {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(isSelected ? .accentColor : Color(UIColor.tertiaryLabel))
+                    .padding(.top, 4)
+            }
         }
-        .padding(.horizontal, 4)
         .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isSelected ? Color.blue.opacity(0.12) : Color.clear)
-        )
+        .contentShape(Rectangle())
     }
 }
 

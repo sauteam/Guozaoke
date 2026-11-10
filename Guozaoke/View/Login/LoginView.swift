@@ -131,10 +131,14 @@ struct LoginView: View {
             do {
                 let success = try await loginService.login(email: email, password: password)
                 if success {
-                    successAsyn()
+                    await MainActor.run {
+                        successAsyn()
+                    }
                 }
             } catch {
-                loginService.error = error.localizedDescription
+                await MainActor.run {
+                    loginService.error = error.localizedDescription
+                }
             }
         }
     }

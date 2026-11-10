@@ -679,13 +679,8 @@ class PostDetailParser: ObservableObject {
             let time = try item.select("span.time").text()
             let location = try item.select("span.location").text()
             
-            let likeCount = try {
-                let text = try item.select(".floor").last()?.text() ?? "0"
-                return text
-            }()
-            let zanNumber = likeCount.replacingOccurrences(of: "赞 ", with: "").replacingOccurrences(of: "已赞 ", with: "")
-            let replyZanNumber = Int(zanNumber) ?? 0
-            let likeVoteElement = try item.select("a.J_replyVote").first()
+            // 解析楼层点赞元素及点赞状态
+            let likeVoteElement = try item.select("a.J_replyVote, .reply-vote, a[href*='replyVote'], .gzk-reply-vote").first()
             var likeLink = try likeVoteElement?.attr("href") ?? ""
             if likeLink.isEmpty || likeLink == "javascript:;" || likeLink == "#" {
                 if let replyId = try? likeVoteElement?.attr("data-id"), !replyId.isEmpty {
@@ -694,7 +689,33 @@ class PostDetailParser: ObservableObject {
                     likeLink = "/replyVote?reply_id=\(replyId)"
                 }
             }
-            let isVoted = try likeVoteElement?.attr("data-voted") == "1"
+            
+            let votedAttr = try likeVoteElement?.attr("data-voted") ?? ""
+            let ariaPressed = try likeVoteElement?.attr("aria-pressed") ?? ""
+            let voteText = try likeVoteElement?.text() ?? ""
+            let voteTitle = try likeVoteElement?.attr("title") ?? ""
+            let isVoted = (votedAttr == "1" || ariaPressed == "true" || voteTitle.contains("取消") || voteText.contains("已赞"))
+            
+            // 解析赞数：优先从 data-count/data-votes 读取，其次提取数字，最后保底
+            var replyZanNumber = 0
+            if let countAttr = try? likeVoteElement?.attr("data-count"), let cnt = Int(countAttr) {
+                replyZanNumber = cnt
+            } else if let countAttr = try? likeVoteElement?.attr("data-votes"), let cnt = Int(countAttr) {
+                replyZanNumber = cnt
+            } else if let countElem = try? likeVoteElement?.select(".vote-count, .count, span.num").first()?.text(),
+                      let cnt = Int(countElem.filter { $0.isNumber }) {
+                replyZanNumber = cnt
+            } else {
+                let digits = voteText.filter { $0.isNumber }
+                if let cnt = Int(digits) {
+                    replyZanNumber = cnt
+                }
+            }
+            // 若已点赞且赞数为 0，保底至少显示 1
+            if isVoted && replyZanNumber == 0 {
+                replyZanNumber = 1
+            }
+            
             return Reply(
                 floor: floor,
                 author: replyAuthor,

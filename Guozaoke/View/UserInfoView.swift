@@ -33,7 +33,25 @@ struct UserInfoView: View {
         if let range = trimmed.range(of: "Lv.", options: .caseInsensitive) {
             trimmed = String(trimmed[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        if trimmed.isEmpty || trimmed == "/u/" {
+        if trimmed.isEmpty || trimmed == "/u/" || trimmed == "我的账号" {
+            let uName = AccountState.userName
+            if !uName.isEmpty && uName != "/u/" {
+                return uName
+            }
+            let link = AccountState.userLink
+            let linkSlug = link.replacingOccurrences(of: "/u/", with: "")
+                .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !linkSlug.isEmpty && linkSlug != "/u/" && linkSlug != "guozaoke" {
+                return linkSlug
+            }
+            if let cookieUser = AccountState.extractUsernameFromCookies(), !cookieUser.isEmpty {
+                return cookieUser
+            }
+            return ""
+        }
+        // 如果传入的是当前登录用户的昵称，且本地已存有对应真实用户名 slug，自动转换为真实 slug
+        if AccountState.isLogin() && trimmed == AccountState.displayName && !AccountState.userName.isEmpty {
             return AccountState.userName
         }
         return trimmed
@@ -48,8 +66,20 @@ struct UserInfoView: View {
             } else if parser.isLoading && parser.userInfo == nil {
                 ProgressView("")
             } else if let errorMessage = parser.errorMessage {
-                Text("加载失败: \(errorMessage)")
-                    .foregroundColor(.red)
+                VStack(spacing: 12) {
+                    Text("加载失败: \(errorMessage)")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    Button("点击重试") {
+                        let targetId = resolvedUserId
+                        if !targetId.isEmpty {
+                            Task { await parser.fetchUserInfoAndData(profileUrl(targetId), reset: true) }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
             } else if let userInfo = parser.userInfo {
                 userInfoHeader(userInfo)
                 userInfoTabs(userInfo)
@@ -75,7 +105,7 @@ struct UserInfoView: View {
                     linkText: (parser.userInfo?.username ?? "") + "的更多回复")
             }
         })
-        .navigationTitleStyle(AccountState.isSelf(userName: userId) ? "我的主页" : parser.userInfo?.nickname ?? "个人主页")
+        .navigationTitleStyle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationBarTitleDisplayMode(.inline)
         .tabbarToolBar()
         .toolbar {

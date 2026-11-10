@@ -407,8 +407,8 @@ struct ReplyItemView: View {
                         }
                     }
                 }
-                let number  = reply.like
-                let zanText = reply.isLiked ? "已赞 \(number)" : "赞 \(number)"
+                let number  = reply.isLiked ? max(reply.like, 1) : reply.like
+                let zanText = reply.isLiked ? "已赞 \(number)" : (number > 0 ? "赞 \(number)" : "赞")
                 Text(zanText)
                     .font(.caption)
                     .foregroundColor(reply.isLiked ? .accentColor : .secondary)
@@ -426,9 +426,9 @@ struct ReplyItemView: View {
                                     DispatchQueue.main.async {
                                         reply.isLiked = true
                                         if let newCount = model?.count {
-                                            reply.like = newCount
+                                            reply.like = max(newCount, 1)
                                         } else {
-                                            reply.like += 1
+                                            reply.like = max(reply.like + 1, 1)
                                         }
                                         ToastView.successToast("点赞成功")
                                     }
@@ -436,6 +436,7 @@ struct ReplyItemView: View {
                                     if model?.message?.contains("already_voted") == true {
                                         DispatchQueue.main.async {
                                             reply.isLiked = true
+                                            reply.like = max(reply.like, 1)
                                             ToastView.successToast("已点赞")
                                         }
                                     }

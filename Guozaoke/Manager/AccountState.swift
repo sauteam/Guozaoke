@@ -15,6 +15,7 @@ struct AccountInfo: Codable {
     var xsrfToken: String?
     var avatar: String?
     var userLink: String?
+    var nickname: String?
     func isValid() -> Bool {
         return xsrfToken.isEmpty == true
     }
@@ -93,12 +94,18 @@ struct AccountState {
             return nil
         }
         let parts = rawVal.components(separatedBy: "|")
-        if let firstPart = parts.first,
-           let data = Data(base64Encoded: firstPart),
-           let decoded = String(data: data, encoding: .utf8) {
-            let trimmed = decoded.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !trimmed.isEmpty {
-                return trimmed
+        // 依次尝试所有 parts (适配 Tornado v1: base64|timestamp|sig 与 v2: 2|1:0|10:timestamp|4:user|44:base64|sig)
+        for part in parts {
+            var candidate = part
+            if let colonIdx = candidate.firstIndex(of: ":") {
+                candidate = String(candidate[candidate.index(after: colonIdx)...])
+            }
+            if let data = Data(base64Encoded: candidate),
+               let decoded = String(data: data, encoding: .utf8) {
+                let trimmed = decoded.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty && trimmed.count <= 64 && trimmed.rangeOfCharacter(from: CharacterSet.whitespacesAndNewlines) == nil {
+                    return trimmed
+                }
             }
         }
         return nil
@@ -114,7 +121,38 @@ struct AccountState {
             var account = try JSONDecoder()
                 .decode(AccountInfo.self, from: data)
             
-            // 自动容错修复：如果历史数据中 username 为空，尝试从 Cookie 恢复
+            var needsSave = false
+            
+            // 自动容错修复 1：如果 username 带有 /u/ 前缀，清理为纯用户名
+            if account.username.hasPrefix("/u/") {
+                let clean = account.username.replacingOccurrences(of: "/u/", with: "")
+                    .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if !clean.isEmpty {
+                    account.username = clean
+                    needsSave = true
+                }
+            }
+            
+            // 自动容错修复 2：如果 userLink 包含合法 slug，但 username 包含了汉字或为空，修复 username 并保留 nickname
+            if let link = account.userLink, link.contains("/u/") {
+                let linkSlug = link.replacingOccurrences(of: "/u/", with: "")
+                    .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if !linkSlug.isEmpty && linkSlug != "guozaoke" {
+                    let hasNonAscii = account.username.unicodeScalars.contains { $0.value > 127 }
+                    if account.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || hasNonAscii {
+                        if account.nickname == nil || account.nickname?.isEmpty == true {
+                            account.nickname = account.username
+                        }
+                        logger("[AccountState] 自动校正用户名: 原 '\(account.username)' -> slug '\(linkSlug)'")
+                        account.username = linkSlug
+                        needsSave = true
+                    }
+                }
+            }
+            
+            // 自动容错修复 3：如果历史数据中 username 为空，尝试从 Cookie 恢复
             if account.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 if let healedName = extractUsernameFromCookies(), !healedName.isEmpty {
                     logger("[AccountState] 从Cookie自动修复历史空用户名: \(healedName)")
@@ -122,9 +160,14 @@ struct AccountState {
                     if account.userLink == nil || account.userLink?.isEmpty == true || account.userLink == "/u/" {
                         account.userLink = "/u/\(healedName)"
                     }
-                    saveAccount(account)
+                    needsSave = true
                 }
             }
+            
+            if needsSave {
+                saveAccount(account)
+            }
+            
             ACCOUNT = account
             return ACCOUNT
         } catch {
@@ -161,6 +204,18 @@ struct AccountState {
     
     static var userName: String {
         return getAccount()?.username ?? .default
+    }
+    
+    static var displayName: String {
+        let acc = getAccount()
+        if let nick = acc?.nickname, !nick.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return nick
+        }
+        return userName
+    }
+    
+    static var nickname: String {
+        return displayName
     }
     
     static var userLink: String {
@@ -263,30 +318,50 @@ class LoginStateChecker: ObservableObject {
                     }
                 }
             }
-            if AccountState.userName.isEmpty {
-                if let account = AccountState.getAccount() {
-                    var updated = account
-                    let userLinkCandidates = [
-                        ".gzk-avatar-menu-panel a[href^='/u/']",
-                        "ul.navbar-right a[href^='/u/']",
-                        ".gzk-desktop-account a[href^='/u/']",
-                        "#navbar5 a[href^='/u/']"
-                    ]
-                    for sel in userLinkCandidates {
-                        if let link = try? doc.select(sel).first() {
-                            let href = (try? link.attr("href")) ?? ""
-                            if !href.isEmpty && href != "/u/" && href != "/u/guozaoke" {
-                                let uname = href.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                                if !uname.isEmpty {
+            if let account = AccountState.getAccount() {
+                var updated = account
+                var hasChanges = false
+                let userLinkCandidates = [
+                    ".gzk-avatar-menu-panel a[href^='/u/']",
+                    ".gzk-avatar-menu a[href^='/u/']",
+                    "ul.navbar-right a[href^='/u/']",
+                    ".navbar-nav.navbar-right a[href^='/u/']",
+                    ".gzk-desktop-account a[href^='/u/']",
+                    "#navbar5 a[href^='/u/']",
+                    ".usercard a[href^='/u/']"
+                ]
+                for sel in userLinkCandidates {
+                    if let link = try? doc.select(sel).first() {
+                        let href = (try? link.attr("href")) ?? ""
+                        if !href.isEmpty && href != "/u/" && href != "/u/guozaoke" {
+                            let uname = href.replacingOccurrences(of: "/u/", with: "")
+                                .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                            if !uname.isEmpty {
+                                let hasNonAscii = updated.username.unicodeScalars.contains { $0.value > 127 }
+                                if updated.username.isEmpty || hasNonAscii || updated.username.hasPrefix("/u/") {
+                                    logger("[AccountState] 页面加载时自动修复用户名: 原 '\(updated.username)' -> '\(uname)'")
                                     updated.username = uname
-                                    updated.userLink = href
-                                    AccountState.saveAccount(updated)
-                                    logger("[AccountState] 页面加载时自动修复用户名: \(uname)")
-                                    break
+                                    hasChanges = true
                                 }
+                                if updated.userLink != href {
+                                    updated.userLink = href
+                                    hasChanges = true
+                                }
+                                let linkText = (try? link.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                                if !linkText.isEmpty && linkText != "我的主页" && linkText != "个人主页" {
+                                    if updated.nickname != linkText {
+                                        updated.nickname = linkText
+                                        hasChanges = true
+                                    }
+                                }
+                                break
                             }
                         }
                     }
+                }
+                if hasChanges {
+                    AccountState.saveAccount(updated)
                 }
             }
         }

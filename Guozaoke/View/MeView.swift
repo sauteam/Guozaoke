@@ -64,14 +64,14 @@ struct MeView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
             logger("[login] me")
-            if let userInfo = notification.userInfo,
-               let user = userInfo as? Dictionary<String, Any> {
-                let username  = user["userName"] as? String ?? ""
-                if !username.isEmpty {
-                    Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
-                }
+            let username = (notification.userInfo?["userName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? AccountState.userName
+            if !username.isEmpty {
+                Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
             }
-
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .logoutSuccessNoti)) { _ in
+            logger("[logout] me")
+            parser.userInfo = nil
         }
         .onDisappear {
             if !AccountState.isLogin() {
@@ -147,11 +147,12 @@ struct MyProfileView: View {
                     .avatar(size: 60)
                     
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(AccountState.userName.isEmpty ? "我的账号" : AccountState.userName)
+                        let displayName = (parser.userInfo?.nickname.isEmpty == false ? parser.userInfo?.nickname : nil) ?? (AccountState.displayName.isEmpty ? "我的账号" : AccountState.displayName)
+                        Text(displayName)
                             .titleFontStyle()
                         
                         Text("我的主页")
-                            .titleFontStyle()
+                            .subTitleFontStyle()
                     }
                 }
             }

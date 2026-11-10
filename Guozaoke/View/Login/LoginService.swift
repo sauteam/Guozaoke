@@ -53,7 +53,7 @@ private func showToast() {
 
 // MARK: - 登录服务
 class LoginService: ObservableObject {
-    @State var isLoggedIn = false
+    @Published var isLoggedIn = false
     @Published var isLoading = false
     @Published var error: String?
     
@@ -63,24 +63,37 @@ class LoginService: ObservableObject {
     func login(email: String, password: String) async throws -> Bool {
         if email.isEmpty || password.isEmpty {
             ToastView.warningToast("填写账号和密码")
-            return (false)
-        }
-        var loginSuccess = false
-        guard xsrfToken.isEmpty == false else {
-            let (success, token) = try await APIService.fetchLoginPage()
-            if success {
-                logger("login success")
-                xsrfToken = token
-                loginSuccess = try await login(email: email, password: password)
-            } else {
-                logger("login fail")
-            }
-            return loginSuccess
+            return false
         }
         
         await MainActor.run {
-            isLoggedIn = true
-            isLoading  = false
+            self.isLoading = true
+            self.error = nil
+        }
+        
+        var loginSuccess = false
+        guard xsrfToken.isEmpty == false else {
+            do {
+                let (success, token) = try await APIService.fetchLoginPage()
+                if success {
+                    logger("login token fetched")
+                    xsrfToken = token
+                    loginSuccess = try await login(email: email, password: password)
+                } else {
+                    logger("login token fetch failed")
+                    await MainActor.run {
+                        self.isLoading = false
+                        self.error = "获取页面Token失败"
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.error = error.localizedDescription
+                }
+                throw error
+            }
+            return loginSuccess
         }
         
         // 构建请求参数并通过 NetworkManager 发送，确保享有自动解算防爬盾和自动带Cookie重试能力
@@ -90,52 +103,76 @@ class LoginService: ObservableObject {
             "_xsrf": xsrfToken
         ]
         
-        let responseString = try await NetworkManager.shared.request(
-            APIService.loginUrl,
-            method: .post,
-            parameters: parameters
-        )
+        let responseString: String
+        do {
+            responseString = try await NetworkManager.shared.request(
+                APIService.loginUrl,
+                method: .post,
+                parameters: parameters
+            )
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.error = error.localizedDescription
+            }
+            throw error
+        }
         
         // 解析响应
         let doc = try SwiftSoup.parse(responseString)
         
         // 检查错误信息
         if let errorMessage = try doc.select("ul.alert-danger li").first()?.text() {
+            await MainActor.run {
+                self.isLoading = false
+                self.error = errorMessage
+            }
             throw LoginError.loginFailed(message: errorMessage)
         }
-        logger("[login] \(doc)")
+        logger("[login] response parsed")
         
         // 尝试多种选择器解析用户名和个人主页链接
         var username = ""
         var userLink = ""
         var avatar = ""
+        var nickname = ""
         
-        // 1. 尝试从过早客导航栏或头像菜单中提取个人主页链接 (/u/{username})
+        // 1. 尝试从过早客导航栏或头像菜单中提取个人主页链接 (/u/{username}) 与真实 handle
         let userLinkCandidates = [
             ".gzk-avatar-menu-panel a[href^='/u/']",
+            ".gzk-avatar-menu a[href^='/u/']",
             "ul.navbar-right a[href^='/u/']",
+            ".navbar-nav.navbar-right a[href^='/u/']",
             ".gzk-desktop-account a[href^='/u/']",
+            "#navbar5 a[href^='/u/']",
             ".usercard a[href^='/u/']",
-            ".ui-header a[href^='/u/']",
-            "#navbar5 a[href^='/u/']"
+            ".ui-header a[href^='/u/']"
         ]
         for sel in userLinkCandidates {
             if let linkElement = try? doc.select(sel).first() {
                 let href = (try? linkElement.attr("href")) ?? ""
                 if !href.isEmpty && href != "/u/" && href != "/u/guozaoke" {
                     userLink = href
+                    let slug = href.replacingOccurrences(of: "/u/", with: "")
+                        .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    if !slug.isEmpty {
+                        username = slug
+                    }
                     let text = (try? linkElement.text())?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                     if !text.isEmpty && text != "我的主页" && text != "个人主页" {
-                        username = text
+                        nickname = text
                     }
                     break
                 }
             }
         }
         
-        // 2. 如果找到了链接，但文本不是用户名，从 href 中提取：/u/{username} -> {username}
+        // 2. 如果找到了链接，但尚未提取出用户名，从 href 中提取：/u/{username} -> {username}
         if !userLink.isEmpty && username.isEmpty {
-            username = userLink.replacingOccurrences(of: "/u/", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            username = userLink.replacingOccurrences(of: "/u/", with: "")
+                .components(separatedBy: CharacterSet(charactersIn: "?#/")).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         }
         
         // 3. 兜底尝试 .ui-header .username
@@ -152,20 +189,11 @@ class LoginService: ObservableObject {
             }
         }
         
-        // 5. 兜底尝试从 Cookie 中解析出 user 的数字ID
+        // 5. 兜底尝试从 Cookie 中解析出 user 的数字ID / 用户名
         if username.isEmpty {
-            if let cookies = HTTPCookieStorage.shared.cookies {
-                for c in cookies where c.name == "user" {
-                    let rawVal = c.value.replacingOccurrences(of: "\"", with: "")
-                    let parts = rawVal.components(separatedBy: "|")
-                    if let firstPart = parts.first,
-                       let data = Data(base64Encoded: firstPart),
-                       let decodedUid = String(data: data, encoding: .utf8), !decodedUid.isEmpty {
-                        username = decodedUid
-                        userLink = "/u/\(decodedUid)"
-                        break
-                    }
-                }
+            if let cookieUser = AccountState.extractUsernameFromCookies(), !cookieUser.isEmpty {
+                username = cookieUser
+                userLink = "/u/\(cookieUser)"
             }
         }
         
@@ -201,23 +229,38 @@ class LoginService: ObservableObject {
 
         let topicCount = (try? doc.select("div.topic-item").count) ?? 0
         if !username.isEmpty || topicCount > 0 {
-            let account = AccountInfo(username: username, xsrfToken: xsrfToken, avatar: avatar, userLink: userLink)
-            DispatchQueue.main.async {
+            let finalUsername = username
+            let finalUserLink = userLink
+            let finalAvatar = avatar
+            let finalNickname = nickname
+            let account = AccountInfo(
+                username: finalUsername,
+                xsrfToken: xsrfToken,
+                avatar: finalAvatar,
+                userLink: finalUserLink,
+                nickname: finalNickname.isEmpty ? nil : finalNickname
+            )
+            await MainActor.run {
                 AccountState.saveAccount(account)
                 showToast()
-                loginSuccess  = true
-                NotificationCenter.default.post(name: .loginSuccessNoti, object: nil, userInfo: ["userId":userLink, "userName": username, "avatar": avatar])
+                self.isLoggedIn = true
+                self.isLoading = false
+                NotificationCenter.default.post(
+                    name: .loginSuccessNoti,
+                    object: nil,
+                    userInfo: ["userId": finalUserLink, "userName": finalUsername, "avatar": finalAvatar, "nickname": finalNickname]
+                )
+                LoginStateChecker.LoginStateHandle()
             }
             logger("[userInfo]\(account)")                
             APIService.saveCookiesToAppGroups()
-            
-            Task {
-                await updateLoginState()
-            }
+            return true
         } else {
+            await MainActor.run {
+                self.isLoading = false
+            }
             throw LoginError.loginFailed(message: "登录失败")
         }
-        return loginSuccess
     }
     
     @MainActor

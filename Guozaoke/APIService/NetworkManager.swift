@@ -129,10 +129,16 @@ class NetworkManager: ObservableObject {
                 allUrl = APIService.baseUrlString + path
             }
             logger("[request] \(url) allUrl \(allUrl)")
-            guard let validURL = URL(string: allUrl) else {
+            var validURL = URL(string: allUrl)
+            if validURL == nil {
+                if let encoded = allUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                    validURL = URL(string: encoded)
+                }
+            }
+            guard let finalURL = validURL else {
                  continuation.resume(throwing: URLError(.badURL))
                  return
-             }
+            }
      
             // 默认头部 - 使用iOS Safari User-Agent，并在后面添加应用标识
             var defaultHeaders: HTTPHeaders = [
@@ -157,7 +163,7 @@ class NetworkManager: ObservableObject {
             }
             
             AF.request(
-                validURL,
+                finalURL,
                 method: method,
                 parameters: parameters,
                 headers: defaultHeaders
