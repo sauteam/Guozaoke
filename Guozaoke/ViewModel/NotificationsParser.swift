@@ -170,6 +170,8 @@ class NotificationsParser: ObservableObject {
             
             DispatchQueue.main.async {
                 self.notifications = newNotifications
+                NotificationManager.shared.unreadCount = 0
+                clearAppBadge()
             }
             
         } catch {

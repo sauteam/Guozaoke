@@ -178,6 +178,7 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.noti.rawValue, systemImage: TabBarView.Tab.noti.icon) }
             .tag(TabBarView.Tab.noti)
+            .badge(notificationManager.unreadCount)
             
             Group {
                 NavigationStack {
@@ -193,6 +194,10 @@ struct TabContentView: View {
 private extension TabContentView {
     
     private func handleTabChange(newTab: TabBarView.Tab) {
+        if newTab == .noti {
+            notificationManager.unreadCount = 0
+            clearAppBadge()
+        }
         let now = Date()
         if let lastTab = lastSelectedTab, let lastTime = lastTapTime, lastTab == newTab {
             if now.timeIntervalSince(lastTime) < 0.5 {

@@ -383,37 +383,48 @@ class PostListParser: ObservableObject {
 
 private extension PostListParser {
     func parseNotification(doc: SwiftSoup.Document) throws {
-        let notificationLinks = try doc.select("a[href*='notifications']")
-        if !notificationLinks.isEmpty() {
-            let titleText = try notificationLinks.first()?.attr("title") ?? ""
-            //logger("完整的提醒文本: \(titleText)")
-            let pattern = "\\d+"
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-                let results = regex.matches(in: titleText, options: [], range: NSRange(titleText.startIndex..., in: titleText))
-                if let match = results.first {
-                    let numberString = (titleText as NSString).substring(with: match.range)
-                    self.notificationLinksCount = Int(numberString) ?? 0
-                    NotificationManager.shared.unreadCount = self.notificationLinksCount
-                    updateAppBadge(NotificationManager.shared.unreadCount)
-                    logger("解析出的未读通知数量: \(numberString)")
-                } else {
-                    //logger("未找到数字")
-                }
-            }
-            // 检查是否包含未读消息
-            if try !doc.select(".mail-status.unread").isEmpty() {
-                logger("存在未读通知")
-            } else {
-                self.notificationLinksCount = 0
-                NotificationManager.shared.unreadCount = 0
-                updateAppBadge(0)
-                logger("没有未读通知")
-            }
-        } else {
+        guard let notiLink = try doc.select("a[href*='notifications']").first() else {
+            self.notificationLinksCount = 0
             NotificationManager.shared.unreadCount = 0
             updateAppBadge(0)
-            logger("未找到通知链接")
+            return
         }
+        
+        var count = 0
+        
+        // 1. 尝试从子元素（例如 .badge, .count, span.badge）提取数字
+        if let badgeText = try? notiLink.select(".badge, .count, span.badge, span.num").first()?.text(),
+           let num = Int(badgeText.filter({ $0.isNumber })), num > 0 {
+            count = num
+        }
+        
+        // 2. 尝试从 title 属性提取（如 "2条未读提醒" 或 "2 条提醒"）
+        if count == 0 {
+            let titleText = (try? notiLink.attr("title")) ?? ""
+            if let num = Int(titleText.filter({ $0.isNumber })), num > 0 {
+                count = num
+            }
+        }
+        
+        // 3. 尝试从链接自身文本提取（如 "2" 或 "提醒(2)"）
+        if count == 0 {
+            let linkText = (try? notiLink.text()) ?? ""
+            if let num = Int(linkText.filter({ $0.isNumber })), num > 0 {
+                count = num
+            }
+        }
+        
+        // 4. 检查是否有未读标记或样式
+        let classAttr = (try? notiLink.attr("class")) ?? ""
+        let hasUnreadClass = classAttr.contains("unread") || classAttr.contains("new") || (try? notiLink.select(".unread, .dot, .badge").isEmpty) == false
+        if count == 0 && hasUnreadClass {
+            count = 1
+        }
+        
+        self.notificationLinksCount = count
+        NotificationManager.shared.unreadCount = count
+        updateAppBadge(count)
+        logger("[PostListParser] 解析未读通知数: \(count)")
     }
         
     // 解析导航栏
