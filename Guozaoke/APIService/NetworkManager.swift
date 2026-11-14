@@ -119,7 +119,9 @@ class NetworkManager: ObservableObject {
         _ url: String,
         method: HTTPMethod = .get,
         parameters: Parameters? = nil,
+        encoding: ParameterEncoding = URLEncoding.default,
         headers: HTTPHeaders? = nil,
+        showErrorToast: Bool = true,
         retryCount: Int = 0
     ) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
@@ -166,6 +168,7 @@ class NetworkManager: ObservableObject {
                 finalURL,
                 method: method,
                 parameters: parameters,
+                encoding: encoding,
                 headers: defaultHeaders
             )
             .validate()
@@ -193,7 +196,9 @@ class NetworkManager: ObservableObject {
                                             url,
                                             method: method,
                                             parameters: parameters,
+                                            encoding: encoding,
                                             headers: headers,
+                                            showErrorToast: showErrorToast,
                                             retryCount: retryCount + 1
                                         )
                                         continuation.resume(returning: retryResult)
@@ -212,26 +217,28 @@ class NetworkManager: ObservableObject {
                     logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
                     continuation.resume(throwing: error)
                     
-                    let statusCode = response.response?.statusCode ?? 0
-                    var desc = "出现错误❌: [\(statusCode)]"
-                    
-                    if statusCode == 404 {
-                        desc = "该内容不存在或已被删除 (404)"
-                    } else if statusCode == 403 {
-                        desc = "访问被拒绝或登录已过期 (403)"
-                        if !LoginStateChecker.isLogin {
+                    if showErrorToast {
+                        let statusCode = response.response?.statusCode ?? 0
+                        var desc = "出现错误❌: [\(statusCode)]"
+                        
+                        if statusCode == 404 {
+                            desc = "该内容不存在或已被删除 (404)"
+                        } else if statusCode == 403 {
+                            desc = "访问被拒绝或登录已过期 (403)"
+                            if !LoginStateChecker.isLogin {
+                                desc = needLoginTextCanDo
+                                LoginStateChecker.LoginStateHandle()
+                            }
+                            logger("[403]重新登录处理  refreshTokenNoti \(url)")
+                            NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
+                        } else if statusCode == 500 {
+                            desc = "服务器开小差了，请稍后再试 (500)"
+                        } else if !LoginStateChecker.isLogin {
                             desc = needLoginTextCanDo
                             LoginStateChecker.LoginStateHandle()
                         }
-                        logger("[403]重新登录处理  refreshTokenNoti \(url)")
-                        NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
-                    } else if statusCode == 500 {
-                        desc = "服务器开小差了，请稍后再试 (500)"
-                    } else if !LoginStateChecker.isLogin {
-                        desc = needLoginTextCanDo
-                        LoginStateChecker.LoginStateHandle()
+                        ToastView.warningToast(desc)
                     }
-                    ToastView.warningToast(desc)
                 }
             }
         }
@@ -239,17 +246,31 @@ class NetworkManager: ObservableObject {
     func post(
         _ url: String,
         parameters: Parameters? = nil,
-        headers: HTTPHeaders? = nil
+        headers: HTTPHeaders? = nil,
+        showErrorToast: Bool = true
     ) async throws -> String {
-        try await request(url, method: .post, parameters: parameters, headers: headers)
+        try await request(url, method: .post, parameters: parameters, headers: headers, showErrorToast: showErrorToast)
+    }
+    
+    func postJSON(
+        _ url: String,
+        parameters: Parameters? = nil,
+        headers: HTTPHeaders? = nil,
+        showErrorToast: Bool = true
+    ) async throws -> String {
+        var jsonHeaders: HTTPHeaders = headers ?? [:]
+        jsonHeaders.update(name: "Content-Type", value: "application/json")
+        jsonHeaders.update(name: "Accept", value: "application/json")
+        return try await request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: jsonHeaders, showErrorToast: showErrorToast)
     }
     
     func get(
         _ url: String,
         parameters: Parameters? = nil,
-        headers: HTTPHeaders? = nil
+        headers: HTTPHeaders? = nil,
+        showErrorToast: Bool = true
     ) async throws -> String {
-        try await request(url, method: .get, parameters: parameters, headers: headers)
+        try await request(url, method: .get, parameters: parameters, headers: headers, showErrorToast: showErrorToast)
     }
 }
 

@@ -9,6 +9,8 @@ import SwiftUI
 
 struct UserInfoView: View {
     let userId: String
+    var fromChatTargetId: String? = nil
+    @Environment(\.dismiss) private var dismiss
     @State private var isLoading = true
     @StateObject private var parser = UserInfoParser()
     @ObservedObject private var pointsParser = PointsParser.shared
@@ -126,17 +128,21 @@ struct UserInfoView: View {
         .navigationDestination(isPresented: $showChatDetail, destination: {
             if let u = parser.userInfo {
                 let cleanNum = u.number.components(separatedBy: CharacterSet(charactersIn: "0123456789").inverted).joined()
+                let targetId = cleanNum.isEmpty ? u.username : cleanNum
+                let thread = DirectMessageManager.shared.findThread(targetId: targetId)
                 ChatDetailView(
-                    targetId: cleanNum.isEmpty ? u.username : cleanNum,
+                    targetId: targetId,
                     targetUsername: u.username,
                     targetNickname: u.nickname.isEmpty ? u.username : u.nickname,
-                    targetAvatar: u.avatar
+                    targetAvatar: u.avatar,
+                    conversationId: thread?.conversationId
                 )
             }
         })
+        .navigationTitle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationTitleStyle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationBarTitleDisplayMode(.inline)
-        .tabbarToolBar()
+        .modifier(ConditionalTabBarToolBar(shouldApply: fromChatTargetId == nil))
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 profileMenu()
@@ -268,6 +274,22 @@ struct UserInfoView: View {
                     ToastView.warningToast("请先登录社区再发送私信")
                     return
                 }
+                
+                // 如果当前正是从私信详情进入该主页，点击直接返回私信详情，避免再次重复跳转
+                if let chatTarget = fromChatTargetId, !chatTarget.isEmpty {
+                    let cleanNum = parser.userInfo?.number.components(separatedBy: CharacterSet(charactersIn: "0123456789").inverted).joined() ?? ""
+                    let uname = parser.userInfo?.username ?? ""
+                    let currentProfileTarget = cleanNum.isEmpty ? uname : cleanNum
+                    
+                    if DirectMessageManager.shared.isSameConversation(
+                        DirectMessageThread(conversationId: nil, targetId: chatTarget, targetUsername: chatTarget, lastMessage: "", lastUpdated: Date(), unreadCount: 0),
+                        DirectMessageThread(conversationId: nil, targetId: currentProfileTarget, targetUsername: uname, lastMessage: "", lastUpdated: Date(), unreadCount: 0)
+                    ) || chatTarget == currentProfileTarget || chatTarget == uname || chatTarget == userId || chatTarget == resolvedUserId {
+                        dismiss()
+                        return
+                    }
+                }
+                
                 showChatDetail = true
             }) {
                 Text("私信")
@@ -548,6 +570,17 @@ struct MyReplyRowView: View {
         .onTapGesture {
             isPostDetailViewActive = true
             logger("titleLink \(myReply.titleLink)")
+        }
+    }
+}
+
+fileprivate struct ConditionalTabBarToolBar: ViewModifier {
+    let shouldApply: Bool
+    func body(content: Content) -> some View {
+        if shouldApply {
+            content.tabbarToolBar()
+        } else {
+            content
         }
     }
 }

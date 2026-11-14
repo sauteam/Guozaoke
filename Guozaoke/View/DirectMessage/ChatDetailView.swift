@@ -12,12 +12,15 @@ struct ChatDetailView: View {
     let targetUsername: String
     let targetNickname: String?
     let targetAvatar: String?
+    var conversationId: Int? = nil
 
     @ObservedObject private var manager = DirectMessageManager.shared
     @State private var inputText: String = ""
     @FocusState private var isInputFocused: Bool
     @State private var currentMyAvatar: String? = nil
     @State private var showClearConfirmation: Bool = false
+    @State private var selectedUserIdForProfile: String? = nil
+    @State private var hasScrolledToBottomOnFirstLoad: Bool = false
 
     private var currentThread: DirectMessageThread? {
         manager.findThread(targetId: targetId)
@@ -81,65 +84,71 @@ struct ChatDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // 聊天消息滚动视图
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        // 顶部安全提醒条（对审合规护身符）
-                        safetyBanner
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    // 顶部安全提醒条（对审合规护身符）
+                    safetyBanner
 
-                        if manager.isLoadingMessages && messages.isEmpty {
-                            ProgressView("加载私信历史...")
-                                .padding(.vertical, 20)
-                        }
-
-                        ForEach(messages) { msg in
-                            messageBubble(msg)
-                                .id(msg.id)
-                        }
+                    if manager.isLoadingMessages && messages.isEmpty {
+                        ProgressView("加载私信历史...")
+                            .padding(.vertical, 20)
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                }
-                .background(Color(UIColor.systemGroupedBackground))
-                .onTapGesture {
-                    isInputFocused = false
-                }
-                .onChange(of: messages.count) { _ in
-                    if let lastId = messages.last?.id {
-                        withAnimation {
-                            proxy.scrollTo(lastId, anchor: .bottom)
-                        }
+
+                    ForEach(messages) { msg in
+                        messageBubble(msg)
+                            .id(msg.id)
                     }
                 }
-                .onAppear {
-                    if let lastId = messages.last?.id {
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+            }
+            .background(Color(UIColor.systemGroupedBackground))
+            .safeAreaInset(edge: .bottom) {
+                bottomInputBar
+            }
+            .onTapGesture {
+                isInputFocused = false
+            }
+            .onChange(of: messages.count) { _ in
+                if let lastId = messages.last?.id {
+                    withAnimation {
                         proxy.scrollTo(lastId, anchor: .bottom)
                     }
                 }
             }
-
-            // 底部输入栏
-            bottomInputBar
+            .onAppear {
+                if !hasScrolledToBottomOnFirstLoad, let lastId = messages.last?.id {
+                    hasScrolledToBottomOnFirstLoad = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        proxy.scrollTo(lastId, anchor: .bottom)
+                    }
+                }
+            }
         }
         .navigationTitle(currentTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: Binding(
+            get: { selectedUserIdForProfile != nil },
+            set: { if !$0 { selectedUserIdForProfile = nil } }
+        )) {
+            if let uid = selectedUserIdForProfile {
+                UserInfoView(userId: uid, fromChatTargetId: targetId)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 chatMenu
             }
         }
-        .refreshable {
-            hapticFeedback()
-            await manager.fetchMessages(for: targetId)
-            await manager.markAsRead(targetId: targetId)
-        }
         .task {
             currentMyAvatar = AccountState.avatarUrl
             await manager.ensureMyAvatar()
             currentMyAvatar = AccountState.avatarUrl
-            await manager.fetchMessages(for: targetId)
+            if messages.isEmpty {
+                let cid = conversationId ?? currentThread?.conversationId
+                await manager.fetchMessages(for: targetId, specificCid: cid)
+            }
             await manager.markAsRead(targetId: targetId)
         }
         .onDisappear {
@@ -188,13 +197,17 @@ struct ChatDetailView: View {
                         .cornerRadius(16, corners: [.topLeft, .topRight, .bottomLeft])
 
                     // 我的头像：点击进入我的主页
-                    NavigationLink(destination: UserInfoView(userId: AccountState.userName)) {
+                    Button {
+                        selectedUserIdForProfile = AccountState.userName
+                    } label: {
                         avatarView(url: myAvatarUrl)
                     }
                     .buttonStyle(.plain)
                 } else {
                     // 对方头像：点击进入对方主页
-                    NavigationLink(destination: UserInfoView(userId: resolvedPeerUsername(for: msg))) {
+                    Button {
+                        selectedUserIdForProfile = resolvedPeerUsername(for: msg)
+                    } label: {
                         avatarView(url: peerAvatarUrl(for: msg))
                     }
                     .buttonStyle(.plain)
@@ -300,9 +313,22 @@ struct ChatDetailView: View {
     // MARK: - 右上角菜单
     private var chatMenu: some View {
         Menu {
+            Button {
+                Task {
+                    let cid = conversationId ?? currentThread?.conversationId
+                    await manager.fetchMessages(for: targetId, specificCid: cid)
+                    await manager.markAsRead(targetId: targetId)
+                    ToastView.successToast("已刷新")
+                }
+            } label: {
+                Label("刷新消息", systemImage: "arrow.clockwise")
+            }
+
             let peerUser = currentThread?.targetUsername.isEmpty == false ? currentThread!.targetUsername : targetUsername
             if !peerUser.isEmpty {
-                NavigationLink(destination: UserInfoView(userId: peerUser)) {
+                Button {
+                    selectedUserIdForProfile = peerUser
+                } label: {
                     Label("查看社友主页", systemImage: "person.circle")
                 }
             }

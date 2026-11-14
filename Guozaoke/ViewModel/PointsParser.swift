@@ -427,7 +427,7 @@ class PointsParser: ObservableObject {
             let userProfileUrl = AccountState.userName.userProfileUrl
             if !userProfileUrl.isEmpty && userProfileUrl != APIService.baseUrlString + "/u/" {
                 logger("[PointsParser] 尝试从个人主页提取: \(userProfileUrl)...")
-                let userHtml = try await NetworkManager.shared.get(userProfileUrl)
+                let userHtml = try await NetworkManager.shared.get(userProfileUrl, showErrorToast: false)
                 if let found = extractPoints(from: userHtml) {
                     applyPoints(found)
                     extractAndApplyLevel(from: userHtml)

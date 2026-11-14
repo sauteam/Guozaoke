@@ -64,7 +64,8 @@ struct DirectMessageListView: View {
                         targetId: thread.targetId,
                         targetUsername: thread.targetUsername,
                         targetNickname: thread.targetNickname,
-                        targetAvatar: thread.targetAvatar
+                        targetAvatar: thread.targetAvatar,
+                        conversationId: thread.conversationId
                     )
                 ) {
                     HStack(spacing: 12) {
@@ -84,7 +85,7 @@ struct DirectMessageListView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
 
-                            Text(thread.lastMessage)
+                            Text(manager.getDisplayLastMessage(for: thread))
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
@@ -92,9 +93,9 @@ struct DirectMessageListView: View {
 
                         Spacer()
 
-                        // 时间与未读红点指示器
+                        // 时间与未读红点指示器（展示详情最后一条消息的时间）
                         VStack(alignment: .trailing, spacing: 6) {
-                            Text(thread.timeFormatted)
+                            Text(manager.getDisplayTime(for: thread))
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
 
