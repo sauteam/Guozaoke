@@ -26,6 +26,7 @@ enum ModeTypeEnum: String, CaseIterable {
 
 struct MeView: View {
     @StateObject private var parser = UserInfoParser()
+    @StateObject private var pointsParser = PointsParser.shared
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var purchaseAppState: PurchaseAppState
     @State var showPurchaseView: Bool = false
@@ -59,19 +60,26 @@ struct MeView: View {
             }
 
             if !AccountState.userName.isEmpty {
-                Task { await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl, reset: true) }
+                Task {
+                    await parser.fetchUserInfoAndData(AccountState.userName.userProfileUrl, reset: true)
+                    await pointsParser.fetchPointsSummary()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccessNoti)) { notification in
             logger("[login] me")
             let username = (notification.userInfo?["userName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? AccountState.userName
             if !username.isEmpty {
-                Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
+                Task {
+                    await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true)
+                    await pointsParser.fetchPointsSummary()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .logoutSuccessNoti)) { _ in
             logger("[logout] me")
             parser.userInfo = nil
+            pointsParser.clear()
         }
         .onDisappear {
             if !AccountState.isLogin() {

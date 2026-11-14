@@ -475,34 +475,82 @@ class UserInfoParser: ObservableObject {
             parsedData[key] = value
         }
         
-        var profile:[String] = []
-        let hasLevel = (level != nil && !level!.isEmpty)
-        // 打印解析结果
-        for (key, value) in parsedData {
-            // 如果已展示等级（等级中已包含信用等级和具体信用分），避免重复展示独立的“信用”
-            if hasLevel && (key == "信用" || key.contains("信用")) {
-                continue
-            }
-            logger("[userInfo]\(key): \(value)")
-            profile.append("\(key): \(value)")
+        // 字段显示优先级函数（严格遵循用户要求的层次结构）
+        func fieldPriority(for key: String) -> Int {
+            if key == "ID" || key == "用户名" { return 1 }
+            if key == "等级" { return 2 }
+            if key == "城市" || key == "地区" || key == "来自" { return 3 }
+            if key == "公司" || key == "职业" { return 4 }
+            if key == "年代" { return 5 }
+            if key == "性别" { return 6 }
+            if key == "早点" || key.contains("早点") { return 7 }
+            if key == "博客" || key == "网站" || key == "个人主页" || key.lowercased().contains("github") { return 8 }
+            if key == "Email" || key == "邮箱" { return 9 }
+            if key == "签名" { return 10 }
+            return 20
         }
-        
-        // 把等级、在线状态等加入资料中
+
+        var orderedItems: [(key: String, value: String)] = []
+
+        // 1. 等级
         if let lvl = level, !lvl.isEmpty {
             let desc = (levelTitle != nil && levelTitle?.isEmpty == false) ? "\(lvl)（\(levelTitle!)）" : lvl
-            profile.insert("等级: \(desc)", at: 0)
+            orderedItems.append((key: "等级", value: desc))
         }
-        if isOnline {
-            profile.insert("状态: 在线 🟢", at: 0)
-        }
+
+        // 2. 年代与性别
         if let gen = generation, !gen.isEmpty {
-            profile.append("年代: \(gen)")
+            orderedItems.append((key: "年代", value: gen))
         }
         if let g = gender, !g.isEmpty {
-            profile.append("性别: \(g)")
+            orderedItems.append((key: "性别", value: g))
         }
+
+        // 3. 签名
         if let sig = signature, !sig.isEmpty {
-            profile.append("签名: \(sig)")
+            orderedItems.append((key: "签名", value: sig))
+        }
+
+        // 4. dl 解析提取的数据（排除状态、重复信用、重复签名）
+        let hasLevel = (level != nil && !level!.isEmpty)
+        for (key, value) in parsedData {
+            // 彻底过滤“状态”（用户明确要求状态不需要）
+            if key == "状态" || key.contains("状态") { continue }
+            // 如果已展示等级，过滤独立的“信用”
+            if hasLevel && (key == "信用" || key.contains("信用")) { continue }
+            // 过滤重复签名
+            if key == "签名" && signature != nil { continue }
+            orderedItems.append((key: key, value: value))
+        }
+
+        // 5. 如果是本人，加入早点（未读取到时展示 0 点）
+        let isMe = AccountState.isSelf(userName: username)
+        if isMe {
+            var pts = "0"
+            if let fullHtml = try? doc.html(),
+               let extracted = PointsParser.extractPoints(from: fullHtml),
+               !extracted.isEmpty {
+                pts = extracted
+                Persist.save(value: extracted, forkey: PointsParser.pointsCacheKey)
+                Task { @MainActor in
+                    PointsParser.shared.pointsBalance = extracted
+                }
+            } else {
+                let cached = Persist.read(key: PointsParser.pointsCacheKey, default: "0")
+                if !cached.isEmpty && cached != "--" {
+                    pts = cached
+                }
+            }
+            orderedItems.append((key: "早点", value: "\(pts) 点"))
+        }
+
+        // 6. 按照严格优先级排序：ID -> 等级 -> 城市 -> 公司 -> 年代 -> 性别 -> 早点 -> 博客 -> Email -> 签名
+        orderedItems.sort { fieldPriority(for: $0.key) < fieldPriority(for: $1.key) }
+
+        var profile: [String] = []
+        for item in orderedItems {
+            logger("[userInfo] \(item.key): \(item.value)")
+            profile.append("\(item.key): \(item.value)")
         }
         
         let topicsCount = try doc.select(".status-topic strong a").text()

@@ -82,6 +82,9 @@ enum SFSymbol: String {
     case textformatSize = "textformat.size"
     /// 􀊸
     case heartCircle = "heart.circle"
+    case sparkles = "sparkles"
+    case flameFill = "flame.fill"
+    case starFill = "star.fill"
 }
 
 extension SFSymbol: View {

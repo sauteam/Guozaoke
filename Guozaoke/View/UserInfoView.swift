@@ -11,10 +11,26 @@ struct UserInfoView: View {
     let userId: String
     @State private var isLoading = true
     @StateObject private var parser = UserInfoParser()
+    @ObservedObject private var pointsParser = PointsParser.shared
     @State private var selectedTab  = 1
     @State private var followText   = "+关注"
     @State private var showCollectionView = false
     @State private var showMyReplyView = false
+
+    private var isCurrentUser: Bool {
+        AccountState.isSelf(userName: parser.userInfo?.username ?? "") ||
+        AccountState.isSelf(userName: userId) ||
+        AccountState.isSelf(userName: resolvedUserId)
+    }
+
+    private var pointsDisplay: String {
+        let p = pointsParser.pointsBalance.trimmingCharacters(in: .whitespacesAndNewlines)
+        if p.isEmpty || p == "--" {
+            let cached = Persist.read(key: PointsParser.pointsCacheKey, default: "0")
+            return (cached.isEmpty || cached == "--") ? "0" : cached
+        }
+        return p
+    }
 
     private var resolvedUserId: String {
         var trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -114,6 +130,9 @@ struct UserInfoView: View {
             }
         }
         .onAppear {
+            if isCurrentUser {
+                Task { await pointsParser.fetchPointsSummary() }
+            }
             if !parser.hadData {
                 let targetId = resolvedUserId
                 if !targetId.isEmpty {
@@ -251,8 +270,19 @@ struct UserInfoView: View {
     // MARK: - profileInfoList
     private func profileInfoList() -> some View {
         List {
-            ForEach(parser.userInfo?.profileInfo ?? [], id: \.self) { userInfo in
-                MyUserInfoView(userInfo: userInfo)
+            ForEach(parser.userInfo?.profileInfo ?? [], id: \.self) { item in
+                if item.hasPrefix("早点:") || item.hasPrefix("社区早点:") {
+                    ZStack(alignment: .leading) {
+                        NavigationLink(destination: CommunityPointsView()) {
+                            EmptyView()
+                        }
+                        .opacity(0)
+                        
+                        MyUserInfoView(userInfo: "早点: \(pointsDisplay) 点")
+                    }
+                } else {
+                    MyUserInfoView(userInfo: item)
+                }
             }
             if parser.isLoading {
                 ProgressView()

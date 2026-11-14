@@ -127,6 +127,9 @@ struct APIService {
     static let faq = "/faq"
     static let members = "/members"
     static let blockedUser = "/setting/blockedUser"
+    static let points = "/points"
+    static let pointsLedger = "/points/ledger"
+    static let pointsLevels = "/points/levels"
     /// baseUrlString + feedback
     static let feedbackAllLink = baseUrlString + feedback
 
