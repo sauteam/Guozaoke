@@ -10,7 +10,9 @@ import JDStatusBarNotification
 
 struct NotificationsView: View {
     @StateObject private var viewModel = NotificationsParser()
+    @ObservedObject private var dmManager = DirectMessageManager.shared
     @State private var showCommentView = false
+    @State private var showDirectMessages = false
     @State private var selectedNotification: NotificationItem? = nil
     @State private var selectedTopicLink: String? = nil
 
@@ -67,6 +69,36 @@ struct NotificationsView: View {
         .navigationTitleStyle("通知")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .navigationDestination(isPresented: $showDirectMessages) {
+            DirectMessageListView()
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    hapticFeedback()
+                    guard AccountState.isLogin() else {
+                        LoginStateChecker.LoginStateHandle()
+                        ToastView.warningToast("请先登录社区再查看私信")
+                        return
+                    }
+                    showDirectMessages = true
+                }) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "bubble.left.and.bubble.right")
+                            .font(.system(size: 17))
+                            .foregroundColor(.primary)
+
+                        if dmManager.hasUnread {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                                .offset(x: 4, y: -2)
+                        }
+                    }
+                    .padding(4)
+                }
+            }
+        }
         .onAppear {
             if !AccountState.isLogin() {
                 LoginStateChecker.LoginStateHandle()
@@ -74,6 +106,8 @@ struct NotificationsView: View {
             }
             Task {
                 await viewModel.fetchNotifications()
+                await dmManager.fetchSummary()
+                await dmManager.fetchThreads()
             }
             
             NotificationCenter.default.addObserver(forName: .logoutSuccessNoti, object: nil, queue: .main) { _ in

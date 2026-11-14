@@ -279,7 +279,48 @@ struct AccountState {
     }
     
     static func isSelf(userName: String) -> Bool {
-        return userName == Self.userName && userName != .default
+        var clean = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if clean.isEmpty || clean == .default { return false }
+        if clean.hasPrefix("@") {
+            clean = String(clean.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if clean.hasPrefix("#") {
+            clean = String(clean.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if clean.hasPrefix("/u/") {
+            clean = String(clean.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        clean = clean.components(separatedBy: CharacterSet(charactersIn: "?#/")).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? clean
+        if let range = clean.range(of: "Lv.", options: .caseInsensitive) {
+            clean = String(clean[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard !clean.isEmpty else { return false }
+
+        let selfUser = Self.userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let selfNick = Self.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        var selfLink = Self.userLink.trimmingCharacters(in: .whitespacesAndNewlines)
+        if selfLink.hasPrefix("/u/") {
+            selfLink = String(selfLink.dropFirst(3))
+        }
+        selfLink = selfLink.components(separatedBy: CharacterSet(charactersIn: "?#/")).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if !selfUser.isEmpty && selfUser != .default {
+            if clean.caseInsensitiveCompare(selfUser) == .orderedSame { return true }
+        }
+        if !selfNick.isEmpty {
+            if clean.caseInsensitiveCompare(selfNick) == .orderedSame { return true }
+        }
+        if !selfLink.isEmpty && selfLink != .default {
+            if clean.caseInsensitiveCompare(selfLink) == .orderedSame { return true }
+        }
+
+        // 针对 isau / 80687 映射（如果当前登录为 isau 或包含 80687，两者互相认定为本人）
+        let isUserIsau = selfUser.lowercased() == "isau" || selfLink == "80687" || selfNick.lowercased() == "isau"
+        if isUserIsau && (clean.lowercased() == "isau" || clean == "80687") {
+            return true
+        }
+
+        return false
     }
     
     static var isISAU: Bool {

@@ -9,13 +9,38 @@ import Foundation
 import SwiftSoup
 import SwiftUI
 
+// MARK: - 明细标签分类
+enum LedgerTab: Int, CaseIterable, Identifiable {
+    case all = 0
+    case rewards = 1
+    case credit = 2
+    
+    var id: Int { rawValue }
+    
+    var title: String {
+        switch self {
+        case .all: return "全部明细"
+        case .rewards: return "奖励记录"
+        case .credit: return "信用明细"
+        }
+    }
+    
+    var queryPath: String {
+        switch self {
+        case .all: return APIService.pointsLedger
+        case .rewards: return "\(APIService.pointsLedger)?type=rewards"
+        case .credit: return "\(APIService.pointsLedger)?type=credit"
+        }
+    }
+}
+
 // MARK: - 积分收支明细模型
 struct PointsLedgerItem: Identifiable, Equatable {
     let id = UUID()
-    let action: String         // 如 "发布优质主题", "回复被采纳", "主题获赞"
+    let action: String         // 如 "发布有效主题", "有效主题奖励", "回复被采纳", "主题获赞"
     let pointsChange: String   // 如 "+5", "+1"
     let date: String           // 如 "2026-11-12 14:30"
-    let balance: String        // 结余，如 "128"
+    let balance: String        // 结余，如 "6"
     let desc: String           // 附加说明
 }
 
@@ -44,6 +69,8 @@ class PointsParser: ObservableObject {
     @Published var creditLevel: String = ""
     @Published var creditScore: String = ""
     @Published var ledgerItems: [PointsLedgerItem] = []
+    @Published var recentRewards: [PointsLedgerItem] = []
+    @Published var currentLedgerTab: LedgerTab = .all
     @Published var isLoading: Bool = false
     @Published var isLedgerLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -121,7 +148,7 @@ class PointsParser: ObservableObject {
         return cleaned.isEmpty ? nil : cleaned
     }
 
-    /// 从 HTML 中多策略提取早点数值
+    /// 从 HTML 中多策略提取早点数值（精准匹配，严防误读分页或规则中的数字）
     nonisolated static func extractPoints(from html: String) -> String? {
         guard let doc = try? SwiftSoup.parse(html) else { return nil }
 
@@ -142,7 +169,7 @@ class PointsParser: ObservableObject {
         // 2. 积分卡片值 .gzk-points-card-value
         if let cardVal = try? doc.select(".gzk-points-card-value").first(),
            let text = try? cardVal.text(),
-           let num = extractDigits(from: text) {
+           let num = extractDigits(from: text), !num.isEmpty {
             logger("[PointsParser] 命中卡片选择器 .gzk-points-card-value: \(num)")
             return num
         }
@@ -150,7 +177,7 @@ class PointsParser: ObservableObject {
         // 3. 积分卡片 a.gzk-points-card
         if let card = try? doc.select("a.gzk-points-card").first(),
            let text = try? card.text(),
-           let num = extractDigits(from: text) {
+           let num = extractDigits(from: text), !num.isEmpty {
             logger("[PointsParser] 命中 a.gzk-points-card: \(num)")
             return num
         }
@@ -158,57 +185,47 @@ class PointsParser: ObservableObject {
         // 4. 列表形式 dl:has(dt:contains(早点)) dd
         if let dd = try? doc.select("dl:has(dt:contains(早点)) dd").first(),
            let text = try? dd.text(),
-           let num = extractDigits(from: text) {
+           let num = extractDigits(from: text), !num.isEmpty {
             logger("[PointsParser] 命中 dl 早点: \(num)")
             return num
         }
 
-        // 5. 详情页/通用容器：.points-balance, .gzk-points .ui-content strong 等
-        let candidateSelectors = [
+        // 5. 个人主页/侧边栏 points 容器: .usercard .status-points
+        let pointsSpecificSelectors = [
+            ".usercard .status-points strong",
+            ".usercard .status-points a",
+            ".status-points strong a",
+            ".status-points strong",
             ".points-balance",
             ".gzk-points-balance",
-            ".usercard .status-points strong",
-            ".gzk-points .ui-content strong",
-            ".gzk-points .ui-content b",
-            ".gzk-points header strong"
+            ".gzk-profile-points strong",
+            ".gzk-points .ui-content strong"
         ]
-        for sel in candidateSelectors {
+        for sel in pointsSpecificSelectors {
             if let elem = try? doc.select(sel).first(),
                let text = try? elem.text(),
-               let num = extractDigits(from: text) {
-                logger("[PointsParser] 命中候选选择器 \(sel): \(num)")
+               let num = extractDigits(from: text),
+               !num.isEmpty {
+                logger("[PointsParser] 命中特定选择器 \(sel): \(num)")
                 return num
             }
         }
 
-        // 6. 从流水表格首行尝试提取结余
-        if let firstRow = try? doc.select("table.gzk-points-rules tbody tr, table tbody tr").first() {
-            let cols = (try? firstRow.select("td")) ?? Elements()
-            if cols.count >= 4 {
-                if let balanceCol = cols.last(),
-                   let text = try? balanceCol.text(),
-                   let num = extractDigits(from: text) {
-                    logger("[PointsParser] 命中流水首行结余: \(num)")
-                    return num
-                }
-            }
-        }
-
-        // 7. 正则表达式深度扫描
+        // 6. 正则表达式高精度扫描（严格限定前后文包含“早点”或“余额”，绝不匹配裸链接或分页标签）
         let patterns = [
             #"data-gzk-point-balance[^\d]*(\d+)"#,
-            #"(?:当前早点|我的早点|早点余额|可用早点|拥有早点|早点)[^\d]{0,8}(\d+)"#,
-            #"(\d+)\s*点早点"#,
-            #"(\d+)\s*个早点"#
+            #"(?:当前早点|我的早点|早点余额|可用早点|拥有早点)\s*[：:]?\s*(\d+)"#,
+            #"[>\"'\s](\d+)\s*(?:个|点)?早点"#,
+            #"[>\"'\s]早点\s*[：:]?\s*(\d+)\s*(?:点)?"#
         ]
         for pattern in patterns {
             if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
                let match = regex.firstMatch(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count)),
                match.numberOfRanges > 1 {
                 if let range = Range(match.range(at: 1), in: html) {
-                    let num = String(html[range])
-                    if !num.isEmpty {
-                        logger("[PointsParser] 命中正则模式 \(pattern): \(num)")
+                    let text = String(html[range])
+                    if let num = extractDigits(from: text), !num.isEmpty {
+                        logger("[PointsParser] 命中高精度正则模式 \(pattern): \(num)")
                         return num
                     }
                 }
@@ -220,6 +237,125 @@ class PointsParser: ObservableObject {
 
     nonisolated func extractPoints(from html: String) -> String? {
         return Self.extractPoints(from: html)
+    }
+
+    /// 从页面中解析奖励记录与明细列表（严格要求必须带真实时间戳，排除静态规则说明表）
+    nonisolated static func parseLedgerItems(from html: String) -> [PointsLedgerItem] {
+        guard let doc = try? SwiftSoup.parse(html) else { return [] }
+        var results: [PointsLedgerItem] = []
+
+        // 1. 查找所有流水表格行（严格排除静态规则表 .gzk-points-rules）
+        if let tables = try? doc.select("table:not(.gzk-points-rules)") {
+            for table in tables {
+                // 如果表格头部或内容包含“规则说明”或“等级划分”，跳过该静态表
+                let tableHeader = (try? table.select("th, thead").text()) ?? ""
+                if tableHeader.contains("说明") && tableHeader.contains("区间") {
+                    continue
+                }
+
+                guard let rows = try? table.select("tbody tr, tr") else { continue }
+                for row in rows {
+                    guard let cols = try? row.select("td"), cols.count >= 2 else { continue }
+
+                    var date = ""
+                    var action = ""
+                    var change = ""
+                    var balance = ""
+
+                    let colTexts = cols.array().map { (try? $0.text().trimmingCharacters(in: .whitespacesAndNewlines)) ?? "" }
+
+                    for text in colTexts {
+                        // 识别变动数额：如 "+5", "-2", "+5 点", "+1"
+                        if text.hasPrefix("+") || text.hasPrefix("-") || (text.contains("点") && (text.contains("+") || text.contains("-"))) {
+                            change = text
+                        } else if (text.contains("-") || text.contains(":") || text.contains("前") || text.contains("月") || text.contains("年")) && text.count >= 4 && text.count <= 25 && text.contains(where: { $0.isNumber }) {
+                            // 识别时间：如 "2026-11-14 12:30", "11-14 12:30", "2026-11-14", "2小时前"
+                            date = text
+                        } else if text.contains("奖励") || text.contains("主题") || text.contains("回复") || text.contains("点赞") || text.contains("收藏") || text.contains("置精") || text.contains("采纳") || text.contains("签到") || text.contains("登录") || text.contains("扣除") {
+                            action = text
+                        } else if balance.isEmpty && !text.isEmpty && text.allSatisfy({ $0.isNumber }) {
+                            balance = text
+                        }
+                    }
+
+                    // 必须具备有效时间戳，防止将静态规则当成流水记录误读
+                    guard !date.isEmpty else { continue }
+
+                    // 如果未直接识别出 action，按位置兜底
+                    if action.isEmpty && cols.count >= 2 {
+                        action = colTexts[0] == date ? colTexts[1] : colTexts[0]
+                    }
+
+                    // 如果变动未被带符号识别，但有数字且行为属于奖励/获得
+                    if change.isEmpty {
+                        for text in colTexts where text != date && text != action && text != balance {
+                            if let digits = extractDigits(from: text), !digits.isEmpty {
+                                change = action.contains("扣除") ? "-\(digits)" : "+\(digits)"
+                                break
+                            }
+                        }
+                    }
+
+                    // 如果仍然没有有效数额变动，跳过
+                    guard !change.isEmpty, change.contains(where: { $0.isNumber }) else { continue }
+
+                    if !change.hasPrefix("+") && !change.hasPrefix("-") {
+                        change = "+" + change
+                    }
+
+                    results.append(PointsLedgerItem(
+                        action: action.isEmpty ? "社区有效奖励" : action,
+                        pointsChange: change,
+                        date: date,
+                        balance: balance,
+                        desc: ""
+                    ))
+                }
+            }
+        }
+
+        // 2. 查找卡片/列表形式的奖励项（严格要求带时间戳）
+        if results.isEmpty {
+            if let items = try? doc.select(".ledger-item, .gzk-points-item, .cell:has(.time), .cell:has(.date), .item:has(.time), .item:has(.date)") {
+                for item in items {
+                    let text = (try? item.text()) ?? ""
+                    let time = (try? item.select(".time, .date, .created, .ago").first()?.text()) ?? ""
+                    // 无时间戳则跳过，杜绝把静态规则卡片误读为流水
+                    guard !time.isEmpty else { continue }
+
+                    let title = (try? item.select(".title, .action, strong, b").first()?.text()) ?? ""
+                    let amount = (try? item.select(".amount, .points, .badge, .label").first()?.text()) ?? ""
+
+                    var finalAction = title.isEmpty ? text : title
+                    var finalChange = amount
+
+                    // 从文本中正则匹配 "+X" 或 "早点 +X"
+                    if finalChange.isEmpty {
+                        if let regex = try? NSRegularExpression(pattern: #"([+-]\s*\d+)"#),
+                           let m = regex.firstMatch(in: text, range: NSRange(location: 0, length: text.utf16.count)),
+                           let r = Range(m.range(at: 1), in: text) {
+                            finalChange = String(text[r])
+                        }
+                    }
+
+                    guard !finalChange.isEmpty, finalChange.contains(where: { $0.isNumber }) else { continue }
+
+                    if !finalChange.hasPrefix("+") && !finalChange.hasPrefix("-") {
+                        finalChange = "+" + finalChange
+                    }
+
+                    results.append(PointsLedgerItem(
+                        action: finalAction,
+                        pointsChange: finalChange,
+                        date: time,
+                        balance: "",
+                        desc: ""
+                    ))
+                }
+            }
+        }
+
+        return results
     }
 
     /// 提取并应用信用等级
@@ -252,12 +388,23 @@ class PointsParser: ObservableObject {
         self.errorMessage = nil
 
         do {
-            // 策略 1: 请求 /points 页面
+            // 策略 1: 请求 /points 页面（包含余额与近期有效奖励展示）
             let pointsHtml = try await NetworkManager.shared.get(APIService.baseUrlString + APIService.points)
             logger("[PointsParser] 请求 /points 得到长度: \(pointsHtml.count)")
             if pointsHtml.contains("action=\"/login\"") {
                 logger("[PointsParser] 提示：/points 返回了登录页面，需确保登录Cookie有效")
             }
+            
+            // 同时从 /points 页面解析有效奖励流水（如“有效主题奖励 +5”）
+            let rewards = Self.parseLedgerItems(from: pointsHtml)
+            if !rewards.isEmpty {
+                logger("[PointsParser] 从 /points 成功解析到 \(rewards.count) 条奖励记录")
+                self.recentRewards = rewards
+                if self.ledgerItems.isEmpty {
+                    self.ledgerItems = rewards
+                }
+            }
+
             if let found = extractPoints(from: pointsHtml) {
                 applyPoints(found)
                 extractAndApplyLevel(from: pointsHtml)
@@ -276,17 +423,7 @@ class PointsParser: ObservableObject {
                 return
             }
 
-            // 策略 3: 请求 /points/ledger（收支明细页面）
-            logger("[PointsParser] 尝试从收支明细 /points/ledger 提取...")
-            let ledgerHtml = try await NetworkManager.shared.get(APIService.baseUrlString + APIService.pointsLedger)
-            if let found = extractPoints(from: ledgerHtml) {
-                applyPoints(found)
-                extractAndApplyLevel(from: ledgerHtml)
-                self.isLoading = false
-                return
-            }
-
-            // 策略 4: 尝试个人主页 /u/{username}
+            // 策略 3: 尝试个人主页 /u/{username}
             let userProfileUrl = AccountState.userName.userProfileUrl
             if !userProfileUrl.isEmpty && userProfileUrl != APIService.baseUrlString + "/u/" {
                 logger("[PointsParser] 尝试从个人主页提取: \(userProfileUrl)...")
@@ -308,71 +445,42 @@ class PointsParser: ObservableObject {
         }
     }
 
-    /// 抓取早点收支/奖励流水明细
-    func fetchLedger() async {
+    /// 抓取早点收支/奖励流水明细（支持分 Tab 获取：全部、奖励、信用）
+    func fetchLedger(tab: LedgerTab = .all) async {
         guard AccountState.isLogin() else {
             self.ledgerItems.removeAll()
             return
         }
 
+        self.currentLedgerTab = tab
         self.isLedgerLoading = true
         self.ledgerErrorMessage = nil
 
         do {
-            let html = try await NetworkManager.shared.get(APIService.baseUrlString + APIService.pointsLedger)
-            let doc = try SwiftSoup.parse(html)
+            let targetUrl = APIService.baseUrlString + tab.queryPath
+            logger("[PointsParser] 抓取流水明细 [\(tab.title)]: \(targetUrl)")
+            let html = try await NetworkManager.shared.get(targetUrl)
 
-            var parsedItems: [PointsLedgerItem] = []
+            var parsedItems = Self.parseLedgerItems(from: html)
 
-            // 解析表格形式的流水记录
-            let rows = try doc.select("table.gzk-points-rules tbody tr, table tbody tr, .ui-content table tr")
-            for row in rows {
-                let cols = try row.select("td")
-                if cols.count >= 3 {
-                    let col0 = try cols[0].text().trimmingCharacters(in: .whitespacesAndNewlines)
-                    let col1 = try cols[1].text().trimmingCharacters(in: .whitespacesAndNewlines)
-                    let col2 = try cols[2].text().trimmingCharacters(in: .whitespacesAndNewlines)
-                    let col3 = cols.count > 3 ? (try cols[3].text().trimmingCharacters(in: .whitespacesAndNewlines)) : ""
-
-                    parsedItems.append(
-                        PointsLedgerItem(
-                            action: col1.isEmpty ? "社区互动成长" : col1,
-                            pointsChange: col2,
-                            date: col0,
-                            balance: col3,
-                            desc: ""
-                        )
-                    )
-                }
-            }
-
-            // 如果表格未解析到，尝试列表元素解析
-            if parsedItems.isEmpty {
-                let listItems = try doc.select(".ledger-item, .gzk-points-item, .ui-content .item")
-                for item in listItems {
-                    let title = (try? item.select(".title, .action").text()) ?? "社区互动成长"
-                    let amount = (try? item.select(".amount, .points").text()) ?? ""
-                    let time = (try? item.select(".time, .date").text()) ?? ""
-                    if !title.isEmpty || !amount.isEmpty {
-                        parsedItems.append(
-                            PointsLedgerItem(
-                                action: title,
-                                pointsChange: amount,
-                                date: time,
-                                balance: "",
-                                desc: ""
-                            )
-                        )
-                    }
-                }
+            // 如果请求的是奖励记录但返回为空，使用 /points 提取到的近期奖励兜底
+            if tab == .rewards && parsedItems.isEmpty && !self.recentRewards.isEmpty {
+                logger("[PointsParser] 奖励记录使用 /points 兜底数据")
+                parsedItems = self.recentRewards
             }
 
             self.ledgerItems = parsedItems
             self.isLedgerLoading = false
         } catch {
             logger("[PointsParser] 抓取明细失败: \(error.localizedDescription)")
-            self.ledgerErrorMessage = error.localizedDescription
-            self.isLedgerLoading = false
+            // 如果分 Tab 失败且是奖励记录，尝试使用 /points 近期奖励兜底展示
+            if tab == .rewards && !self.recentRewards.isEmpty {
+                self.ledgerItems = self.recentRewards
+                self.isLedgerLoading = false
+            } else {
+                self.ledgerErrorMessage = error.localizedDescription
+                self.isLedgerLoading = false
+            }
         }
     }
 
@@ -381,6 +489,7 @@ class PointsParser: ObservableObject {
         self.pointsBalance = "0"
         self.creditLevel = ""
         self.ledgerItems.removeAll()
+        self.recentRewards.removeAll()
         Persist.remove(key: Self.pointsCacheKey)
         Persist.remove(key: Self.levelCacheKey)
     }

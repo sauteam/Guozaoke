@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct CommunityPointsView: View {
-    @StateObject private var parser = PointsParser()
+    @ObservedObject private var parser = PointsParser.shared
     @State private var selectedTab: Int = 0
+    @State private var selectedLedgerTab: LedgerTab = .all
 
     var body: some View {
         ScrollView {
@@ -44,12 +45,12 @@ struct CommunityPointsView: View {
             hapticFeedback()
             await parser.fetchPointsSummary()
             if selectedTab == 2 {
-                await parser.fetchLedger()
+                await parser.fetchLedger(tab: selectedLedgerTab)
             }
         }
         .task {
             await parser.fetchPointsSummary()
-            await parser.fetchLedger()
+            await parser.fetchLedger(tab: selectedLedgerTab)
         }
     }
     
@@ -254,6 +255,20 @@ struct CommunityPointsView: View {
     // MARK: - Tab 2: 积分明细
     private var ledgerSection: some View {
         VStack(spacing: 12) {
+            // 明细分类子导航（全部明细、奖励记录、信用明细）
+            Picker("明细类型", selection: $selectedLedgerTab) {
+                ForEach(LedgerTab.allCases) { tab in
+                    Text(tab.title).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.bottom, 4)
+            .onChange(of: selectedLedgerTab) { newTab in
+                Task {
+                    await parser.fetchLedger(tab: newTab)
+                }
+            }
+            
             if parser.isLedgerLoading {
                 ProgressView("加载明细中...")
                     .padding(.vertical, 32)
@@ -264,7 +279,7 @@ struct CommunityPointsView: View {
                         .foregroundColor(.secondary.opacity(0.6))
                         .padding(.top, 24)
                     
-                    Text("暂无明细记录")
+                    Text("暂无\(selectedLedgerTab.title)记录")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                     
@@ -290,9 +305,17 @@ struct CommunityPointsView: View {
                         
                         Spacer()
                         
-                        Text(item.pointsChange.isEmpty ? "+1" : item.pointsChange)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundColor(item.pointsChange.contains("-") ? .red : .green)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(item.pointsChange)
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundColor(item.pointsChange.contains("-") ? .red : .green)
+                            
+                            if !item.balance.isEmpty {
+                                Text("结余 \(item.balance)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)

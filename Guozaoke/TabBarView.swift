@@ -96,6 +96,7 @@ struct TabBarView: View {
 struct TabContentView: View {
     @Binding var tab: TabBarView.Tab
     @ObservedObject var notificationManager = NotificationManager.shared
+    @ObservedObject var dmManager = DirectMessageManager.shared
     @ObservedObject var navigationManager = NavigationManager.shared
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = PostListViewModel()
@@ -130,6 +131,12 @@ struct TabContentView: View {
             }
             .onOpenURL { url in
                 handleOpenURL(url)
+            }
+            .onAppear {
+                Task {
+                    await dmManager.fetchSummary()
+                    await dmManager.fetchThreads()
+                }
             }
     }
     
@@ -178,7 +185,7 @@ struct TabContentView: View {
             }
             .tabItem { Label(TabBarView.Tab.noti.rawValue, systemImage: TabBarView.Tab.noti.icon) }
             .tag(TabBarView.Tab.noti)
-            .badge(notificationManager.unreadCount)
+            .badge(notificationManager.unreadCount + dmManager.totalUnreadCount)
             
             Group {
                 NavigationStack {
@@ -197,6 +204,10 @@ private extension TabContentView {
         if newTab == .noti {
             notificationManager.unreadCount = 0
             clearAppBadge()
+            Task {
+                await dmManager.fetchSummary()
+                await dmManager.fetchThreads()
+            }
         }
         let now = Date()
         if let lastTab = lastSelectedTab, let lastTime = lastTapTime, lastTab == newTab {

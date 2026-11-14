@@ -468,8 +468,8 @@ class UserInfoParser: ObservableObject {
             let key = try dl.select("dt").text()
             let valueElement = try dl.select("dd")
             var value = try valueElement.text()
-            // 如果 `dd` 里面包含 `<a>` 链接，则取 `href`
-            if let link = try? valueElement.select("a").attr("href"), !link.isEmpty {
+            // 如果 `dd` 里面包含 `<a>` 链接，且不是早点字段，则取 `href`
+            if !key.contains("早点"), let link = try? valueElement.select("a").attr("href"), !link.isEmpty {
                 value = link
             }
             parsedData[key] = value
@@ -511,7 +511,7 @@ class UserInfoParser: ObservableObject {
             orderedItems.append((key: "签名", value: sig))
         }
 
-        // 4. dl 解析提取的数据（排除状态、重复信用、重复签名）
+        // 4. dl 解析提取的数据（排除状态、重复信用、重复签名、以及单独管理的早点）
         let hasLevel = (level != nil && !level!.isEmpty)
         for (key, value) in parsedData {
             // 彻底过滤“状态”（用户明确要求状态不需要）
@@ -520,11 +520,15 @@ class UserInfoParser: ObservableObject {
             if hasLevel && (key == "信用" || key.contains("信用")) { continue }
             // 过滤重复签名
             if key == "签名" && signature != nil { continue }
+            // 早点在下方由本人逻辑统一标准化注入，避免重复
+            if key == "早点" || key.contains("早点") { continue }
             orderedItems.append((key: key, value: value))
         }
 
-        // 5. 如果是本人，加入早点（未读取到时展示 0 点）
-        let isMe = AccountState.isSelf(userName: username)
+        // 5. 如果是本人，加入早点（多策略提取，未读取到时展示 0 点）
+        let isMe = AccountState.isSelf(userName: username) ||
+                   AccountState.isSelf(userName: id) ||
+                   AccountState.isSelf(userName: number)
         if isMe {
             var pts = "0"
             if let fullHtml = try? doc.html(),
@@ -535,10 +539,22 @@ class UserInfoParser: ObservableObject {
                 Task { @MainActor in
                     PointsParser.shared.pointsBalance = extracted
                 }
+            } else if let rawDlVal = parsedData.first(where: { $0.key.contains("早点") })?.value,
+                      let extracted = PointsParser.extractPoints(from: rawDlVal),
+                      !extracted.isEmpty {
+                pts = extracted
+                Persist.save(value: extracted, forkey: PointsParser.pointsCacheKey)
+                Task { @MainActor in
+                    PointsParser.shared.pointsBalance = extracted
+                }
             } else {
                 let cached = Persist.read(key: PointsParser.pointsCacheKey, default: "0")
                 if !cached.isEmpty && cached != "--" {
                     pts = cached
+                }
+                // 后台立即异步触发获取 /points 最新资产
+                Task { @MainActor in
+                    await PointsParser.shared.fetchPointsSummary()
                 }
             }
             orderedItems.append((key: "早点", value: "\(pts) 点"))

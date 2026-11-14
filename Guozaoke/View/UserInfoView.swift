@@ -16,9 +16,11 @@ struct UserInfoView: View {
     @State private var followText   = "+关注"
     @State private var showCollectionView = false
     @State private var showMyReplyView = false
+    @State private var showChatDetail = false
 
     private var isCurrentUser: Bool {
         AccountState.isSelf(userName: parser.userInfo?.username ?? "") ||
+        AccountState.isSelf(userName: parser.userInfo?.number ?? "") ||
         AccountState.isSelf(userName: userId) ||
         AccountState.isSelf(userName: resolvedUserId)
     }
@@ -121,6 +123,17 @@ struct UserInfoView: View {
                     linkText: (parser.userInfo?.username ?? "") + "的更多回复")
             }
         })
+        .navigationDestination(isPresented: $showChatDetail, destination: {
+            if let u = parser.userInfo {
+                let cleanNum = u.number.components(separatedBy: CharacterSet(charactersIn: "0123456789").inverted).joined()
+                ChatDetailView(
+                    targetId: cleanNum.isEmpty ? u.username : cleanNum,
+                    targetUsername: u.username,
+                    targetNickname: u.nickname.isEmpty ? u.username : u.nickname,
+                    targetAvatar: u.avatar
+                )
+            }
+        })
         .navigationTitleStyle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationBarTitleDisplayMode(.inline)
         .tabbarToolBar()
@@ -156,6 +169,11 @@ struct UserInfoView: View {
                 if !username.isEmpty {
                     Task { await parser.fetchUserInfoAndData(username.userProfileUrl, reset: true) }
                 }
+            }
+        }
+        .onChange(of: parser.userInfo?.username) { _ in
+            if isCurrentUser {
+                Task { await pointsParser.fetchPointsSummary() }
             }
         }
         .onDisappear {
@@ -201,7 +219,7 @@ struct UserInfoView: View {
                 }
             }
             if !isMe {
-                followButton(userInfo)
+                userActionButtons(userInfo)
             }
             Text("\(userInfo.number) \(userInfo.joinDate)")
                 .font(.footnote)
@@ -211,10 +229,16 @@ struct UserInfoView: View {
         .padding()
     }
     
-    private func followButton(_ userInfo: UserInfo) -> some View {
-        HStack {
+    private func userActionButtons(_ userInfo: UserInfo) -> some View {
+        HStack(spacing: 12) {
+            // 关注按钮（纯文字，无icon）
             Button(action: {
                 hapticFeedback()
+                guard AccountState.isLogin() else {
+                    LoginStateChecker.LoginStateHandle()
+                    ToastView.warningToast(needLoginTextCanDo)
+                    return
+                }
                 logger("关注按钮点击")
                 Task {
                     do {
@@ -229,10 +253,29 @@ struct UserInfoView: View {
             }) {
                 Text(userInfo.followTextChange)
                     .font(.headline)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 8)
                     .background(userInfo.followTextChange == "取消关注" ? Color.gray.opacity(0.6) : Color.blue)
                     .foregroundColor(.white)
+                    .cornerRadius(16)
+            }
+            
+            // 私信按钮（纯文字，无icon，与关注按钮保持严格一致，严格校验登录状态）
+            Button(action: {
+                hapticFeedback()
+                guard AccountState.isLogin() else {
+                    LoginStateChecker.LoginStateHandle()
+                    ToastView.warningToast("请先登录社区再发送私信")
+                    return
+                }
+                showChatDetail = true
+            }) {
+                Text("私信")
+                    .font(.headline)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundColor(.blue)
                     .cornerRadius(16)
             }
         }

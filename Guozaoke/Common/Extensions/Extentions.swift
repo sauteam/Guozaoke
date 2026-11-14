@@ -49,6 +49,28 @@ extension String {
         return trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    var decodingHTMLEntities: String {
+        guard self.contains("&") else { return self }
+        var result = self
+        let entities = [
+            ("&quot;", "\""),
+            ("&apos;", "'"),
+            ("&amp;", "&"),
+            ("&lt;", "<"),
+            ("&gt;", ">"),
+            ("&nbsp;", " "),
+            ("&#39;", "'"),
+            ("&#34;", "\""),
+            ("&#60;", "<"),
+            ("&#62;", ">"),
+            ("&#38;", "&")
+        ]
+        for (ent, rep) in entities {
+            result = result.replacingOccurrences(of: ent, with: rep)
+        }
+        return result
+    }
+
     func remove(_ seg: String) -> String {
         return replacingOccurrences(of: seg, with: "")
     }

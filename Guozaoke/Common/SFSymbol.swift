@@ -85,6 +85,8 @@ enum SFSymbol: String {
     case sparkles = "sparkles"
     case flameFill = "flame.fill"
     case starFill = "star.fill"
+    case message = "message.fill"
+    case messageFill = "message.circle.fill"
 }
 
 extension SFSymbol: View {

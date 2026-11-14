@@ -33,9 +33,9 @@ class FestivalDate {
         let timeGreeting = getTimeGreeting()
         
         if !greetingName.isEmpty {
-            return "\(greetingName)，\(timeGreeting)"
+            return "\(greetingName) \(timeGreeting)"
         } else {
-            return "\(timeGreeting)，过早客欢迎您"
+            return "\(timeGreeting) 过早客欢迎您"
         }
     }
     
