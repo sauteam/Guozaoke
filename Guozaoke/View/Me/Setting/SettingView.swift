@@ -130,6 +130,10 @@ struct SettingView: View {
     @ViewBuilder
     private var accountSection: some View {
         Section {
+            NavigationLink(destination: EditProfileView()) {
+                ProfileRow(icon: "person.crop.circle", title: "编辑个人资料")
+            }
+
             Button {
                 tapTextEvent("退出登录")
             } label: {

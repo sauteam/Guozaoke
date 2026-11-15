@@ -272,6 +272,74 @@ class NetworkManager: ObservableObject {
     ) async throws -> String {
         try await request(url, method: .get, parameters: parameters, headers: headers, showErrorToast: showErrorToast)
     }
+
+    func uploadMultipart(
+        _ url: String,
+        fileData: Data,
+        name: String = "avatar",
+        fileName: String = "avatar.jpg",
+        mimeType: String = "image/jpeg",
+        parameters: [String: String]? = nil,
+        headers: HTTPHeaders? = nil,
+        showErrorToast: Bool = true
+    ) async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            var allUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !allUrl.hasPrefix("http://") && !allUrl.hasPrefix("https://") {
+                let path = allUrl.hasPrefix("/") ? allUrl : "/" + allUrl
+                allUrl = APIService.baseUrlString + path
+            }
+            guard let finalURL = URL(string: allUrl) else {
+                continuation.resume(throwing: URLError(.badURL))
+                return
+            }
+
+            var defaultHeaders: HTTPHeaders = [
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 MyApp/1.0",
+                "Cookie": APIService.getStoredCookies(),
+                "Origin": APIService.baseUrlString
+            ]
+            let token = AccountState.token()
+            if !token.isEmpty {
+                defaultHeaders.add(name: "X-Xsrftoken", value: token)
+            }
+            if let headers = headers {
+                headers.forEach { defaultHeaders.update($0) }
+            }
+
+            AF.upload(
+                multipartFormData: { formData in
+                    formData.append(fileData, withName: name, fileName: fileName, mimeType: mimeType)
+                    if let params = parameters {
+                        for (k, v) in params {
+                            if let d = v.data(using: .utf8) {
+                                formData.append(d, withName: k)
+                            }
+                        }
+                    }
+                    if !token.isEmpty && (parameters?["_xsrf"] == nil) {
+                        if let d = token.data(using: .utf8) {
+                            formData.append(d, withName: "_xsrf")
+                        }
+                    }
+                },
+                to: finalURL,
+                headers: defaultHeaders
+            )
+            .responseString { response in
+                switch response.result {
+                case .success(let string):
+                    continuation.resume(returning: string)
+                case .failure(let error):
+                    if showErrorToast {
+                        ToastView.warningToast("上传失败: \(error.localizedDescription)")
+                    }
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
 }
 
 // MARK: - 网络错误类型

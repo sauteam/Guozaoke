@@ -19,6 +19,7 @@ struct UserInfoView: View {
     @State private var showCollectionView = false
     @State private var showMyReplyView = false
     @State private var showChatDetail = false
+    @State private var showEditProfileView = false
 
     private var isCurrentUser: Bool {
         AccountState.isSelf(userName: parser.userInfo?.username ?? "") ||
@@ -139,6 +140,9 @@ struct UserInfoView: View {
                 )
             }
         })
+        .navigationDestination(isPresented: $showEditProfileView) {
+            EditProfileView()
+        }
         .navigationTitle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationTitleStyle((AccountState.isSelf(userName: userId) || AccountState.isSelf(userName: resolvedUserId)) ? "我的主页" : (parser.userInfo?.nickname ?? "个人主页"))
         .navigationBarTitleDisplayMode(.inline)
@@ -483,12 +487,12 @@ struct UserInfoView: View {
     
     private func profileMenu() -> some View {
         Menu {
-            Button {
-                profileUrl(resolvedUserId).copyToClipboard()
-            } label: {
-                Label("拷贝个人主页", systemImage: .copy)
-            }
-            if AccountState.isSelf(userName: resolvedUserId) {
+            if isCurrentUser || AccountState.isSelf(userName: resolvedUserId) {
+                Button {
+                    showEditProfileView = true
+                } label: {
+                    Label("编辑个人信息", systemImage: "pencil.line")
+                }
                 Button {
                     resolvedUserId.userProfileUrl.openURL()
                 } label: {
@@ -513,6 +517,12 @@ struct UserInfoView: View {
                 } label: {
                     Label(parser.userInfo?.blockText ?? "屏蔽此账号", systemImage: parser.userInfo?.blockUser ?? false ? .block : .unblock)
                 }
+            }
+            
+            Button {
+                profileUrl(resolvedUserId).copyToClipboard()
+            } label: {
+                Label("拷贝个人主页", systemImage: .copy)
             }
         } label: {
             SFSymbol.more
