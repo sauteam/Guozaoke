@@ -7,72 +7,14 @@
 
 import SwiftUI
 import PhotosUI
-import AVFoundation
-import ImageIO
 import UniformTypeIdentifiers
 
-// MARK: - 媒体选择结果包装（支持静态照片、GIF动图与 Live Photo 实况照片）
-struct PickedMediaItem {
-    let previewImage: UIImage
-    let uploadData: Data
-    let isLivePhoto: Bool
-    let isGif: Bool
-    let mimeType: String
-}
-
-// MARK: - Live Photo 实况照片转换辅助
-struct LivePhotoHelper {
-    /// 将 Live Photo 配对的伴随 QuickTime MOV 视频转为高质量紧凑循环 GIF 动图
-    static func convertVideoToGif(videoURL: URL, maxDimension: CGFloat = 480, fps: Double = 12, maxDuration: Double = 3.0) -> Data? {
-        let asset = AVAsset(url: videoURL)
-        let totalSeconds = CMTimeGetSeconds(asset.duration)
-        guard totalSeconds > 0 else { return nil }
-        let duration = min(totalSeconds, maxDuration)
-        
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: maxDimension, height: maxDimension)
-        
-        let frameCount = max(1, Int(duration * fps))
-        let frameDuration = duration / Double(frameCount)
-        var times: [NSValue] = []
-        for i in 0..<frameCount {
-            let time = CMTime(seconds: Double(i) * frameDuration, preferredTimescale: 600)
-            times.append(NSValue(time: time))
-        }
-        
-        let gifData = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(gifData, UTType.gif.identifier as CFString, frameCount, nil) else {
-            return nil
-        }
-        
-        let fileProperties: [CFString: Any] = [
-            kCGImagePropertyGIFDictionary: [
-                kCGImagePropertyGIFLoopCount: 0 // 循环播放
-            ]
-        ]
-        CGImageDestinationSetProperties(destination, fileProperties as CFDictionary)
-        
-        let frameProperties: [CFString: Any] = [
-            kCGImagePropertyGIFDictionary: [
-                kCGImagePropertyGIFDelayTime: frameDuration,
-                kCGImagePropertyGIFUnclampedDelayTime: frameDuration
-            ]
-        ]
-        
-        for timeVal in times {
-            let time = timeVal.timeValue
-            if let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) {
-                CGImageDestinationAddImage(destination, cgImage, frameProperties as CFDictionary)
-            }
-        }
-        
-        guard CGImageDestinationFinalize(destination) else {
-            return nil
-        }
-        
-        return gifData as Data
-    }
+// MARK: - 选取的媒体项模型（支持静态图与动图 GIF 原生多帧数据）
+struct PickedMediaItem: Identifiable {
+    let id = UUID()
+    let image: UIImage
+    let rawData: Data?
+    let isGIF: Bool
 }
 
 struct ImagePicker: UIViewControllerRepresentable {
@@ -116,11 +58,30 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - 多图选择器（基于 PHPickerViewController，支持多选、保证选择顺序）
+// MARK: - 多图选择器（基于 PHPickerViewController，支持多选、顺序保持、原生 GIF 动图多帧解析）
 struct MultiImagePicker: UIViewControllerRepresentable {
     var maxSelectionCount: Int = 9
-    var onImagesPicked: ([UIImage]) -> Void
+    var onItemsPicked: (([PickedMediaItem]) -> Void)? = nil
+    var onImagesPicked: (([UIImage]) -> Void)? = nil
     @Environment(\.presentationMode) var presentationMode
+
+    init(
+        maxSelectionCount: Int = 9,
+        onItemsPicked: @escaping ([PickedMediaItem]) -> Void
+    ) {
+        self.maxSelectionCount = maxSelectionCount
+        self.onItemsPicked = onItemsPicked
+        self.onImagesPicked = nil
+    }
+
+    init(
+        maxSelectionCount: Int = 9,
+        onImagesPicked: @escaping ([UIImage]) -> Void
+    ) {
+        self.maxSelectionCount = maxSelectionCount
+        self.onItemsPicked = nil
+        self.onImagesPicked = onImagesPicked
+    }
 
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
@@ -151,16 +112,28 @@ struct MultiImagePicker: UIViewControllerRepresentable {
             parent.presentationMode.wrappedValue.dismiss()
             guard !results.isEmpty else { return }
 
-            var loadedImages = [UIImage?](repeating: nil, count: results.count)
+            var loadedItems = [PickedMediaItem?](repeating: nil, count: results.count)
             let group = DispatchGroup()
 
             for (index, result) in results.enumerated() {
                 let provider = result.itemProvider
-                if provider.canLoadObject(ofClass: UIImage.self) {
+                if provider.hasItemConformingToTypeIdentifier(UTType.gif.identifier) {
+                    group.enter()
+                    provider.loadDataRepresentation(forTypeIdentifier: UTType.gif.identifier) { data, _ in
+                        if let gifData = data, let img = UIImage(data: gifData) {
+                            DispatchQueue.main.async {
+                                loadedItems[index] = PickedMediaItem(image: img, rawData: gifData, isGIF: true)
+                            }
+                        }
+                        group.leave()
+                    }
+                } else if provider.canLoadObject(ofClass: UIImage.self) {
                     group.enter()
                     provider.loadObject(ofClass: UIImage.self) { image, _ in
                         if let uiImage = image as? UIImage {
-                            loadedImages[index] = uiImage
+                            DispatchQueue.main.async {
+                                loadedItems[index] = PickedMediaItem(image: uiImage, rawData: nil, isGIF: false)
+                            }
                         }
                         group.leave()
                     }
@@ -168,9 +141,13 @@ struct MultiImagePicker: UIViewControllerRepresentable {
             }
 
             group.notify(queue: .main) {
-                let finalImages = loadedImages.compactMap { $0 }
-                if !finalImages.isEmpty {
-                    self.parent.onImagesPicked(finalImages)
+                let finalItems = loadedItems.compactMap { $0 }
+                if !finalItems.isEmpty {
+                    if let onItems = self.parent.onItemsPicked {
+                        onItems(finalItems)
+                    } else if let onImages = self.parent.onImagesPicked {
+                        onImages(finalItems.map { $0.image })
+                    }
                 }
             }
         }

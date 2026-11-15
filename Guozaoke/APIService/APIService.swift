@@ -296,14 +296,14 @@ struct APIService {
         }
     }
     
-    /// 上传二进制图片/动图数据到绑定的 ImgURL 图床（支持 JPG、PNG、GIF、Live Photo 动态格式）
+    /// 上传二进制媒体数据（支持保留 GIF、PNG、JPG 原始多帧/无损二进制）
     static func uploadMediaToHost(data: Data) async throws -> (url: String, thumbUrl: String) {
         if data.count > 10 * 1024 * 1024 {
             throw NSError(domain: "ImageError", code: -1, userInfo: [NSLocalizedDescriptionKey: "图片体积超过 10MB 限制"])
         }
         return try await performUploadImage(data: data)
     }
-    
+
     /// 上传图片到绑定的 ImgURL 图床
     static func uploadImageToHost(image: UIImage) async throws -> (url: String, thumbUrl: String) {
         guard let data = image.jpegData(compressionQuality: 0.85) else {

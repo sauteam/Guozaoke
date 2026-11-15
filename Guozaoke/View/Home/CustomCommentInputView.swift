@@ -234,8 +234,8 @@ struct CustomCommentInputView: View {
             }
         }
         .sheet(isPresented: $showingImagePicker) {
-            MultiImagePicker(maxSelectionCount: 9) { images in
-                handleImagesPicked(images)
+            MultiImagePicker(maxSelectionCount: 9) { items in
+                handleMediaItemsPicked(items)
             }
         }
         .fullScreenCover(item: $previewItem) { item in
@@ -328,22 +328,33 @@ struct CustomCommentInputView: View {
         }
     }
     
-    private func handleImagesPicked(_ images: [UIImage]) {
-        guard !images.isEmpty else { return }
+    private func handleMediaItemsPicked(_ items: [PickedMediaItem]) {
+        guard !items.isEmpty else { return }
         isUploadingImage = true
-        let total = images.count
+        let total = items.count
         
         Task {
             var successCount = 0
             var failCount = 0
             var lastErrorMsg = ""
             
-            for (index, image) in images.enumerated() {
+            for (index, item) in items.enumerated() {
                 uploadProgressText = "(\(index + 1)/\(total))"
                 do {
-                    let (imgUrl, thumbUrl) = try await APIService.uploadImageToHost(image: image)
-                    let item = UploadedImageItem(url: imgUrl, thumbUrl: thumbUrl, localImage: image)
-                    uploadedImages.append(item)
+                    let (imgUrl, thumbUrl): (String, String)
+                    if item.isGIF, let gifData = item.rawData {
+                        (imgUrl, thumbUrl) = try await APIService.uploadMediaToHost(data: gifData)
+                    } else {
+                        (imgUrl, thumbUrl) = try await APIService.uploadImageToHost(image: item.image)
+                    }
+                    let uploadedItem = UploadedImageItem(
+                        url: imgUrl,
+                        thumbUrl: thumbUrl,
+                        localImage: item.image,
+                        localGIFData: item.rawData,
+                        isGIF: item.isGIF
+                    )
+                    uploadedImages.append(uploadedItem)
                     
                     // 自动插入 Markdown 到评论正文
                     let md = "\n![图片](\(imgUrl))\n"
@@ -396,7 +407,8 @@ struct CustomCommentInputView: View {
                 let urlRange = match.range(at: 1)
                 let imgUrl = nsString.substring(with: urlRange)
                 if !uploadedImages.contains(where: { $0.url == imgUrl }) {
-                    uploadedImages.append(UploadedImageItem(url: imgUrl, thumbUrl: imgUrl, localImage: nil))
+                    let isGif = imgUrl.lowercased().hasSuffix(".gif") || imgUrl.lowercased().contains(".gif?")
+                    uploadedImages.append(UploadedImageItem(url: imgUrl, thumbUrl: imgUrl, localImage: nil, localGIFData: nil, isGIF: isGif))
                 }
             }
         }

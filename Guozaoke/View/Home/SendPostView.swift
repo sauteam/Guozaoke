@@ -13,6 +13,8 @@ struct UploadedImageItem: Identifiable, Equatable {
     let url: String
     let thumbUrl: String
     var localImage: UIImage? = nil
+    var localGIFData: Data? = nil
+    var isGIF: Bool = false
 }
 
 struct SendPostView: View {
@@ -123,34 +125,48 @@ struct SendPostView: View {
                                     HStack(spacing: 12) {
                                         ForEach(uploadedImages) { item in
                                             ZStack(alignment: .topTrailing) {
-                                                Button {
-                                                    hapticFeedback()
-                                                    previewItem = item
-                                                } label: {
-                                                    Group {
-                                                        if let local = item.localImage {
-                                                            Image(uiImage: local)
-                                                                .resizable()
-                                                                .scaledToFill()
-                                                        } else {
-                                                            let displayUrl = item.thumbUrl.isEmpty ? item.url : item.thumbUrl
-                                                            KFImage(cleanURL(displayUrl))
-                                                                .placeholder {
-                                                                    Color.gray.opacity(0.2)
-                                                                }
-                                                                .fade(duration: 0.2)
-                                                                .resizable()
-                                                                .scaledToFill()
+                                                ZStack(alignment: .bottomLeading) {
+                                                    Button {
+                                                        hapticFeedback()
+                                                        previewItem = item
+                                                    } label: {
+                                                        Group {
+                                                            if let local = item.localImage {
+                                                                Image(uiImage: local)
+                                                                    .resizable()
+                                                                    .scaledToFill()
+                                                            } else {
+                                                                let displayUrl = item.thumbUrl.isEmpty ? item.url : item.thumbUrl
+                                                                KFImage(cleanURL(displayUrl))
+                                                                    .placeholder {
+                                                                        Color.gray.opacity(0.2)
+                                                                    }
+                                                                    .fade(duration: 0.2)
+                                                                    .resizable()
+                                                                    .scaledToFill()
+                                                            }
                                                         }
+                                                        .frame(width: 76, height: 76)
+                                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                                        .overlay(
+                                                            RoundedRectangle(cornerRadius: 8)
+                                                                .stroke(Color.secondary.opacity(0.25), lineWidth: 1)
+                                                        )
                                                     }
-                                                    .frame(width: 76, height: 76)
-                                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 8)
-                                                            .stroke(Color.secondary.opacity(0.25), lineWidth: 1)
-                                                    )
+                                                    .buttonStyle(.plain)
+                                                    
+                                                    // GIF 动态图标识
+                                                    if item.isGIF || item.url.lowercased().hasSuffix(".gif") || item.url.lowercased().contains(".gif?") {
+                                                        Text("GIF")
+                                                            .font(.system(size: 9, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                            .padding(.horizontal, 4)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color.black.opacity(0.75))
+                                                            .cornerRadius(4)
+                                                            .padding(4)
+                                                    }
                                                 }
-                                                .buttonStyle(.plain)
                                                 
                                                 // 点击删除图片
                                                 Button {
@@ -302,8 +318,8 @@ struct SendPostView: View {
                 }
             }
             .sheet(isPresented: $showingImagePicker) {
-                MultiImagePicker(maxSelectionCount: 9) { images in
-                    handleImagesPicked(images)
+                MultiImagePicker(maxSelectionCount: 9) { items in
+                    handleMediaItemsPicked(items)
                 }
             }
             .fullScreenCover(item: $previewItem) { item in
@@ -536,22 +552,34 @@ struct SendPostView: View {
         }
     }
     
-    private func handleImagesPicked(_ images: [UIImage]) {
-        guard !images.isEmpty else { return }
+    private func handleMediaItemsPicked(_ items: [PickedMediaItem]) {
+        guard !items.isEmpty else { return }
         isUploadingImage = true
-        let total = images.count
+        let total = items.count
         
         Task {
             var successCount = 0
             var failCount = 0
             var lastErrorMsg = ""
             
-            for (index, image) in images.enumerated() {
+            for (index, item) in items.enumerated() {
                 uploadProgressText = "(\(index + 1)/\(total))"
                 do {
-                    let (imgUrl, thumbUrl) = try await APIService.uploadImageToHost(image: image)
-                    let item = UploadedImageItem(url: imgUrl, thumbUrl: thumbUrl, localImage: image)
-                    uploadedImages.append(item)
+                    let (imgUrl, thumbUrl): (String, String)
+                    if item.isGIF, let gifData = item.rawData {
+                        // 上传完整的原始动图 GIF 数据，保留所有动态帧！
+                        (imgUrl, thumbUrl) = try await APIService.uploadMediaToHost(data: gifData)
+                    } else {
+                        (imgUrl, thumbUrl) = try await APIService.uploadImageToHost(image: item.image)
+                    }
+                    let uploadedItem = UploadedImageItem(
+                        url: imgUrl,
+                        thumbUrl: thumbUrl,
+                        localImage: item.image,
+                        localGIFData: item.rawData,
+                        isGIF: item.isGIF
+                    )
+                    uploadedImages.append(uploadedItem)
                     
                     // 自动插入 Markdown 到正文末尾
                     let md = "\n![图片](\(imgUrl))\n"
@@ -610,7 +638,8 @@ struct SendPostView: View {
                 let urlRange = match.range(at: 1)
                 let imgUrl = nsString.substring(with: urlRange)
                 if !uploadedImages.contains(where: { $0.url == imgUrl }) {
-                    uploadedImages.append(UploadedImageItem(url: imgUrl, thumbUrl: imgUrl, localImage: nil))
+                    let isGif = imgUrl.lowercased().hasSuffix(".gif") || imgUrl.lowercased().contains(".gif?")
+                    uploadedImages.append(UploadedImageItem(url: imgUrl, thumbUrl: imgUrl, localImage: nil, localGIFData: nil, isGIF: isGif))
                 }
             }
         }

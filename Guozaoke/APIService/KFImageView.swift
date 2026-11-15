@@ -198,7 +198,7 @@ struct ImagePreviewView: View {
     
     private var isAnimated: Bool {
         guard let url = urlString?.lowercased() else { return false }
-        return url.hasSuffix(".gif")
+        return url.hasSuffix(".gif") || url.contains(".gif?")
     }
     
     private var cleanURL: URL? {
@@ -323,20 +323,26 @@ struct ImagePreviewView: View {
     
     @ViewBuilder
     private func imageContent(screenSize: CGSize) -> some View {
-        if let localImg = image {
-            Image(uiImage: localImg)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
-        } else if isAnimated, let url = cleanURL {
+        if isAnimated, let url = cleanURL {
             KFAnimatedImage(url)
                 .configure { view in
                     view.framePreloadCount = 3
                 }
                 .placeholder { _ in
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    if let localImg = image {
+                        Image(uiImage: localImg)
+                            .resizable()
+                            .scaledToFit()
+                    } else {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    }
                 }
+                .scaledToFit()
+                .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
+        } else if let localImg = image {
+            Image(uiImage: localImg)
+                .resizable()
                 .scaledToFit()
                 .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
         } else if let url = cleanURL {
