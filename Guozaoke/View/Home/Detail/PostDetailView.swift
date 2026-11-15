@@ -68,6 +68,10 @@ struct PostDetailView: View {
     @State private var showRelateTopic = false
     @State private var selectedTopic: Node? = nil
     
+    @EnvironmentObject var purchaseAppState: PurchaseAppState
+    @State private var showVipPurchaseView = false
+    @State private var showVipEditPrompt   = false
+    
     // 添加NavigationManager监听
     @ObservedObject private var navigationManager = NavigationManager.shared
     @State private var currentPostId: String = ""
@@ -92,6 +96,17 @@ struct PostDetailView: View {
             }
             .sheet(isPresented: $showRelateTopic) {
                 RelatedTopicView(isPresented: $showRelateTopic, viewModel: detailParser)
+            }
+            .sheet(isPresented: $showVipPurchaseView) {
+                InAppPurchaseView(isPresented: $showVipPurchaseView, purchaseAppState: purchaseAppState)
+            }
+            .alert("过早客 Pro 长期编辑", isPresented: $showVipEditPrompt) {
+                Button("开通过早客 Pro", role: .none) {
+                    showVipPurchaseView = true
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("该帖子发布已超过 15 分钟免费纠错期。\n\n开通过早客 Pro 即可解锁永久编辑、主楼长期维护、单帖 9 图批量传等专属特权。")
             }
             .fullScreenCover(isPresented: $showSendView) {
                 SendPostView(isPresented: $showSendView, selectedTopic: $selectedTopic, postDetail: detailParser.postDetail) {
@@ -389,14 +404,33 @@ struct PostDetailView: View {
             }
             
             if userIsMe {
-                Button {
-                    if LoginStateChecker.isLogin {
-                        showSendView = true
-                    } else {
-                        LoginStateChecker.LoginStateHandle()
+                switch editStatus {
+                case .vipUnlimited:
+                    Button {
+                        if LoginStateChecker.isLogin {
+                            showSendView = true
+                        } else {
+                            LoginStateChecker.LoginStateHandle()
+                        }
+                    } label: {
+                        Label("编辑主题 (Pro版)", systemImage: SFSymbol.pencilCircle)
                     }
-                } label: {
-                    Label("编辑主题", systemImage: SFSymbol.pencilCircle)
+                case .editableWithin15Min(let remaining):
+                    Button {
+                        if LoginStateChecker.isLogin {
+                            showSendView = true
+                        } else {
+                            LoginStateChecker.LoginStateHandle()
+                        }
+                    } label: {
+                        Label("编辑主题 (剩 \(remaining) 分钟)", systemImage: SFSymbol.pencilCircle)
+                    }
+                case .expiredRequiresVip:
+                    Button {
+                        showVipEditPrompt = true
+                    } label: {
+                        Label("编辑主题 (过早客 Pro)", systemImage: "crown.fill")
+                    }
                 }
             }
             
@@ -410,6 +444,36 @@ struct PostDetailView: View {
         } label: {
             SFSymbol.more
         }
+    }
+
+    private enum PostEditStatus {
+        case vipUnlimited
+        case editableWithin15Min(remainingMinutes: Int)
+        case expiredRequiresVip
+    }
+    
+    private var editStatus: PostEditStatus {
+        if purchaseAppState.isPurchased {
+            return .vipUnlimited
+        }
+        guard let publishTime = detailParser.postDetail?.publishTime, !publishTime.isEmpty else {
+            return .expiredRequiresVip
+        }
+        let cleanTime = publishTime.replacingOccurrences(of: "发表于", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleanTime.contains("刚刚") || cleanTime.contains("秒") {
+            return .editableWithin15Min(remainingMinutes: 15)
+        }
+        if cleanTime.contains("分钟") {
+            let digits = cleanTime.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+            if let mins = Int(digits) {
+                if mins < 15 {
+                    return .editableWithin15Min(remainingMinutes: max(1, 15 - mins))
+                } else {
+                    return .expiredRequiresVip
+                }
+            }
+        }
+        return .expiredRequiresVip
     }
 
     private func performJumpFloor() {

@@ -21,15 +21,24 @@ class StoreManager: ObservableObject {
     private var hasCheckedReceipt = false
     private var hasRestoredPurchases = false
     
+    var originPriceId: String {
+        return "originPrice"
+    }
     var sponserIds: String {
         return "sponsorDeveloper"
     }
     var productIDs: [String] {
-        let ids = ["sponsorDeveloper", "GuozaokeReward", "GuozaokeReward2"]
-//        if purchaseAppState.isPurchased {
-//            ids.removeFirst()
-//        }
+        let ids = ["sponsorDeveloper", "originPrice", "GuozaokeReward", "GuozaokeReward2"]
         return ids
+    }
+    
+    var originProduct: Product? {
+        return products.first(where: { $0.id == originPriceId })
+    }
+    
+    var purchasableProducts: [Product] {
+        let list = products.filter { $0.id != originPriceId }
+        return list.isEmpty ? products : list
     }
     
     init(purchaseAppState: PurchaseAppState) {

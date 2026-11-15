@@ -32,7 +32,7 @@ struct MeView: View {
     @State var showPurchaseView: Bool = false
     var body: some View {
         VStack() {
-            MyProfileView(parser: parser)
+            MyProfileView(parser: parser, showPurchaseView: $showPurchaseView)
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitleStyle("我的")
@@ -93,6 +93,8 @@ struct MeView: View {
 
 struct MyProfileView: View {
     @ObservedObject var parser: UserInfoParser
+    @EnvironmentObject var purchaseAppState: PurchaseAppState
+    @Binding var showPurchaseView: Bool
     @AppStorage("appearanceMode") private var appearanceMode: String = ModeTypeEnum.system.rawValue
     @State private var currentMode: ModeTypeEnum = .system
 
@@ -163,6 +165,18 @@ struct MyProfileView: View {
                             .subTitleFontStyle()
                     }
                 }
+            }
+        }
+        
+        if !purchaseAppState.isPurchased {
+            Section {
+                Button {
+                    hapticFeedback()
+                    showPurchaseView = true
+                } label: {
+                    VipBannerRow()
+                }
+                .buttonStyle(.plain)
             }
         }
         
@@ -322,5 +336,46 @@ struct ProfileRow: View {
 //        }) {
 //        }
 //        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - 过早客 Pro 行（仅未开通时在列表展示，样式与列表其他行统一）
+struct VipBannerRow: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.seal.fill")
+                .frame(width: 25, height: 25)
+                .foregroundColor(.primary)
+            
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text("过早客 Pro")
+                        .foregroundColor(.primary)
+                        .titleFontStyle()
+                    
+                    Text("限时折扣")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(Capsule().fill(Color.red.opacity(0.1)))
+                }
+                
+                Text("解锁长期编辑 · 9图上传 · 无限私信")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Text("去开通")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Color(UIColor.tertiaryLabel))
+        }
+        .padding(.vertical, 4)
     }
 }
