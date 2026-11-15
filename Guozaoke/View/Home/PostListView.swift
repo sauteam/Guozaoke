@@ -115,11 +115,9 @@ struct PostListView: View {
         .navigationDestination(isPresented: $showSearchView, destination: {
             SearchListView()
         })
-        .sheet(isPresented: $showAddPostView) {
-            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
+        .fullScreenCover(isPresented: $showAddPostView) {
+            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail: nil) {
             }
-            .presentationDetents([.height(isPadOrWideScreen ? screenHeight : screenHeight/2), .medium, .large])
-            .presentationDragIndicator(.visible)
         }
         .onAppear {
             let appearance = UINavigationBarAppearance()

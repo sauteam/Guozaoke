@@ -49,6 +49,30 @@ extension String {
         return trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// 是否包含大于 3 字节的 Unicode 字符（如大部分原生 Emoji 表情 🤣 等，过早客服务端的 MySQL 数据库使用 legacy utf8/utf8mb3，无法写入 4 字节字符，会导致服务端 500 报错）
+    var contains4ByteUnicode: Bool {
+        return self.unicodeScalars.contains { $0.value > 0xFFFF }
+    }
+    
+    /// 获取字符串中所有大于 3 字节的字符（用于错误提示展示给用户）
+    var fourByteCharacters: [String] {
+        var set = Set<String>()
+        var list: [String] = []
+        for scalar in self.unicodeScalars where scalar.value > 0xFFFF {
+            let s = String(scalar)
+            if !set.contains(s) {
+                set.insert(s)
+                list.append(s)
+            }
+        }
+        return list
+    }
+    
+    /// 移除大于 3 字节的 Unicode 字符（保留中文、英文、符号等标准 1~3 字节字符）
+    var stripping4ByteUnicode: String {
+        return String(self.unicodeScalars.filter { $0.value <= 0xFFFF })
+    }
+
     var decodingHTMLEntities: String {
         guard self.contains("&") else { return self }
         var result = self

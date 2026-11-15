@@ -182,145 +182,195 @@ struct OptimizedImageView: View {
     }
 }
 
-// MARK: - 图片预览视图
+// MARK: - 全屏大图交互预览视图（自适应正确尺寸、支持缩放/拖动与本地图片）
 struct ImagePreviewView: View {
-    let urlString: String
+    var urlString: String? = nil
+    var image: UIImage? = nil
+    var onDismiss: (() -> Void)? = nil
+    
     @Environment(\.dismiss) private var dismiss
-    @State private var isAnimated: Bool = false
-        
+    
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    @State private var showControls: Bool = true
+    
+    private var isAnimated: Bool {
+        guard let url = urlString?.lowercased() else { return false }
+        return url.hasSuffix(".gif")
+    }
+    
+    private var cleanURL: URL? {
+        guard let raw = urlString?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+        if raw.hasPrefix("//") {
+            return URL(string: "https:" + raw)
+        } else if raw.hasPrefix("/") {
+            return URL(string: APIService.baseUrlString + raw)
+        }
+        return URL(string: raw)
+    }
+    
     var body: some View {
         GeometryReader { geometry in
+            let screenSize = geometry.size
+            
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                Group {
-                    if isAnimated {
-                        KFAnimatedImage(URL(string: urlString))
-                            .configure { view in
-                                view.framePreloadCount = 3
-                            }
-                            .placeholder { _ in
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            }
-                    } else {
-                        KFImage.url(URL(string: urlString))
-                            .placeholder { _ in
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            }
+                // 纯黑沉浸式背景
+                Color.black
+                    .edgesIgnoringSafeArea(.all)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showControls.toggle()
+                        }
                     }
+                
+                // 图片主体：保持原始长宽比自适应屏幕，支持捏合缩放与拖动平移
+                imageContent(screenSize: screenSize)
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        SimultaneousGesture(
+                            // 双指捏合缩放（1.0x ~ 5.0x）
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    let delta = value / lastScale
+                                    lastScale = value
+                                    scale = min(max(scale * delta, 1.0), 5.0)
+                                }
+                                .onEnded { _ in
+                                    lastScale = 1.0
+                                    if scale <= 1.0 {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            scale = 1.0
+                                            offset = .zero
+                                        }
+                                    }
+                                },
+                            // 拖动手势：放大时漫游平移，未放大时支持下拉拖拽跟手关闭
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1.0 {
+                                        let delta = CGSize(
+                                            width: value.translation.width - lastOffset.width,
+                                            height: value.translation.height - lastOffset.height
+                                        )
+                                        lastOffset = value.translation
+                                        offset = CGSize(
+                                            width: offset.width + delta.width,
+                                            height: offset.height + delta.height
+                                        )
+                                    } else {
+                                        offset = CGSize(width: 0, height: max(0, value.translation.height))
+                                    }
+                                }
+                                .onEnded { value in
+                                    lastOffset = .zero
+                                    if scale <= 1.0 {
+                                        if value.translation.height > 90 {
+                                            closeView()
+                                        } else {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                                offset = .zero
+                                            }
+                                        }
+                                    } else {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            clampOffset(screenSize: screenSize)
+                                        }
+                                    }
+                                }
+                        )
+                    )
+                    .onTapGesture(count: 2) {
+                        // 双击放大 2.5x 或还原
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            if scale > 1.0 {
+                                scale = 1.0
+                                offset = .zero
+                            } else {
+                                scale = 2.5
+                            }
+                        }
+                    }
+                
+                // 顶部关闭按钮（常驻控制条）
+                if showControls {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button {
+                                closeView()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .padding(.top, 44)
+                                    .padding(.trailing, 20)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .transition(.opacity)
                 }
-                .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
-                .aspectRatio(contentMode: .fit)
             }
         }
-        .onAppear {
-            isAnimated = urlString.lowercased().hasSuffix(".gif")
+        .edgesIgnoringSafeArea(.all)
+    }
+    
+    @ViewBuilder
+    private func imageContent(screenSize: CGSize) -> some View {
+        if let localImg = image {
+            Image(uiImage: localImg)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
+        } else if isAnimated, let url = cleanURL {
+            KFAnimatedImage(url)
+                .configure { view in
+                    view.framePreloadCount = 3
+                }
+                .placeholder { _ in
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                }
+                .scaledToFit()
+                .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
+        } else if let url = cleanURL {
+            KFImage(url)
+                .placeholder { _ in
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                }
+                .fade(duration: 0.2)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: screenSize.width, maxHeight: screenSize.height)
+        } else {
+            Image(systemName: "photo")
+                .font(.system(size: 60))
+                .foregroundColor(.white.opacity(0.4))
+        }
+    }
+    
+    private func clampOffset(screenSize: CGSize) {
+        let maxOffsetX = max(0, (screenSize.width * (scale - 1)) / 2)
+        let maxOffsetY = max(0, (screenSize.height * (scale - 1)) / 2)
+        offset.width = min(max(offset.width, -maxOffsetX), maxOffsetX)
+        offset.height = min(max(offset.height, -maxOffsetY), maxOffsetY)
+    }
+    
+    private func closeView() {
+        if let onDismiss = onDismiss {
+            onDismiss()
+        } else {
+            dismiss()
         }
     }
 }
-// MARK: - 图片预览视图
-//struct ImagePreviewView: View {
-//    let urlString: String
-//    @Environment(\.dismiss) private var dismiss
-//    
-//    @State private var scale: CGFloat = 1.0
-//    @State private var lastScale: CGFloat = 1.0
-//    @State private var offset = CGSize.zero
-//    @State private var lastOffset = CGSize.zero
-//    @State private var showControls = true
-//    
-//    private var url: URL? {
-//        URL(string: urlString)
-//    }
-//    
-//    var body: some View {
-//        GeometryReader { geometry in
-//            ZStack {
-//                // 背景
-//                Color.black.edgesIgnoringSafeArea(.all)
-//                // 图片
-//                KFImage.url(url)
-//                    .placeholder { _ in
-//                        ProgressView()
-//                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-//                    }
-//                    .loadDiskFileSynchronously()
-//                    .resizable()
-//                    .aspectRatio(contentMode: .fit)
-//                    .scaleEffect(scale)
-//                    .offset(offset)
-//                    .gesture(
-//                        SimultaneousGesture(
-//                            // 缩放手势
-//                            MagnificationGesture()
-//                                .onChanged { value in
-//                                    let delta = value / lastScale
-//                                    lastScale = value
-//                                    scale = min(max(scale * delta, 1), 4)
-//                                }
-//                                .onEnded { _ in
-//                                    lastScale = 1.0
-//                                },
-//                            // 拖动手势
-//                            DragGesture()
-//                                .onChanged { value in
-//                                    let delta = CGSize(
-//                                        width: value.translation.width - lastOffset.width,
-//                                        height: value.translation.height - lastOffset.height
-//                                    )
-//                                    lastOffset = value.translation
-//                                    offset = CGSize(
-//                                        width: offset.width + delta.width,
-//                                        height: offset.height + delta.height
-//                                    )
-//                                }
-//                                .onEnded { _ in
-//                                    lastOffset = .zero
-//                                }
-//                        )
-//                    )
-//                    .onTapGesture(count: 2) {
-//                        withAnimation {
-//                            if scale > 1 {
-//                                scale = 1
-//                                offset = .zero
-//                            } else {
-//                                scale = 2
-//                            }
-//                        }
-//                    }
-//                
-//                // 控制按钮
-//                if showControls {
-//                    VStack {
-//                        HStack (alignment: .top, spacing: 100) {
-//                            Spacer()
-//                            Button {
-//                                dismiss()
-//                            } label: {
-//                                Image(systemName: "xmark")
-//                                    .foregroundColor(.white)
-//                                    .padding()
-//                                    .background(Color.black.opacity(0.6))
-//                                    .clipShape(Circle())
-//                            }
-//                            .padding()
-//                        }
-//                        Spacer()
-//                    }
-//                }
-//            }
-//            .onTapGesture {
-//                withAnimation {
-//                    showControls.toggle()
-//                }
-//            }
-//        }
-//        .edgesIgnoringSafeArea(.all)
-//    }
-//}
 
 //// MARK: - 使用示例
 //struct ContentView: View {

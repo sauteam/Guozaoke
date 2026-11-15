@@ -161,7 +161,13 @@ class NetworkManager: ObservableObject {
             }
 
             if let headers = headers {
-                headers.forEach { defaultHeaders.update($0) }
+                headers.forEach { header in
+                    if header.value.isEmpty {
+                        defaultHeaders.remove(name: header.name)
+                    } else {
+                        defaultHeaders.update(header)
+                    }
+                }
             }
             
             AF.request(
@@ -214,7 +220,8 @@ class NetworkManager: ObservableObject {
                     }
                     continuation.resume(returning: string)
                 case .failure(let error):
-                    logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response)")
+                    let errorBody = response.data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                    logger("[request][error] \(parameters ?? [:]) \(headers ?? [:])  \(error) \(response) [errorBody]: \(errorBody.prefix(1000))")
                     continuation.resume(throwing: error)
                     
                     if showErrorToast {
@@ -232,7 +239,12 @@ class NetworkManager: ObservableObject {
                             logger("[403]重新登录处理  refreshTokenNoti \(url)")
                             NotificationCenter.default.post(name: .refreshTokenNoti, object: nil)
                         } else if statusCode == 500 {
-                            desc = "服务器开小差了，请稍后再试 (500)"
+                            let hasEmoji = (parameters?.values.compactMap { $0 as? String } ?? []).contains { $0.contains4ByteUnicode }
+                            if hasEmoji {
+                                desc = "发布失败 (500)：社区数据库不支持原生 Emoji，请移除表情后重试"
+                            } else {
+                                desc = "服务器开小差了，请稍后再试 (500)"
+                            }
                         } else if !LoginStateChecker.isLogin {
                             desc = needLoginTextCanDo
                             LoginStateChecker.LoginStateHandle()
@@ -305,7 +317,13 @@ class NetworkManager: ObservableObject {
                 defaultHeaders.add(name: "X-Xsrftoken", value: token)
             }
             if let headers = headers {
-                headers.forEach { defaultHeaders.update($0) }
+                headers.forEach { header in
+                    if header.value.isEmpty {
+                        defaultHeaders.remove(name: header.name)
+                    } else {
+                        defaultHeaders.update(header)
+                    }
+                }
             }
 
             AF.upload(

@@ -231,13 +231,117 @@ struct APIService {
     static func sendPost(
         url: String,
         title: String,
-        content: String
+        content: String,
+        nodeSlug: String? = nil
     ) async throws -> String {
-        let parameters: Parameters = [
+        var parameters: Parameters = [
             "title": title,
             "content": content,
         ]
+        if let node = nodeSlug, !node.isEmpty {
+            parameters["node"] = node
+        }
         return try await toServer(url: url, parameters: parameters)
+    }
+    
+    /// 获取待编辑主题详情（原始内容与标题）
+    static func fetchEditTopic(topicId: String) async throws -> (title: String, content: String, nodeSlug: String?, xsrf: String) {
+        let cleanId = topicId.extractDigits()
+        let url = "\(baseUrlString)/t/edit/\(cleanId)"
+        let html = try await NetworkManager.shared.get(url, showErrorToast: false)
+        let doc = try SwiftSoup.parse(html)
+        
+        let title = (try? doc.select("input[name=title], #title, input#topic-title").val()) ?? ""
+        let content = (try? doc.select("textarea[name=content], #content, textarea#topic-content").val()) ?? (try? doc.select("textarea[name=content], #content, textarea#topic-content").text()) ?? ""
+        let nodeSlug = try? doc.select("select[name=node] option[selected]").val()
+        let xsrf = (try? doc.select("input[name=_xsrf]").val()) ?? AccountState.token()
+        
+        return (title, content, nodeSlug, xsrf)
+    }
+    
+    /// 更新已发布的主题
+    static func updatePost(
+        topicId: String,
+        title: String,
+        content: String,
+        nodeSlug: String? = nil
+    ) async throws -> String {
+        let cleanId = topicId.extractDigits()
+        let url = "\(baseUrlString)/t/edit/\(cleanId)"
+        var parameters: Parameters = [
+            "title": title,
+            "content": content
+        ]
+        if let node = nodeSlug, !node.isEmpty {
+            parameters["node"] = node
+        }
+        return try await toServer(url: url, parameters: parameters)
+    }
+    
+    /// 检查图床绑定状态
+    static func checkImageHostBound() async -> (bound: Bool, mask: String) {
+        do {
+            let url = "\(baseUrlString)/api/media/settings"
+            let str = try await NetworkManager.shared.get(url, headers: ["Accept": "application/json"], showErrorToast: false)
+            guard let data = str.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let d = json["data"] as? [String: Any] else {
+                return (false, "")
+            }
+            let isBound = (d["bound"] as? Bool) ?? false
+            let mask = (d["mask"] as? String) ?? ""
+            return (isBound, mask)
+        } catch {
+            return (false, "")
+        }
+    }
+    
+    /// 上传二进制图片/动图数据到绑定的 ImgURL 图床（支持 JPG、PNG、GIF、Live Photo 动态格式）
+    static func uploadMediaToHost(data: Data) async throws -> (url: String, thumbUrl: String) {
+        if data.count > 10 * 1024 * 1024 {
+            throw NSError(domain: "ImageError", code: -1, userInfo: [NSLocalizedDescriptionKey: "图片体积超过 10MB 限制"])
+        }
+        return try await performUploadImage(data: data)
+    }
+    
+    /// 上传图片到绑定的 ImgURL 图床
+    static func uploadImageToHost(image: UIImage) async throws -> (url: String, thumbUrl: String) {
+        guard let data = image.jpegData(compressionQuality: 0.85) else {
+            throw NSError(domain: "ImageError", code: -1, userInfo: [NSLocalizedDescriptionKey: "图片格式转换失败"])
+        }
+        if data.count > 10 * 1024 * 1024 {
+            guard let compressedData = image.jpegData(compressionQuality: 0.5), compressedData.count <= 10 * 1024 * 1024 else {
+                throw NSError(domain: "ImageError", code: -1, userInfo: [NSLocalizedDescriptionKey: "图片体积超过 10MB 限制"])
+            }
+            return try await performUploadImage(data: compressedData)
+        }
+        return try await performUploadImage(data: data)
+    }
+    
+    private static func performUploadImage(data: Data) async throws -> (url: String, thumbUrl: String) {
+        let uploadId = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        let url = "\(baseUrlString)/api/media/uploads/\(uploadId)"
+        let xsrf = AccountState.token()
+        let headers: HTTPHeaders = [
+            "Content-Type": "application/octet-stream",
+            "X-XSRFToken": xsrf
+        ]
+        
+        let responseStr = try await AF.upload(data, to: url, headers: headers)
+            .serializingString()
+            .value
+        
+        guard let resData = responseStr.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: resData) as? [String: Any],
+              let isOk = json["ok"] as? Bool, isOk,
+              let dataDict = json["data"] as? [String: Any],
+              let imageUrl = dataDict["url"] as? String else {
+            let msg = (try? JSONSerialization.jsonObject(with: responseStr.data(using: .utf8) ?? Data()) as? [String: Any])?["message"] as? String ?? "图片上传失败"
+            throw NSError(domain: "UploadError", code: -2, userInfo: [NSLocalizedDescriptionKey: msg])
+        }
+        
+        let thumbUrl = (dataDict["thumbnail_url"] as? String) ?? imageUrl
+        return (imageUrl, thumbUrl)
     }
     
     static func toServer(url: String, parameters: Parameters) async throws -> String {
@@ -259,7 +363,8 @@ struct APIService {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Accept-Encoding": "gzip, deflate",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-            "Referer": url
+            "Referer": url,
+            "X-Requested-With": ""
         ]
         
         // 调用通用请求方法
@@ -461,16 +566,20 @@ extension String {
         return baseT + finalId
     }
         
-    /// /node/IT => /t/create/IT
+    /// /node/IT => IT
+    var nodeSlug: String {
+        let clean = self.components(separatedBy: "?").first ?? self
+        let parts = clean.split(separator: "/").map { String($0) }
+        if let last = parts.last, !last.isEmpty {
+            return last
+        }
+        return self
+    }
+    
+    /// /node/IT => https://www.guozaoke.com/t/create/IT
     var createPostUrl: String {
-        var url = self
-        if url.hasPrefix("/node") {
-            url = url.replacingOccurrences(of: "/node", with: "create")
-        }
-        if !url.hasPrefix("/t") {
-            url = "/t/" + url
-        }
-        return APIService.baseUrlString + url
+        let slug = self.nodeSlug
+        return "\(APIService.baseUrlString)/t/create/\(slug)"
     }
     
 }

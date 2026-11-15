@@ -84,12 +84,10 @@ struct NodeInfoView: View {
                 }
             }
         }
-        .sheet(isPresented: $showAddPostView) {
-            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail:nil) {
-                
+        .fullScreenCover(isPresented: $showAddPostView) {
+            SendPostView(isPresented: $showAddPostView, selectedTopic: $selectedTopic, postDetail: nil) {
+                viewModel.refreshPostList(type: .latest)
             }
-            .presentationDetents([.height(isPadOrWideScreen ? screenHeight : screenHeight/2), .medium, .large])
-            .presentationDragIndicator(.visible)
         }
         .onAppear {
             if viewModel.posts.isEmpty {
